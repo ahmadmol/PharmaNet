@@ -1,0 +1,39 @@
+# 🔥 مجلدات البناء - لا ترفع أبداً
+**/build/
+**/Build/
+*.apk
+*.aab
+*.jar
+*.dex
+*.class
+
+# 🗂️ Gradle - استبعاده بالكامل
+.gradle/
+gradle-app.setting
+*.gradle
+
+# 🖥️ Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+*.log
+out/
+captures/
+
+# 🔐 بيانات حساسة
+local.properties
+secrets.properties
+*.jks
+*.keystore
+google-services.json
+
+# 🗑️ نظام وملفات مؤقتةgit add .
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+
+# 📦 Node / MCP
+node_modules/
+*.env

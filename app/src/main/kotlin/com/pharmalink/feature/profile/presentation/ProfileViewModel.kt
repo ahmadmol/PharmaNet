@@ -1,0 +1,73 @@
+package com.pharmalink.feature.profile.presentation
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.pharmalink.core.common.ui.ScreenState
+import com.pharmalink.data.repository.PharmaRepository
+import com.pharmalink.domain.model.ComplianceDocumentStatus
+import com.pharmalink.domain.model.ComplianceOverview
+import com.pharmalink.domain.model.PharmacyProfile
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+
+data class ProfileContent(
+    val profile: PharmacyProfile,
+    val compliance: ComplianceOverview,
+    val unreadNotifications: Int,
+    val complianceAlertsCount: Int,
+    val documentsNeedingAttentionCount: Int,
+)
+
+data class ProfileUiState(
+    val isUpdatingNotifications: Boolean = false,
+    val screenState: ScreenState<ProfileContent> = ScreenState.Loading,
+)
+
+@HiltViewModel
+class ProfileViewModel @Inject constructor(
+    private val repository: PharmaRepository,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(ProfileUiState())
+    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            combine(
+                repository.observeProfile(),
+                repository.observeCompliance(),
+                repository.observeNotifications(),
+            ) { profile, compliance, notifications ->
+                ProfileUiState(
+                    isUpdatingNotifications = _uiState.value.isUpdatingNotifications,
+                    screenState = ScreenState.Success(
+                        ProfileContent(
+                            profile = profile,
+                            compliance = compliance,
+                            unreadNotifications = notifications.count { !it.read },
+                            complianceAlertsCount = compliance.alerts.size,
+                            documentsNeedingAttentionCount = compliance.documents.count { document ->
+                                document.status != ComplianceDocumentStatus.VALID
+                            },
+                        ),
+                    ),
+                )
+            }.collect { nextState ->
+                _uiState.value = nextState
+            }
+        }
+    }
+
+    fun updateNotifications(enabled: Boolean) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUpdatingNotifications = true)
+            repository.updateNotificationsPreference(enabled)
+            _uiState.value = _uiState.value.copy(isUpdatingNotifications = false)
+        }
+    }
+}

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="delivery_tracking_title">متابعة التوصيل</string>
+    <string name="delivery_tracking_back">العودة</string>
+    <string name="delivery_tracking_loading">جاري تحميل معلومات التوصيل...</string>
+    <string name="delivery_tracking_error">تعذر تحميل معلومات التوصيل حاليًا.</string>
+    <string name="delivery_tracking_empty">لا توجد معلومات توصيل متاحة.</string>
+    <string name="delivery_tracking_offline">أنت غير متصل الآن، سنعرض آخر بيانات متاحة عند عودة الاتصال.</string>
+    
+    <!-- Status texts -->
+    <string name="delivery_status_preparing">جاري التجهيز</string>
+    <string name="delivery_status_assigned">تم تعيين المندوب</string>
+    <string name="delivery_status_picked_up">تم الاستلام</string>
+    <string name="delivery_status_in_transit">المندوب في الطريق</string>
+    <string name="delivery_status_arriving">اقترب من الوجهة</string>
+    <string name="delivery_status_delivered">تم التسليم</string>
+    <string name="delivery_status_failed">فشل التوصيل</string>
+    
+    <!-- Route info -->
+    <string name="route_start_point">نقطة الانطلاق</string>
+    <string name="route_destination">نقطة التسليم</string>
+    <string name="route_will_be_determined">سيتم تحديده قريبًا</string>
+    
+    <!-- Delegate info -->
+    <string name="delegate_call">اتصال</string>
+    <string name="delegate_no_assignee">سيتم تعيين مندوب قريبًا</string>
+    
+    <!-- Timeline -->
+    <string name="timeline_title">مراحل التوصيل</string>
+    <string name="timeline_preparing_desc">يتم تجهيز طلبك</string>
+    <string name="timeline_assigned_desc">تم اختيار مندوب التوصيل</string>
+    <string name="timeline_picked_up_desc">المندوب في طريقه لاستلام الطلب</string>
+    <string name="timeline_in_transit_desc">المندوب في طريقه إليك</string>
+    <string name="timeline_arriving_desc">سيصل خلال دقائق</string>
+    <string name="timeline_delivered_desc">تم تسليم الطلب بنجاح</string>
+    <string name="tracking_timeline_step_in_transit_short">في الطريق</string>
+    
+    <!-- Extra info -->
+    <string name="extra_info_title">معلومات إضافية</string>
+    <string name="extra_info_order_number">رقم الطلب</string>
+    <string name="extra_info_warehouse">المستودع</string>
+    <string name="extra_info_departure_time">وقت الانطلاق</string>
+    <string name="extra_info_delivery_notes">ملاحظات التوصيل</string>
+    
+    <string name="tracking_error_load_failed">تعذر تحميل التتبع</string>
+
+    <!-- Common -->
+    <string name="estimated_arrival">الوصول المتوقع: %s</string>
+    <string name="last_update">آخر تحديث: %s</string>
+</resources>

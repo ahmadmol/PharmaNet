@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_greeting">مرحباً، %1$s</string>
+    <string name="home_subtitle">إدارة طلباتك بسهولة</string>
+    <string name="home_stat_active">طلبات نشطة</string>
+    <string name="home_stat_urgent">عاجلة</string>
+    <string name="home_stat_completed">مكتمل اليوم</string>
+    <string name="home_quick_new">طلب جديد</string>
+    <string name="home_quick_search">بحث دواء</string>
+    <string name="home_quick_warehouses">المستودعات</string>
+    <string name="home_quick_emergency">طلب طارئ</string>
+    <string name="home_quick_actions_title">إجراءات سريعة</string>
+    <string name="home_section_activity">آخر النشاطات</string>
+    <string name="home_section_suggestions">اقتراحات ذكية</string>
+    <string name="home_suggestions_subtitle">الأكثر طلباً والمتوفرة بالقرب منك</string>
+    <string name="home_activity_1_title">تم قبول طلبك</string>
+    <string name="home_activity_1_sub">باراسيتامول 500 مجم — مستودع النور</string>
+    <string name="home_activity_2_title">دواء متوفر الآن</string>
+    <string name="home_activity_2_sub">أموكسيسيلين أصبح متاحاً للتوريد</string>
+    <string name="home_activity_3_title">تحديث الشحن</string>
+    <string name="home_activity_3_sub">طلبك في الطريق إلى الصيدلية</string>
+    <string name="home_suggest_1">فيتامين د3</string>
+    <string name="home_suggest_1_sub">متوفر — الرياض</string>
+    <string name="home_suggest_2">أوميغا 3</string>
+    <string name="home_suggest_2_sub">متوفر — جدة</string>
+    <string name="home_suggest_3">مضاد حيوي</string>
+    <string name="home_suggest_3_sub">بحاجة لتأكيد وصفة</string>
+    <string name="home_go_orders">عرض جميع الطلبات ←</string>
+
+    <string name="home_dashboard_title">لوحة التحكم</string>
+    <string name="home_dashboard_subtitle">نظرة سريعة على أداء طلباتك</string>
+    <string name="home_kpi_fulfillment">نسبة التنفيذ</string>
+    <string name="home_kpi_response">زمن الاستجابة</string>
+    <string name="home_kpi_pending">طلبات قيد الانتظار</string>
+    <string name="home_alerts_title">تنبيهات مهمة</string>
+    <string name="home_recent_title">أحدث الطلبات</string>
+    <string name="home_empty_title">لا توجد بيانات بعد</string>
+    <string name="home_empty_subtitle">ابدأ بإنشاء طلب جديد لمتابعة حالتك هنا</string>
+
+    <!-- Stitch clinical home -->
+    <string name="home_stitch_title">أهلاً بك في الملجأ السريري</string>
+    <string name="home_stitch_subtitle">إليك آخر التحديثات لليوم</string>
+    <string name="home_search_placeholder">بحث عن دواء أو مستودع…</string>
+    <string name="home_urgent_banner_title">تنبيهات عاجلة</string>
+    <string name="home_urgent_banner_subtitle">لديك %1$d طلباً حرجاً يتطلب متابعة فورية.</string>
+    <string name="home_urgent_banner_cta">طلب فوري</string>
+    <string name="home_kpi_active">طلب نشط</string>
+    <string name="home_kpi_urgent">طلبات حرجة</string>
+    <string name="home_kpi_completed">طلب مكتمل</string>
+    <string name="home_kpi_stock">تنبيهات مخزون</string>
+    <string name="home_quick_orders">عرض الطلبات</string>
+    <string name="home_quick_actions_row_title">إجراءات سريعة</string>
+    <string name="home_section_activity_stitch">آخر النشاطات</string>
+    <string name="home_section_notifications">تنبيهات</string>
+    <string name="home_warehouses_promo_title">المستودعات القريبة</string>
+    <string name="home_warehouses_promo_body">تصفح المستودعات المتاحة وتتبع التوريد في الوقت الفعلي.</string>
+    <string name="home_warehouses_promo_cta">استكشف المستودعات</string>
+    <string name="home_loading_subtitle">جاري تحديث البيانات…</string>
+    <string name="home_retry">إعادة المحاولة</string>
+    <string name="home_status_draft">مسودة</string>
+    <string name="home_status_submitted">مُرسل</string>
+    <string name="home_status_under_review">قيد المراجعة</string>
+    <string name="home_status_approved">معتمد</string>
+    <string name="home_status_completed">مكتمل</string>
+    <string name="home_status_rejected">مرفوض</string>
+    <string name="home_priority_urgent_chip">عاجل</string>
+</resources>

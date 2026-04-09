@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="request_title">طلب دواء جديد</string>
+    <string name="request_step">الخطوة %1$d من 3</string>
+    <string name="request_medicine_label">اسم الدواء أو الرمز</string>
+    <string name="request_notes_label">ملاحظات إضافية</string>
+    <string name="request_camera">التقاط صورة</string>
+    <string name="request_gallery">معرض الصور</string>
+    <string name="request_voice">رسالة صوتية</string>
+    <string name="request_urgency_normal">عادي</string>
+    <string name="request_urgency_urgent">عاجل</string>
+    <string name="request_submit">إرسال الطلب</string>
+    <string name="request_success">تم إرسال الطلب بنجاح</string>
+    <string name="request_error_empty">أدخل اسم الدواء</string>
+    <string name="request_voice_soon">قريباً: تسجيل صوتي</string>
+    <string name="request_image_preview">صورة الوصفة</string>
+    <string name="request_quantity">الكمية</string>
+    <string name="request_unit">الوحدة</string>
+    <string name="request_step_medicine">بيانات الدواء</string>
+    <string name="request_step_quantity">الكمية والمراجعة</string>
+    <string name="request_step_review">مراجعة وإرسال</string>
+    <string name="request_success_cta">الانتقال إلى الطلبات</string>
+
+    <string name="request_details_title">تفاصيل الطلب</string>
+    <string name="request_details_id">المعرف: %1$s</string>
+    <string name="request_details_back">رجوع</string>
+    <string name="request_error_invalid_id">معرف الطلب غير صالح</string>
+    <string name="request_error_not_found">الطلب غير موجود</string>
+    <string name="resources_screen_title">اختر أفضل مسار توريد</string>
+    <string name="request_section_medicine_hint">أدخل اسم الدواء أو الرمز بدقة</string>
+    <string name="request_section_warehouse_hint">اختر المستودع المناسب للتوريد</string>
+    <string name="request_section_review_hint">راجع البيانات والمرفقات ثم أرسل الطلب</string>
+
+    <string name="request_summary_title">ملخص الطلب</string>
+    <string name="request_created_banner">تم إنشاء الطلب</string>
+    <string name="request_validation_fix_fields">يرجى تصحيح الحقول المحددة</string>
+    <string name="request_error_submit_failed">تعذر إنشاء الطلب، حاول مرة أخرى</string>
+    <string name="request_error_generic">حدث خطأ غير متوقع</string>
+    <string name="request_validation_medicine_required">اسم الدواء مطلوب</string>
+    <string name="request_validation_medicine_short">أدخل اسم دواء أوضح (3 أحرف على الأقل)</string>
+    <string name="request_validation_warehouse">اختر مستودعاً</string>
+    <string name="request_validation_urgent_notes">الطلبات العاجلة تحتاج إلى مزيد من التفاصيل في الملاحظات</string>
+    <string name="request_review_line">%1$s • %2$d %3$s</string>
+    <string name="request_eta_line">%1$s • الوصول المتوقع: %2$s</string>
+    <string name="request_placeholder_dash">—</string>
+
+    <string name="request_unit_box">علبة</string>
+    <string name="request_unit_bottle">زجاجة</string>
+    <string name="request_unit_pack">عبوة</string>
+
+    <string-array name="request_medicine_suggestions">
+        <item>باراسيتامول 500 مجم</item>
+        <item>أموكسيسيلين شراب</item>
+        <item>فيتامين د3</item>
+        <item>أوميغا 3</item>
+        <item>إيبوبروفين 400 مجم</item>
+        <item>ميتفورمين ممتد المفعول</item>
+    </string-array>
+
+    <!-- Request details screen -->
+    <string name="request_details_loading_subtitle">جاري تحميل بيانات الطلب.</string>
+    <string name="request_details_empty_subtitle">لا توجد بيانات متاحة لهذا الطلب.</string>
+    <string name="request_details_error_subtitle">تعذر تحميل الطلب حاليًا.</string>
+    <string name="request_details_offline_subtitle">أنت غير متصل الآن، سنعرض آخر بيانات متاحة عند عودة الاتصال.</string>
+    <string name="request_details_open_related_order">فتح الطلبية المرتبطة</string>
+    <string name="request_details_request_id_format">طلب #%1$s</string>
+    <string name="request_details_urgent_badge">عاجل</string>
+    <string name="request_details_section_warehouse">معلومات المستودع والتوريد</string>
+    <string name="request_details_section_storage">ملاحظات التخزين</string>
+    <string name="request_details_section_eta">الوقت المتوقع للتسليم</string>
+    <string name="request_details_label_expected_delivery">التسليم المتوقع</string>
+    <string name="request_details_contact_warehouse">تواصل مع المستودع</string>
+    <string name="request_details_reorder_same">إعادة طلب نفس الدواء</string>
+    <string name="request_details_label_warehouse">المستودع</string>
+    <string name="request_details_label_supplier">المورد</string>
+    <string name="request_details_label_last_updated">آخر تحديث</string>
+    <string name="request_details_label_order_notes">ملاحظات الطلب</string>
+    <string name="request_details_label_storage_notes">ملاحظات التخزين</string>
+    <string name="request_details_label_priority">الأولوية</string>
+    <string name="request_details_priority_urgent">عاجل</string>
+    <string name="request_details_priority_normal">عادية</string>
+
+    <!-- Request status timeline -->
+    <string name="request_timeline_submitted_title">تم تقديم الطلب</string>
+    <string name="request_timeline_submitted_subtitle">تم استلام طلبك وجاري مراجعته</string>
+    <string name="request_timeline_review_title">قيد المراجعة</string>
+    <string name="request_timeline_review_subtitle">طلبك قيد المراجعة من قبل الفريق المختص</string>
+    <string name="request_timeline_approved_title">تم الموافقة</string>
+    <string name="request_timeline_approved_subtitle">تمت الموافقة على طلبك وجاري تجهيزه</string>
+    <string name="request_timeline_completed_title">تم التسليم</string>
+    <string name="request_timeline_completed_subtitle">تم تسليم طلبك بنجاح</string>
+    <string name="request_timeline_rejected_title">مرفوض</string>
+    <string name="request_timeline_rejected_subtitle">تم رفض طلبك، يرجى مراجعة التفاصيل</string>
+</resources>

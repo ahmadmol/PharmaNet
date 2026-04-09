@@ -1,0 +1,23 @@
+package com.pharmalink.domain.model
+
+data class PharmacyProfile(
+    val id: String,
+    val pharmacyName: String,
+    val city: String,
+    val district: String,
+    val managerName: String,
+    val addressLine: String,
+    val contactPhone: String,
+    val contactEmail: String,
+    val licenseStatusLabel: String,
+    val licenseNumber: String,
+    val licenseExpiryLabel: String,
+    val operatingHoursLabel: String,
+    val preferredLanguageLabel: String,
+    val notificationsEnabled: Boolean,
+    val twoFactorEnabled: Boolean,
+    val linkedDevicesCount: Int,
+    val totalOrders: Int,
+    val completedOrders: Int,
+    val activeOrders: Int,
+)

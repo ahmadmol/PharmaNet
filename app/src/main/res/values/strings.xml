@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PharmaLink</string>
+
+    <!-- Bottom navigation & shell -->
+    <string name="placeholder_under_development">قيد التطوير</string>
+    <string name="home_screen">الرئيسية</string>
+    <string name="resources">الموارد</string>
+    <string name="my_orders">طلباتي</string>
+    <string name="account">حسابي</string>
+    <string name="add_medicine">إضافة دواء</string>
+    <string name="resources_screen_title">الموارد</string>
+    <string name="resources_search_placeholder">ابحث عن مستودع أو مدينة</string>
+    <string name="resources_filter_all">الكل</string>
+    <string name="resources_filter_near">قريب</string>
+    <string name="resources_filter_cold_chain">سلسلة تبريد</string>
+    <string name="resources_sort_nearest">الأقرب</string>
+    <string name="resources_sort_stock">المخزون</string>
+    <string name="resources_sort_latest">الأحدث</string>
+    <string name="resources_empty_title">لا توجد نتائج</string>
+    <string name="resources_empty_subtitle">جرّب كلمات بحث مختلفة أو أزل الفلاتر</string>
+    <string name="resources_section_available">المستودعات المتاحة</string>
+    <string name="resources_chip_in_stock">%1$d%% متوفر</string>
+    <string name="resources_chip_low">%1$d منخفض</string>
+    <string name="resources_chip_out">%1$d غير متوفر</string>
+    <string name="resources_last_updated">آخر تحديث: %1$s</string>
+
+    <string name="warehouse_detail_placeholder">تفاصيل المستودع</string>
+    <string name="warehouse_detail_body">مستودع معتمد يوفر توريد الأدوية بجودة عالية مع تتبع الشحنات ودعم فني على مدار الساعة.</string>
+    <string name="warehouse_detail_hours_title">ساعات التوريد</string>
+    <string name="warehouse_detail_hours_value">السبت – الخميس: ٨ ص – ١٠ م</string>
+
+    <!-- Profile -->
+    <string name="profile_dummy_name">أحمد محمد الزهراني</string>
+    <string name="profile_dummy_bio">صيدلاني | متخصص في الأدوية العامة</string>
+    <string name="profile_label_phone">رقم الهاتف</string>
+    <string name="profile_dummy_phone">0501234567</string>
+    <string name="profile_label_address">العنوان</string>
+    <string name="profile_dummy_address">الرياض، حي النزهة، شارع الأمير سلطان</string>
+    <string name="profile_label_email">البريد الإلكتروني</string>
+    <string name="profile_dummy_email">ahmed@pharmanet.sa</string>
+    <string name="profile_map_section_title">الموقع على الخريطة</string>
+    <string name="profile_map_placeholder_label">موقع المستودع</string>
+
+    <string name="action_logout">تسجيل الخروج</string>
+    <string name="profile_pharmacy_name">صيدلية النور</string>
+    <string name="profile_location_short">الرياض، المملكة العربية السعودية</string>
+    <string name="profile_stat_total">إجمالي الطلبات</string>
+    <string name="profile_stat_completed">مكتملة</string>
+    <string name="profile_stat_active">نشطة</string>
+    <string name="profile_settings_title">الإعدادات</string>
+    <string name="profile_settings_account">الحساب</string>
+    <string name="profile_settings_notifications">الإشعارات</string>
+    <string name="profile_settings_subscription">الاشتراك</string>
+    <string name="profile_settings_help">مركز المساعدة</string>
+    <string name="profile_settings_language">اللغة</string>
+    <string name="profile_settings_security">الأمان</string>
+    <string name="profile_settings_devices">الأجهزة المرتبطة</string>
+    <string name="profile_compliance_title">الامتثال</string>
+    <string name="profile_compliance_ok">الامتثال مكتمل</string>
+    <string name="profile_edit_profile">تعديل الملف</string>
+
+    <string name="orders_screen_title">طلباتي</string>
+    <string name="orders_tab_pending">قيد الانتظار</string>
+    <string name="orders_tab_approved">مقبولة</string>
+    <string name="orders_tab_rejected">مرفوضة</string>
+    <string name="orders_tab_delivered">تم التسليم</string>
+    <string name="order_status_pending">بانتظار الموافقة</string>
+    <string name="order_status_approved">تمت الموافقة</string>
+    <string name="order_status_rejected">مرفوض</string>
+    <string name="order_status_delivered">مكتمل</string>
+    <string name="order_track">تتبع الشحنة</string>
+    <string name="orders_filter_status">الحالة</string>
+    <string name="orders_filter_date">التاريخ</string>
+    <string name="orders_empty_title">لا توجد طلبات</string>
+    <string name="orders_empty_subtitle">ستظهر طلباتك هنا عند إنشاء طلب جديد</string>
+
+    <string name="messages_title">الرسائل</string>
+    <string name="action_back">رجوع</string>
+    <string name="action_filter">تصفية</string>
+    <string name="message_hint">اكتب رسالتك…</string>
+    <string name="msg_sample_1">تم قبول طلبك وجاري تجهيز الشحنة.</string>
+    <string name="msg_sample_2">يرجى تأكيد عنوان التسليم خلال 20 دقيقة.</string>
+
+    <string name="rate_title">قيّم تجربتك</string>
+    <string name="rate_description">نقدّر ملاحظاتك لتحسين جودة الخدمة والتوريد.</string>
+    <string name="rate_love_it">أحببت التطبيق!</string>
+    <string name="rate_feedback_cta">لديك ملاحظات؟ أخبرنا</string>
+    <string name="rate_kpi_section_title">مؤشرات الأداء الرئيسية</string>
+    <string name="rate_kpi_compliance">نسبة الالتزام</string>
+    <string name="rate_kpi_response">زمن الاستجابة</string>
+    <string name="rate_kpi_supply_quality">جودة التوريد</string>
+    <string name="rate_kpi_value_minutes">%1$s د</string>
+
+    <string name="help_title">مركز المساعدة</string>
+    <string name="help_faq_title">الأسئلة الشائعة</string>
+    <string name="help_report_issue">الإبلاغ عن مشكلة</string>
+    <string name="help_contact_support">التواصل مع الدعم</string>
+
+    <string name="warehouse_stock_title">مستوى المخزون</string>
+    <string name="warehouse_shipments_title">شحنات المستودع</string>
+    <string name="warehouse_action_request">طلب توريد</string>
+    <string name="warehouse_action_contact">تواصل</string>
+
+    <!-- Orders list -->
+    <string name="orders_loading_title">جاري تحميل الطلبات</string>
+    <string name="orders_loading_subtitle">يتم جلب أحدث البيانات…</string>
+    <string name="orders_filter_urgent">عاجل</string>
+    <string name="orders_section_operational">طلبات تشغيلية</string>
+    <string name="orders_error_load_fallback">تعذر تحميل الطلبات</string>
+    <string name="orders_offline_fallback">لا يوجد اتصال</string>
+    <string name="orders_error_order_not_found">الطلبية غير موجودة</string>
+
+    <!-- Resources / warehouse detail -->
+    <string name="resources_error_warehouse_not_found">المستودع غير موجود</string>
+    <string name="resources_search_header_title">تجربة البحث</string>
+    <string name="resources_search_header_subtitle">ابحث عن دواء أو مستودع للتوريد</string>
+    <string name="resources_filter_action">فلترة</string>
+    <string name="resources_sort_cd">ترتيب</string>
+    <string name="resources_loading_title">تحميل الموارد</string>
+    <string name="resources_loading_subtitle">جاري تحميل قائمة المستودعات…</string>
+    <string name="resources_error_title">خطأ</string>
+    <string name="resources_error_fallback">حدث خطأ أثناء تحميل الموارد</string>
+    <string name="resources_offline_title">لا يوجد اتصال</string>
+    <string name="resources_offline_fallback">أنت غير متصل بالإنترنت</string>
+
+    <!-- Help / compliance badges -->
+    <string name="help_badge_placeholder">قريباً</string>
+    <string name="compliance_badge_placeholder">قريباً</string>
+
+    <!-- Order detail -->
+    <string name="order_detail_title">تفاصيل الطلبية</string>
+    <string name="order_detail_loading_subtitle">جاري تحميل بيانات الطلبية.</string>
+    <string name="order_detail_empty_subtitle">لا توجد بيانات متاحة لهذه الطلبية.</string>
+    <string name="order_detail_error_subtitle">تعذر تحميل الطلبية حاليًا.</string>
+    <string name="order_detail_offline_subtitle">أنت غير متصل الآن، سنعرض آخر بيانات متاحة عند عودة الاتصال.</string>
+    <string name="order_detail_open_request">فتح الطلب المرتبط</string>
+    <string name="order_detail_track_delivery">متابعة التوصيل</string>
+    <string name="order_detail_urgent">عاجل</string>
+    <string name="order_detail_label_quantity">الكمية</string>
+    <string name="order_detail_label_warehouse">المستودع</string>
+    <string name="order_detail_label_supplier">المورّد</string>
+    <string name="order_detail_label_order_date">تاريخ الطلب</string>
+    <string name="order_detail_label_eta">الوصول المتوقع</string>
+    <string name="order_detail_label_last_update">آخر تحديث</string>
+    <string name="order_detail_status_pending">قيد المراجعة</string>
+    <string name="order_detail_status_approved">معتمد</string>
+    <string name="order_detail_status_rejected">مرفوض</string>
+    <string name="order_detail_status_delivered">تم التسليم</string>
+
+    <!-- Cart -->
+    <string name="cart_title_review">مراجعة السلة</string>
+    <string name="cart_loading_subtitle">جاري تحميل أصناف السلة...</string>
+    <string name="cart_error_title">خطأ في السلة</string>
+    <string name="cart_error_fallback">تعذر تحميل أصناف السلة</string>
+    <string name="cart_offline_title">لا يوجد اتصال</string>
+    <string name="cart_offline_fallback">تعذر الاتصال بالشبكة</string>
+    <string name="cart_empty_title">السلة فارغة</string>
+    <string name="cart_empty_subtitle">أضف بعض الأدوية إلى السلة للمتابعة</string>
+    <string name="cart_demo_medicine_subtitle">مضاد حيوي</string>
+    <string name="cart_notes_section_title">ملاحظات وتعليمات</string>
+    <string name="cart_notes_order_label">ملاحظات الطلب</string>
+    <string name="cart_notes_order_placeholder">أضف أي ملاحظات خاصة بالطلب...</string>
+    <string name="cart_notes_pharmacy_title">تعليمات الصيدلية</string>
+    <string name="cart_notes_pharmacy_placeholder">تعليمات خاصة بالصيدلية (اختياري)...</string>
+    <string name="cart_summary_title">ملخص الطلب</string>
+    <string name="cart_summary_items_total">إجمالي الأصناف</string>
+    <string name="cart_summary_warehouse_count">عدد المستودعات</string>
+    <string name="cart_summary_eta">الوقت المقدر للتوصيل</string>
+    <string name="cart_header_title">السلة</string>
+    <string name="cart_header_subtitle">مراجعة الأصناف والكميات قبل الإرسال</string>
+    <string name="cart_header_back_cd">رجوع</string>
+    <string name="cart_header_more_cd">المزيد</string>
+    <string name="cart_action_submit">إرسال الطلب</string>
+    <string name="cart_action_save_draft">حفظ مسودة</string>
+    <string name="cart_action_browse">متابعة التصفح</string>
+    <string name="cart_empty_heading">السلة فارغة</string>
+    <string name="cart_empty_body">ابدأ بإضافة الأدوية والمعدات الطبية إلى سلتك</string>
+    <string name="cart_empty_browse">تصفح الموارد</string>
+    <string name="cart_chip_cold_chain">سلسلة باردة</string>
+    <string name="cart_chip_fast_delivery">توصيل سريع</string>
+    <string name="cart_remove_cd">إزالة</string>
+    <string name="cart_batch_label">الدفعة: %1$s</string>
+    <string name="cart_packaging_label">التغليف: %1$s</string>
+    <string name="cart_stock_in_stock">متوفر</string>
+    <string name="cart_stock_low">مخزون منخفض</string>
+    <string name="cart_stock_out">نفد المخزون</string>
+    <string name="resources_search_start_title">ابدأ بالبحث</string>
+    <string name="resources_recommended_heading">موصى بها</string>
+    <string name="resources_all_warehouses_heading">جميع المستودعات</string>
+</resources>
