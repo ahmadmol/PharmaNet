@@ -1,0 +1,19 @@
+<resources>
+    <string name="orders_screen_title">طلباتي</string>
+    <string name="search_orders_placeholder">ابحث عن طلب أو دواء...</string>
+    <string name="order_status_pending">قيد الانتظار</string>
+    <string name="order_status_approved">موافق عليه</string>
+    <string name="order_status_rejected">مرفوض</string>
+    <string name="order_status_delivered">تم التسليم</string>
+    <string name="order_error_loading_failed">فشل تحميل الطلبات. حاول مرة أخرى.</string>
+    <string name="order_list_empty">لا توجد طلبات حالياً</string>
+    <string name="order_loading_message">جاري تحميل الطلبات...</string>
+    <string name="order_retry_loading">إعادة المحاولة</string>
+    <string name="order_urgent">عاجل</string>
+    <string name="order_request_id">رقم الطلب: %s</string>
+    <string name="order_warehouse">المستودع: %s</string>
+    <string name="order_supplier">المورد: %s</string>
+    <string name="order_last_updated">آخر تحديث: %s</string>
+    <string name="error_network">خطأ في الشبكة. تحقق من اتصالك بالإنترنت.</string>
+    <string name="error_permission">ليس لديك صلاحية للقيام بهذا الإجراء.</string>
+</resources>

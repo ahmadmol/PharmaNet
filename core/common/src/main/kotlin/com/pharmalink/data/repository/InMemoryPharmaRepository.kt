@@ -7,6 +7,8 @@ import com.pharmalink.domain.model.ComplianceOverview
 import com.pharmalink.domain.model.DeliveryDelegate
 import com.pharmalink.domain.model.DeliveryStatus
 import com.pharmalink.domain.model.DeliveryTracking
+import com.pharmalink.domain.model.HomeStats
+import com.pharmalink.domain.model.Medicine
 import com.pharmalink.domain.model.NotificationCategory
 import com.pharmalink.domain.model.NotificationDestination
 import com.pharmalink.domain.model.NotificationType
@@ -44,15 +46,42 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     override fun observeProfile(): Flow<PharmacyProfile> = profile.asStateFlow()
     override fun observeCompliance(): Flow<ComplianceOverview> = compliance.asStateFlow()
 
-    override suspend fun getOrder(orderId: String): Order? = orders.value.firstOrNull { it.id == orderId }
+    override suspend fun updateProfile(profile: PharmacyProfile): Result<Unit> {
+        this.profile.value = profile
+        return Result.success(Unit)
+    }
 
-    override suspend fun getRequest(requestId: String): Request? = requests.value.firstOrNull { it.id == requestId }
+    override suspend fun fetchHomeStats(): Result<HomeStats> = Result.success(
+        HomeStats(
+            requestsTodayCount = requests.value.size,
+            requestsTodayTrend = "+5%",
+            totalInventoryCount = 1250,
+            totalInventoryUnit = "وحدة",
+            weeklySalesAmount = "12.5K",
+            weeklySalesTrend = "+3.2%",
+            alertMessage = if (requests.value.size > 10) "لديك عدد كبير من الطلبات المعلقة" else null,
+        ),
+    )
 
-    override suspend fun getWarehouse(warehouseId: String): Warehouse? = warehouses.value.firstOrNull { it.id == warehouseId }
+    override suspend fun fetchFeaturedWarehouses(): Result<List<Warehouse>> =
+        Result.success(warehouses.value.take(10))
 
-    override suspend fun getWarehouseShipments(warehouseId: String): List<WarehouseShipment> = shipments[warehouseId].orEmpty()
+    override suspend fun fetchMedicines(): Result<List<Medicine>> =
+        Result.success(sampleMedicines())
 
-    override suspend fun createRequest(request: Request): Request {
+    override suspend fun getOrder(orderId: String): Result<Order?> =
+        Result.success(orders.value.firstOrNull { it.id == orderId })
+
+    override suspend fun getRequest(requestId: String): Result<Request?> =
+        Result.success(requests.value.firstOrNull { it.id == requestId })
+
+    override suspend fun getWarehouse(warehouseId: String): Result<Warehouse?> =
+        Result.success(warehouses.value.firstOrNull { it.id == warehouseId })
+
+    override suspend fun getWarehouseShipments(warehouseId: String): Result<List<WarehouseShipment>> =
+        Result.success(shipments[warehouseId].orEmpty())
+
+    override suspend fun createRequest(request: Request): Result<Request> {
         val warehouse = warehouses.value.firstOrNull { it.id == request.warehouseId } ?: warehouses.value.first()
         val requestId = "REQ-${1280 + requests.value.size + 1}"
         val orderId = "ORD-${880 + orders.value.size + 1}"
@@ -104,21 +133,24 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             activeOrders = profile.value.activeOrders + 1,
         )
 
-        return createdRequest
+        return Result.success(createdRequest)
     }
 
-    override suspend fun markNotificationRead(notificationId: String) {
+    override suspend fun markNotificationRead(notificationId: String): Result<Unit> {
         notifications.value = notifications.value.map { notification ->
             if (notification.id == notificationId) notification.copy(read = true) else notification
         }
+        return Result.success(Unit)
     }
 
-    override suspend fun markAllNotificationsRead() {
+    override suspend fun markAllNotificationsRead(): Result<Unit> {
         notifications.value = notifications.value.map { it.copy(read = true) }
+        return Result.success(Unit)
     }
 
-    override suspend fun updateNotificationsPreference(enabled: Boolean) {
+    override suspend fun updateNotificationsPreference(enabled: Boolean): Result<Unit> {
         profile.value = profile.value.copy(notificationsEnabled = enabled)
+        return Result.success(Unit)
     }
 
     override suspend fun updateRequest(request: Request): Result<Request> {
@@ -165,10 +197,10 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         return Result.success(Unit)
     }
 
-    override suspend fun getDeliveryTracking(orderId: String): Result<DeliveryTracking> {
-        val order = getOrder(orderId) ?: return Result.failure(IllegalArgumentException("Order not found"))
-        return Result.success(buildDeliveryTrackingForDemo(order))
-    }
+    override suspend fun getDeliveryTracking(orderId: String): Result<DeliveryTracking> =
+        getOrder(orderId).mapCatching { order ->
+            order ?: throw IllegalArgumentException("Order not found")
+        }.map { buildDeliveryTrackingForDemo(it) }
 
     override suspend fun recordDelegateCall(phoneNumber: String): Result<Unit> {
         delay(200)
@@ -264,6 +296,12 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             )
         }
     }
+
+    private fun sampleMedicines(): List<Medicine> = listOf(
+        Medicine("m1", "باراسيتامول", "جنريك", "500 ملغ", 12.0, null),
+        Medicine("m2", "أموكسيسيلين", "سبيكترا", "شراب", 45.0, null),
+        Medicine("m3", "فيتامين د3", "نيوتري", "1000 وحدة", 28.5, null),
+    )
 
     private fun sampleWarehouses(): List<Warehouse> = listOf(
         Warehouse("w1", "مستودع الشفاء", "الرياض", "العليا", true, 92, 4, 1, "خلال ساعتين", "4 كم", "+966500001111", "قبل 12 دقيقة"),

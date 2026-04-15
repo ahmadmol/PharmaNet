@@ -12,6 +12,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -25,6 +26,7 @@ data class ProfileContent(
 
 data class ProfileUiState(
     val isUpdatingNotifications: Boolean = false,
+    val notificationsUpdateError: String? = null,
     val screenState: ScreenState<ProfileContent> = ScreenState.Loading,
 )
 
@@ -45,6 +47,7 @@ class ProfileViewModel @Inject constructor(
             ) { profile, compliance, notifications ->
                 ProfileUiState(
                     isUpdatingNotifications = _uiState.value.isUpdatingNotifications,
+                    notificationsUpdateError = _uiState.value.notificationsUpdateError,
                     screenState = ScreenState.Success(
                         ProfileContent(
                             profile = profile,
@@ -57,17 +60,31 @@ class ProfileViewModel @Inject constructor(
                         ),
                     ),
                 )
-            }.collect { nextState ->
-                _uiState.value = nextState
             }
+                .catch { error ->
+                    _uiState.value = _uiState.value.copy(
+                        screenState = ScreenState.Error(
+                            error.message ?: "تعذر تحميل الملف الشخصي حاليًا.",
+                        ),
+                    )
+                }
+                .collect { nextState ->
+                    _uiState.value = nextState
+                }
         }
     }
 
     fun updateNotifications(enabled: Boolean) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isUpdatingNotifications = true)
-            repository.updateNotificationsPreference(enabled)
-            _uiState.value = _uiState.value.copy(isUpdatingNotifications = false)
+            _uiState.value = _uiState.value.copy(
+                isUpdatingNotifications = true,
+                notificationsUpdateError = null,
+            )
+            val result = repository.updateNotificationsPreference(enabled)
+            _uiState.value = _uiState.value.copy(
+                isUpdatingNotifications = false,
+                notificationsUpdateError = result.exceptionOrNull()?.message,
+            )
         }
     }
 }

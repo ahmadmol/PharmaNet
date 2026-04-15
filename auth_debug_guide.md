@@ -7,7 +7,7 @@
 init {
     Log.d("AuthDebug", "=== Auth Debug Info ===")
     Log.d("AuthDebug", "Supabase URL: ${BuildConfig.SUPABASE_URL.take(25)}...")
-    Log.d("AuthDebug", "Internal email domain: @pharmalink.internal")
+    Log.d("AuthDebug", "Internal email domain: @pharmalink.app")
 }
 
 // ✅ في UI، راقب الأخطاء:

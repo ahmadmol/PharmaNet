@@ -3,6 +3,8 @@ package com.pharmalink.data.repository
 import com.pharmalink.domain.model.AppNotification
 import com.pharmalink.domain.model.ComplianceOverview
 import com.pharmalink.domain.model.DeliveryTracking
+import com.pharmalink.domain.model.HomeStats
+import com.pharmalink.domain.model.Medicine
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
 import com.pharmalink.domain.model.PharmacyProfile
@@ -14,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Single application data contract. Replace [InMemoryPharmaRepository] with a network-backed
  * implementation when the API is ready.
+ *
+ * Convention: [Flow] APIs emit plain data; [suspend] APIs return [Result].
  */
 interface PharmaRepository {
     fun observeOrders(): Flow<List<Order>>
@@ -26,17 +30,25 @@ interface PharmaRepository {
 
     fun observeProfile(): Flow<PharmacyProfile>
 
+    suspend fun updateProfile(profile: PharmacyProfile): Result<Unit>
+
     fun observeCompliance(): Flow<ComplianceOverview>
 
-    suspend fun getOrder(orderId: String): Order?
+    suspend fun fetchHomeStats(): Result<HomeStats>
 
-    suspend fun getRequest(requestId: String): Request?
+    suspend fun fetchFeaturedWarehouses(): Result<List<Warehouse>>
 
-    suspend fun getWarehouse(warehouseId: String): Warehouse?
+    suspend fun fetchMedicines(): Result<List<Medicine>>
 
-    suspend fun getWarehouseShipments(warehouseId: String): List<WarehouseShipment>
+    suspend fun getOrder(orderId: String): Result<Order?>
 
-    suspend fun createRequest(request: Request): Request
+    suspend fun getRequest(requestId: String): Result<Request?>
+
+    suspend fun getWarehouse(warehouseId: String): Result<Warehouse?>
+
+    suspend fun getWarehouseShipments(warehouseId: String): Result<List<WarehouseShipment>>
+
+    suspend fun createRequest(request: Request): Result<Request>
 
     suspend fun updateRequest(request: Request): Result<Request>
 
@@ -44,15 +56,15 @@ interface PharmaRepository {
 
     suspend fun submitRequest(requestId: String): Result<Unit>
 
-    suspend fun markNotificationRead(notificationId: String)
+    suspend fun markNotificationRead(notificationId: String): Result<Unit>
 
-    suspend fun markAllNotificationsRead()
+    suspend fun markAllNotificationsRead(): Result<Unit>
 
     suspend fun deleteNotification(notificationId: String): Result<Unit>
 
     suspend fun deleteAllNotifications(): Result<Unit>
 
-    suspend fun updateNotificationsPreference(enabled: Boolean)
+    suspend fun updateNotificationsPreference(enabled: Boolean): Result<Unit>
 
     suspend fun getDeliveryTracking(orderId: String): Result<DeliveryTracking>
 

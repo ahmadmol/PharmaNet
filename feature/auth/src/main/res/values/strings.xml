@@ -27,6 +27,9 @@
     <string name="auth_or_via">أو عبر</string>
     <string name="auth_google">Google</string>
     <string name="auth_biometric">Biometric</string>
+    <string name="auth_error_invalid_credentials">Invalid login credentials</string>
+    <string name="auth_error_user_not_found">User not found</string>
+    <string name="auth_error_email_not_confirmed">Email is not confirmed</string>
     <string name="auth_error_invalid_phone">Invalid phone number</string>
     <string name="auth_error_name_required">Name is required</string>
     <string name="auth_error_phone_exists">Phone number already registered</string>

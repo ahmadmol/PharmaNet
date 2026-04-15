@@ -140,15 +140,6 @@ private fun RequestDetailsContent(
         }
         
         item {
-            // Action Buttons
-            ActionButtons(
-                onContactWarehouse = { /* TODO: Implement contact warehouse */ },
-                onReorder = { /* TODO: Implement reorder */ },
-                request = request,
-            )
-        }
-        
-        item {
             request.relatedOrderId?.let { orderId ->
                 PharmaButton(
                     text = stringResource(R.string.request_details_open_related_order),

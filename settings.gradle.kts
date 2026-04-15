@@ -1,4 +1,4 @@
-﻿pluginManagement {
+pluginManagement {
     repositories {
         google {
             content {
@@ -28,5 +28,8 @@ include(":designsystem")
 include(":feature:auth")
 include(":feature:home")
 include(":feature:request")
+include(":feature:orders")
+include(":feature:profile")
+include(":feature:warehouses")
 include(":feature:notifications")
 include(":feature:tracking")

@@ -1,0 +1,19 @@
+<resources>
+    <string name="warehouses_screen_title">المستودعات</string>
+    <string name="search_warehouses_placeholder">ابحث عن مستودع...</string>
+    <string name="warehouse_status_available">متاح</string>
+    <string name="warehouse_status_low_stock">مخزون منخفض</string>
+    <string name="warehouse_status_closed">مغلق</string>
+    <string name="warehouse_error_loading_failed">فشل تحميل المستودعات. حاول مرة أخرى.</string>
+    <string name="warehouse_list_empty">لا توجد مستودعات حالياً</string>
+    <string name="warehouse_loading_message">جاري تحميل المستودعات...</string>
+    <string name="warehouse_retry_loading">إعادة المحاولة</string>
+    <string name="warehouse_cold_chain">سلسلة التبريد</string>
+    <string name="warehouse_stock_percent">مخزون: %d%%</string>
+    <string name="warehouse_distance">المسافة: %s</string>
+    <string name="warehouse_delivery">التوصيل: %s</string>
+    <string name="warehouse_phone">الهاتف: %s</string>
+    <string name="warehouse_last_updated">آخر تحديث: %s</string>
+    <string name="error_network">خطأ في الشبكة. تحقق من اتصالك بالإنترنت.</string>
+    <string name="error_permission">ليس لديك صلاحية للقيام بهذا الإجراء.</string>
+</resources>

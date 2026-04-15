@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Stitch Home Screen -->
+    <string name="home_current_orders">الطلبات الحالية</string>
+    <string name="home_stock_shortages">نقص المخزون</string>
+    <string name="home_critical_stock_alert">تنبيه: يوجد نقص حاد في المخزون!</string>
+    <string name="home_recent_activity">آخر النشاطات</string>
+    <string name="home_featured_warehouses">المستودعات المميزة</string>
+
+    <!-- Stitch Quick Actions -->
+    <string name="quick_action_quick_order">طلب سريع</string>
+    <string name="quick_action_add_medicine">إضافة دواء</string>
+    <string name="quick_action_contact">تواصل</string>
+    <string name="quick_action_reports">تقارير</string>
+    ////
+    <string name="no_results_found">لم يتم العثور على نتائج</string>
+    <string name="search_suggestion">جرب كلمات بحث مختلفة أو تصفح الأقسام</string>
+    <string name="browse_all_medicines">تصفح الأدوية</string>
+    <string name="no_warehouses">لا توجد مستودعات</string>
+    <string name="no_warehouses_desc">حاول تغيير الفلاتر أو التحقق من اتصال الإنترنت</string>
+    <string name="promo_title">عرض خاص: خصم 20% على التوريد الذكي!</string>
+    <string name="promo_desc">اشترك الآن واحصل على توصيل مجاني لأول طلب</string>
+    <string name="back">رجوع</string>
+    <string name="search">بحث</string>
+    <!-- Stitch Create Order Screen -->
+    <string name="medicine_input_placeholder">اسم الدواء</string>
+    <string name="search_button_description">بحث</string>
+    <string name="create_order_title">إنشاء طلب جديد</string>
+    <string name="save_as_draft">حفظ كمسودة</string>
+    <string name="send_order">إرسال الطلب</string>
+    <string name="shipping_info_banner">سيتم تأكيد تفاصيل الشحن والتوصيل بعد مراجعة الطلب.</string>
+    <string name="dosage_concentration_placeholder">العيار / التركيز</string>
+    <string name="additional_notes_placeholder">ملاحظات إضافية</string>
+    <string name="upload_prescription_label">ارفع صورة الوصفة هنا</string>
+    <string name="urgency_normal">عادي</string>
+    <string name="urgency_urgent">عاجل</string>
+
+    <!-- Stitch Orders Screen -->
+    <string name="orders_title">طلباتي</string>
+    <string name="orders_completed_tab">المكتملة</string>
+    <string name="orders_shipping_tab">قيد الشحن</string>
+    <string name="orders_review_tab">قيد المراجعة</string>
+    <string name="orders_filter_warehouse">المستودع</string>
+    <string name="orders_filter_type">النوع</string>
+    <string name="orders_filter_date">التاريخ</string>
+    <string name="order_card_view_details">عرض التفاصيل</string>
+    <string name="order_card_contact_warehouse">تواصل مع المستودع</string>
+    <string name="order_status_received">تم الاستلام</string>
+    <string name="order_status_shipping">قيد الشحن</string>
+    <string name="order_status_delivered">تم التوصيل</string>
+    <string name="empty_state_no_orders">لا توجد طلبات لعرضها حاليًا.</string>
+    <string name="empty_state_create_order">ابدأ بإنشاء طلب جديد.</string>
+
+
+    <!-- Stitch Profile Screen -->
+    <string name="profile_title">الملف الشخصي</string>
+    <string name="profile_edit_button">تعديل</string>
+    <string name="profile_balance_title">الرصيد الحالي</string>
+    <string name="profile_active_orders">الطلبات النشطة</string>
+    <string name="profile_points">النقاط</string>
+    <string name="profile_general_settings">إعدادات عامة</string>
+    <string name="profile_security_settings">الأمان والخصوصية</string>
+    <string name="profile_support_settings">الدعم والمساعدة</string>
+    <string name="profile_notifications_toggle">تفعيل الإشعارات</string>
+    <string name="profile_logout_button">تسجيل الخروج</string>
+    <string name="logout_dialog_title">تسجيل الخروج</string>
+    <string name="logout_dialog_message">هل أنت متأكد أنك تريد تسجيل الخروج؟</string>
+    <string name="logout_dialog_confirm">تأكيد</string>
+    <string name="logout_dialog_cancel">إلغاء</string>
+
+    <!-- Stitch Warehouses Screen -->
+    <string name="warehouses_title">المستودعات والمصادر</string>
+    <string name="warehouses_filter_all">الكل</string>
+    <string name="warehouses_filter_chronic_meds">أدوية مزمنة</string>
+    <string name="warehouses_filter_vaccines">لقاحات</string>
+    <string name="warehouses_filter_beauty">تجميل</string>
+    <string name="warehouses_filter_children">أطفال</string>
+    <string name="warehouses_filter_supplements">مكملات</string>
+    <string name="warehouse_status_available">متاح</string>
+    <string name="warehouse_status_low">منخفض</string>
+    <string name="warehouse_status_closed">مغلق</string>
+    <string name="promo_banner_title">عرض خاص!</string>
+    <string name="promo_banner_description">خصومات حصرية على منتجات مختارة.</string>
+    <string name="search_warehouses_placeholder">البحث في المستودعات...</string>
+
+    <string name="notifications_button_description">الإشعارات</string>
+    <string name="promo_banner_icon_description">أيقونة العرض الترويجي</string>
+    <string name="warehouse_icon_description">أيقونة المستودع</string>
+    <string name="details_arrow_description">سهم التفاصيل</string>
+      <string name="activity_icon_description">أيقونة النشاط</string>
+      <string name="location_icon_description">أيقونة الموقع</string>
+
+    <!-- Stitch Quick Actions - Missing strings -->
+    <string name="quick_order_action">طلب سريع</string>
+    <string name="add_medicine_action">إضافة دواء</string>
+    <string name="contact_action">تواصل</string>
+    <string name="reports_action">تقارير</string>
+
+    <!-- Stitch Dashboard Header - Missing strings -->
+    <string name="home_greeting_title">مرحباً بك</string>
+
+    <!-- Stitch Section Header - Missing strings -->
+    <string name="view_all">عرض الكل</string>
+
+    <!-- Stitch Search Field - Missing strings -->
+    <string name="search_placeholder">بحث...</string>
+    <string name="search_icon_description">أيقونة البحث</string>
+
+    <!-- Stitch Order Item Card - Missing strings -->
+    <string name="order_number_icon_description">أيقونة رقم الطلب</string>
+    <string name="order_date_icon_description">أيقونة تاريخ الطلب</string>
+    <string name="delivery_date_icon_description">أيقونة تاريخ التوصيل</string>
+
+    <!-- Stitch Warehouse Card - Missing strings -->
+    <string name="warehouse_status_low_stock">منخفض</string>
+</resources>

@@ -1,7 +1,6 @@
 package com.pharmalink.feature.auth.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,16 +20,12 @@ import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.VerifiedUser
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -59,14 +54,14 @@ fun LoginScreen(
     onLoginClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onSignUpClick: () -> Unit,
-    onGuestClick: () -> Unit = {},
+    onGuestClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
     val scroll = rememberScrollState()
-    var rememberMe by remember { mutableStateOf(false) }
-    val phoneEmpty = uiState.errorMessage != null && uiState.phoneNumber.isBlank()
-    val passEmpty = uiState.errorMessage != null && uiState.password.isBlank()
+    // Real-time validation errors (independent of errorMessage)
+    val phoneEmpty = uiState.phoneNumber.isBlank()
+    val passEmpty = uiState.password.isBlank()
 
     Box(
         modifier = modifier
@@ -157,19 +152,8 @@ fun LoginScreen(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.End,
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = rememberMe,
-                                onCheckedChange = { rememberMe = it },
-                            )
-                            Text(
-                                text = stringResource(R.string.auth_remember_me),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
                         AuthSecondaryTextAction(
                             text = stringResource(R.string.auth_forgot_password),
                             onClick = onForgotPasswordClick,
@@ -196,50 +180,44 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onSignUpClick,
-                            )
+                            .clickable(onClick = onSignUpClick)
                             .padding(vertical = d.spaceXS),
                     )
-                    StitchOrDivider(Modifier.padding(vertical = d.spaceS))
-                    Text(
-                        text = stringResource(R.string.auth_or_via),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                    )
-                    Spacer(Modifier.height(d.spaceS))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onGuestClick,
+                    if (onGuestClick != null) {
+                        StitchOrDivider(Modifier.padding(vertical = d.spaceS))
+                        Text(
+                            text = stringResource(R.string.auth_or_via),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                        )
+                        Spacer(Modifier.height(d.spaceS))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = onGuestClick)
+                                .padding(vertical = d.spaceS),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.auth_google),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium,
                             )
-                            .padding(vertical = d.spaceS),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.auth_google),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        Icon(
-                            Icons.Outlined.Fingerprint,
-                            contentDescription = stringResource(R.string.auth_cd_biometric),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp),
-                        )
-                        Text(
-                            text = stringResource(R.string.auth_biometric),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                            Icon(
+                                Icons.Outlined.Fingerprint,
+                                contentDescription = stringResource(R.string.auth_cd_biometric),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp),
+                            )
+                            Text(
+                                text = stringResource(R.string.auth_biometric),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }

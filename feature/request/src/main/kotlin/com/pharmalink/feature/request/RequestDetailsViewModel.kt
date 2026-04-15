@@ -33,6 +33,10 @@ class RequestDetailsViewModel @Inject constructor(
     private val requestId: String = savedStateHandle.get<String>(NavArgs.REQUEST_ID).orEmpty()
 
     init {
+        loadRequestDetails()
+    }
+    
+    private fun loadRequestDetails() {
         viewModelScope.launch {
             if (requestId.isBlank()) {
                 _uiState.value = RequestDetailsUiState(
@@ -40,14 +44,54 @@ class RequestDetailsViewModel @Inject constructor(
                 )
                 return@launch
             }
-            val request = pharmaRepository.getRequest(requestId)
-            _uiState.value = if (request != null) {
-                RequestDetailsUiState(ScreenState.Success(request))
-            } else {
-                RequestDetailsUiState(
-                    screenState = ScreenState.Error(context.getString(R.string.request_error_not_found)),
+            
+            try {
+                _uiState.value = RequestDetailsUiState(ScreenState.Loading)
+                
+                pharmaRepository.getRequest(requestId).fold(
+                    onSuccess = { request ->
+                        _uiState.value = if (request != null) {
+                            RequestDetailsUiState(ScreenState.Success(request))
+                        } else {
+                            RequestDetailsUiState(
+                                screenState = ScreenState.Error(context.getString(R.string.request_error_not_found)),
+                            )
+                        }
+                    },
+                    onFailure = { e ->
+                        _uiState.value = RequestDetailsUiState(
+                            screenState = ScreenState.Error(
+                                e.message ?: context.getString(R.string.request_error_not_found),
+                            ),
+                        )
+                    },
+                )
+            } catch (e: Exception) {
+                _uiState.value = RequestDetailsUiState(
+                    screenState = ScreenState.Error(mapErrorToUserMessage(e)),
                 )
             }
+        }
+    }
+    
+    fun refreshRequest() {
+        loadRequestDetails()
+    }
+    
+    private fun mapErrorToUserMessage(error: Throwable): String {
+        return when {
+            error.message?.contains("not found", ignoreCase = true) == true ||
+            error.message?.contains("404", ignoreCase = true) == true ->
+                context.getString(R.string.request_error_not_found)
+            error.message?.contains("network", ignoreCase = true) == true ||
+            error.message?.contains("connection", ignoreCase = true) == true ->
+                context.getString(R.string.error_network)
+            error.message?.contains("permission", ignoreCase = true) == true ||
+            error.message?.contains("unauthorized", ignoreCase = true) == true ->
+                context.getString(R.string.error_permission)
+            error.message?.contains("deleted", ignoreCase = true) == true ->
+                context.getString(R.string.request_error_deleted)
+            else -> error.message ?: context.getString(R.string.request_error_loading_failed)
         }
     }
 }

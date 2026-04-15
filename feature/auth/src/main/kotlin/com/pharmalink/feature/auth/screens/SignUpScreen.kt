@@ -64,16 +64,16 @@ fun SignUpScreen(
     val d = MaterialTheme.dimens
     val scroll = rememberScrollState()
 
-    val isFullNameError = uiState.errorMessage != null && uiState.fullName.isEmpty()
-    val isPharmacyNameError = uiState.errorMessage != null && uiState.pharmacyName.isEmpty() &&
+    // Real-time validation errors (independent of errorMessage)
+    val isFullNameError = uiState.fullName.isBlank()
+    val isPharmacyNameError = uiState.pharmacyName.isBlank() &&
         uiState.accountType == AccountType.PHARMACY
-    val isPhoneError = uiState.errorMessage != null && uiState.phoneNumber.isEmpty()
-    val isPasswordError = uiState.errorMessage != null && uiState.password.isEmpty()
-    val isConfirmPasswordError = uiState.errorMessage != null &&
-        (uiState.confirmPassword.isEmpty() || uiState.password != uiState.confirmPassword)
-    val isWarehouseNameError = uiState.errorMessage != null && uiState.warehouseName.isEmpty() &&
+    val isPhoneError = uiState.phoneNumber.isBlank()
+    val isPasswordError = uiState.password.isBlank()
+    val isConfirmPasswordError = uiState.confirmPassword.isBlank() || uiState.password != uiState.confirmPassword
+    val isWarehouseNameError = uiState.warehouseName.isBlank() &&
         uiState.accountType == AccountType.WAREHOUSE
-    val isWarehouseLocationError = uiState.errorMessage != null && uiState.warehouseLocation.isEmpty() &&
+    val isWarehouseLocationError = uiState.warehouseLocation.isBlank() &&
         uiState.accountType == AccountType.WAREHOUSE
 
     Box(

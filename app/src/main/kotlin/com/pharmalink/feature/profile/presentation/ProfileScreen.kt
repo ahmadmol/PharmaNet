@@ -184,6 +184,7 @@ fun ProfileScreen(
                         profile = content.profile,
                         unreadNotifications = content.unreadNotifications,
                         isUpdating = state.isUpdatingNotifications,
+                        updateError = state.notificationsUpdateError,
                         onNotificationsToggle = viewModel::updateNotifications,
                         onOpenNotifications = onOpenNotifications,
                     )
@@ -407,6 +408,7 @@ private fun PreferencesSection(
     profile: PharmacyProfile,
     unreadNotifications: Int,
     isUpdating: Boolean,
+    updateError: String?,
     onNotificationsToggle: (Boolean) -> Unit,
     onOpenNotifications: () -> Unit,
 ) {
@@ -454,6 +456,15 @@ private fun PreferencesSection(
                     actionLabel = stringResource(R.string.common_open_details),
                     onClick = onOpenNotifications,
                 )
+                updateError?.let { message ->
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(horizontal = d.spaceL, vertical = d.spaceM),
+                    )
+                }
             }
         }
     }

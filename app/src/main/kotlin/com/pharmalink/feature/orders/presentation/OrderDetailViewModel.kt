@@ -35,12 +35,20 @@ class OrderDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val order = repository.getOrder(orderId)
-            _uiState.value = if (order == null) {
-                OrderDetailUiState(ScreenState.Error(context.getString(R.string.orders_error_order_not_found)))
-            } else {
-                OrderDetailUiState(ScreenState.Success(order))
-            }
+            repository.getOrder(orderId).fold(
+                onSuccess = { order ->
+                    _uiState.value = if (order == null) {
+                        OrderDetailUiState(ScreenState.Error(context.getString(R.string.orders_error_order_not_found)))
+                    } else {
+                        OrderDetailUiState(ScreenState.Success(order))
+                    }
+                },
+                onFailure = { e ->
+                    _uiState.value = OrderDetailUiState(
+                        ScreenState.Error(e.message ?: context.getString(R.string.orders_error_order_not_found)),
+                    )
+                },
+            )
         }
     }
 }

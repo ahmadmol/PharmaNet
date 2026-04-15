@@ -23,7 +23,7 @@ class PharmaBackedOrderRepository @Inject constructor(
     override suspend fun getOrdersByStatus(status: OrderStatus): Flow<List<Order>> =
         pharma.observeOrders().map { list -> list.filter { it.status == status } }
 
-    override suspend fun getOrderById(orderId: String): Order? = pharma.getOrder(orderId)
+    override suspend fun getOrderById(orderId: String): Order? = pharma.getOrder(orderId).getOrNull()
 
     override suspend fun updateOrderStatus(orderId: String, status: OrderStatus): Result<Unit> =
         pharma.updateOrderStatus(orderId, status)
@@ -42,10 +42,10 @@ class PharmaBackedRequestRepository @Inject constructor(
     override suspend fun getRequestsByStatus(status: RequestStatus): Flow<List<Request>> =
         pharma.observeRequests().map { list -> list.filter { it.status == status } }
 
-    override suspend fun getRequestById(requestId: String): Request? = pharma.getRequest(requestId)
+    override suspend fun getRequestById(requestId: String): Request? = pharma.getRequest(requestId).getOrNull()
 
     override suspend fun createRequest(request: Request): Result<Request> =
-        runCatching { pharma.createRequest(request) }
+        pharma.createRequest(request)
 
     override suspend fun updateRequest(request: Request): Result<Request> = pharma.updateRequest(request)
 
@@ -60,13 +60,11 @@ class PharmaBackedNotificationRepository @Inject constructor(
 ) : NotificationRepository {
     override suspend fun getNotifications(): Flow<List<AppNotification>> = pharma.observeNotifications()
 
-    override suspend fun markAsRead(notificationId: String): Result<Unit> = runCatching {
+    override suspend fun markAsRead(notificationId: String): Result<Unit> =
         pharma.markNotificationRead(notificationId)
-    }
 
-    override suspend fun markAllAsRead(): Result<Unit> = runCatching {
+    override suspend fun markAllAsRead(): Result<Unit> =
         pharma.markAllNotificationsRead()
-    }
 
     override suspend fun deleteNotification(notificationId: String): Result<Unit> =
         pharma.deleteNotification(notificationId)
@@ -96,7 +94,8 @@ class PharmaBackedWarehouseRepository @Inject constructor(
             }
         }
 
-    override suspend fun getWarehouseById(warehouseId: String): Warehouse? = pharma.getWarehouse(warehouseId)
+    override suspend fun getWarehouseById(warehouseId: String): Warehouse? =
+        pharma.getWarehouse(warehouseId).getOrNull()
 
     override suspend fun updateWarehouse(warehouse: Warehouse): Result<Warehouse> =
         Result.success(warehouse)

@@ -34,27 +34,29 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.pharmalink.R
 import com.pharmalink.core.navigation.AppDestination
-import com.pharmalink.core.navigation.NavArgs
 import com.pharmalink.core.navigation.matchesDestination
-import com.pharmalink.core.navigation.navigateToTopLevel
+import com.pharmalink.core.navigation.navigateToInnerTopLevel
 import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.designsystem.theme.PharmaGradients
 import com.pharmalink.designsystem.theme.StitchShellTokens
 import com.pharmalink.designsystem.theme.dimens
-import com.pharmalink.domain.model.AppNotification
 import com.pharmalink.domain.model.NotificationDestination
 import com.pharmalink.feature.compliance.presentation.ComplianceScreen
 import com.pharmalink.feature.help.presentation.HelpScreen
-import com.pharmalink.feature.home.HomeScreen
+import com.pharmalink.feature.home.homeScreen
 import com.pharmalink.feature.notifications.NotificationsScreen
-import com.pharmalink.feature.orders.presentation.OrderDetailScreen
-import com.pharmalink.feature.orders.presentation.OrdersScreen
-import com.pharmalink.feature.profile.presentation.ProfileScreen
+import com.pharmalink.feature.warehouses.WarehousesScreen
 import com.pharmalink.feature.request.CreateRequestScreen
+import com.pharmalink.feature.request.RequestListScreen
 import com.pharmalink.feature.request.RequestDetailsScreen
-import com.pharmalink.feature.resources.presentation.ResourcesScreen
-import com.pharmalink.feature.resources.presentation.WarehouseDetailScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.pharmalink.feature.orders.OrdersScreen
+import com.pharmalink.feature.orders.presentation.OrderDetailScreen
+import com.pharmalink.feature.profile.ChangePasswordScreen
+import com.pharmalink.feature.profile.EditProfileScreen
+import com.pharmalink.feature.profile.ProfileScreen
 import com.pharmalink.feature.tracking.DeliveryTrackingScreen
+import com.pharmalink.feature.resources.presentation.WarehouseDetailScreen
 
 private val bottomBarRoutes = setOf(
     AppDestination.Home.route,
@@ -89,14 +91,14 @@ fun PharmaNavigator(
             currentRoute.matchesDestination(AppDestination.Notifications) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Help) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Compliance) -> navController.popBackStack()
+            currentRoute.matchesDestination(AppDestination.EditProfile) -> navController.popBackStack()
+            currentRoute.matchesDestination(AppDestination.ChangePassword) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.RequestDetail) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.OrderDetail) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.DeliveryTracking) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Home) -> Unit
             currentRoute in bottomBarRoutes -> {
-                if (!currentRoute.matchesDestination(AppDestination.Home)) {
-                    navController.navigateToTopLevel(AppDestination.Home.route)
-                }
+                navController.navigateToInnerTopLevel(AppDestination.Home)
             }
             else -> Unit
         }
@@ -116,7 +118,7 @@ fun PharmaNavigator(
         floatingActionButton = {
             if (isBottomBarVisible) {
                 FloatingActionButton(
-                    onClick = { navController.navigateToTopLevel(AppDestination.CreateRequest.route) },
+                    onClick = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
                     modifier = Modifier
                         .size(dimens.fabSize)
                         .offset(y = 32.dp)
@@ -150,7 +152,14 @@ fun PharmaNavigator(
             if (isBottomBarVisible) {
                 PharmaBottomNavigation(
                     selectedItem = tabSelectedIndex,
-                    onTabSelected = { route, _ -> navController.navigateToTopLevel(route) },
+                    onTabSelected = { route, _ ->
+                        when (route) {
+                            AppDestination.Home.route -> navController.navigateToInnerTopLevel(AppDestination.Home)
+                            AppDestination.Resources.route -> navController.navigateToInnerTopLevel(AppDestination.Resources)
+                            AppDestination.Orders.route -> navController.navigateToInnerTopLevel(AppDestination.Orders)
+                            AppDestination.Profile.route -> navController.navigateToInnerTopLevel(AppDestination.Profile)
+                        }
+                    },
                 )
             }
         },
@@ -164,21 +173,16 @@ fun PharmaNavigator(
                 navController = navController,
                 startDestination = AppDestination.Home.route,
             ) {
-                composable(AppDestination.Home.route) {
-                    HomeScreen(
-                        onCreateRequest = { navController.navigateToTopLevel(AppDestination.CreateRequest.route) },
-                        onSearchMedicine = { navController.navigateToTopLevel(AppDestination.Resources.route) },
-                        onOpenWarehouses = { navController.navigateToTopLevel(AppDestination.Resources.route) },
-                        onEmergencyRequest = { navController.navigateToTopLevel(AppDestination.CreateRequest.route) },
-                        onOpenOrders = { navController.navigateToTopLevel(AppDestination.Orders.route) },
-                        onOpenNotifications = { navController.navigate(AppDestination.Notifications.route) },
-                        onOpenRequest = { requestId ->
-                            navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
-                        },
-                    )
-                }
+                homeScreen(
+                    onNavigateToHome = { navController.navigateToInnerTopLevel(AppDestination.Home) },
+                    onNavigateToOrders = { navController.navigateToInnerTopLevel(AppDestination.Orders) },
+                    onNavigateToProfile = { navController.navigateToInnerTopLevel(AppDestination.Profile) },
+                    onNavigateToWarehouses = { navController.navigateToInnerTopLevel(AppDestination.Resources) },
+                    onNavigateToCreateRequest = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
+                )
                 composable(AppDestination.Resources.route) {
-                    ResourcesScreen(
+                    WarehousesScreen(
+                        viewModel = hiltViewModel(),
                         onWarehouseClick = { warehouseId ->
                             navController.navigate(AppDestination.WarehouseDetail.createRoute(warehouseId))
                         },
@@ -186,9 +190,9 @@ fun PharmaNavigator(
                 }
                 composable(AppDestination.CreateRequest.route) {
                     CreateRequestScreen(
-                        onSubmitted = { requestId ->
-                            navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
-                        },
+                        viewModel = hiltViewModel(),
+                        onNavigateToRequestList = { navController.navigate(AppDestination.RequestList.route) },
+                        onNavigateToRequestDetails = { requestId -> navController.navigate(AppDestination.RequestDetail.createRoute(requestId)) },
                     )
                 }
                 composable(AppDestination.Orders.route) {
@@ -198,62 +202,42 @@ fun PharmaNavigator(
                         },
                     )
                 }
+                composable(AppDestination.RequestList.route) {
+                    RequestListScreen(
+                        onNavigateToCreateRequest = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
+                        onNavigateToRequestDetails = { requestId -> navController.navigate(AppDestination.RequestDetail.createRoute(requestId)) }
+                    )
+                }
                 composable(AppDestination.Profile.route) {
                     ProfileScreen(
                         onLogout = onProfileLogout,
-                        onOpenNotifications = { navController.navigate(AppDestination.Notifications.route) },
-                        onOpenCompliance = { navController.navigate(AppDestination.Compliance.route) },
-                        onOpenHelp = { navController.navigate(AppDestination.Help.route) },
-                    )
-                }
-                composable(
-                    route = AppDestination.WarehouseDetail.route,
-                    arguments = AppDestination.WarehouseDetail.arguments,
-                ) { backStack ->
-                    WarehouseDetailScreen(
-                        warehouseId = backStack.arguments?.getString(NavArgs.WAREHOUSE_ID).orEmpty(),
-                        onBack = { navController.popBackStack() },
-                        onCreateRequest = { navController.navigateToTopLevel(AppDestination.CreateRequest.route) },
-                    )
-                }
-                composable(
-                    route = AppDestination.RequestDetail.route,
-                    arguments = AppDestination.RequestDetail.arguments,
-                ) {
-                    RequestDetailsScreen(
-                        onBack = { navController.popBackStack() },
-                        onOpenOrder = { orderId ->
-                            navController.navigate(AppDestination.OrderDetail.createRoute(orderId))
-                        },
-                    )
-                }
-                composable(
-                    route = AppDestination.OrderDetail.route,
-                    arguments = AppDestination.OrderDetail.arguments,
-                ) {
-                    OrderDetailScreen(
-                        onBack = { navController.popBackStack() },
-                        onOpenRequest = { requestId ->
-                            navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
-                        },
-                        onTrackDelivery = { orderId ->
-                            navController.navigate(AppDestination.DeliveryTracking.createRoute(orderId))
-                        },
-                    )
-                }
-                composable(
-                    route = AppDestination.DeliveryTracking.route,
-                    arguments = AppDestination.DeliveryTracking.arguments,
-                ) {
-                    DeliveryTrackingScreen(
-                        onBack = { navController.popBackStack() },
+                        onEditProfile = { navController.navigate(AppDestination.EditProfile.route) },
+                        onChangePassword = { navController.navigate(AppDestination.ChangePassword.route) },
                     )
                 }
                 composable(AppDestination.Notifications.route) {
                     NotificationsScreen(
                         onBack = { navController.popBackStack() },
                         onNotificationOpen = { notification ->
-                            navigateFromNotification(navController, notification)
+                            when (notification.destination) {
+                                NotificationDestination.ORDER ->
+                                    notification.destinationId?.let { orderId ->
+                                        navController.navigate(AppDestination.OrderDetail.createRoute(orderId))
+                                    }
+                                NotificationDestination.REQUEST ->
+                                    notification.destinationId?.let { requestId ->
+                                        navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
+                                    }
+                                NotificationDestination.WAREHOUSE ->
+                                    notification.destinationId?.let { warehouseId ->
+                                        navController.navigate(AppDestination.WarehouseDetail.createRoute(warehouseId))
+                                    }
+                                NotificationDestination.COMPLIANCE ->
+                                    navController.navigate(AppDestination.Compliance.route)
+                                NotificationDestination.HELP ->
+                                    navController.navigate(AppDestination.Help.route)
+                                null -> Unit
+                            }
                         },
                     )
                 }
@@ -269,27 +253,63 @@ fun PharmaNavigator(
                         onOpenHelp = { navController.navigate(AppDestination.Help.route) },
                     )
                 }
+                composable(AppDestination.EditProfile.route) {
+                    EditProfileScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(AppDestination.ChangePassword.route) {
+                    ChangePasswordScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(AppDestination.RequestDetail.route) {
+                    RequestDetailsScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenOrder = { orderId ->
+                            navController.navigate(AppDestination.OrderDetail.createRoute(orderId))
+                        },
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(
+                    route = AppDestination.OrderDetail.route,
+                    arguments = AppDestination.OrderDetail.arguments,
+                ) {
+                    OrderDetailScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenRequest = { requestId ->
+                            navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
+                        },
+                        onTrackDelivery = { orderId ->
+                            navController.navigate(AppDestination.DeliveryTracking.createRoute(orderId))
+                        },
+                        viewModel = hiltViewModel(),
+                    )
+                }
+                composable(
+                    route = AppDestination.DeliveryTracking.route,
+                    arguments = AppDestination.DeliveryTracking.arguments,
+                ) {
+                    DeliveryTrackingScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(
+                    route = AppDestination.WarehouseDetail.route,
+                    arguments = AppDestination.WarehouseDetail.arguments,
+                ) { entry ->
+                    val warehouseId = entry.arguments?.getString("warehouseId").orEmpty()
+                    WarehouseDetailScreen(
+                        warehouseId = warehouseId,
+                        onBack = { navController.popBackStack() },
+                        onCreateRequest = {
+                            navController.navigateToInnerTopLevel(AppDestination.CreateRequest)
+                        },
+                        viewModel = hiltViewModel(),
+                    )
+                }
             }
         }
-    }
-}
-
-private fun navigateFromNotification(
-    navController: androidx.navigation.NavHostController,
-    notification: AppNotification,
-) {
-    when (notification.destination) {
-        NotificationDestination.ORDER -> {
-            notification.destinationId?.let { navController.navigate(AppDestination.OrderDetail.createRoute(it)) }
-        }
-        NotificationDestination.REQUEST -> {
-            notification.destinationId?.let { navController.navigate(AppDestination.RequestDetail.createRoute(it)) }
-        }
-        NotificationDestination.WAREHOUSE -> {
-            notification.destinationId?.let { navController.navigate(AppDestination.WarehouseDetail.createRoute(it)) }
-        }
-        NotificationDestination.COMPLIANCE -> navController.navigate(AppDestination.Compliance.route)
-        NotificationDestination.HELP -> navController.navigate(AppDestination.Help.route)
-        null -> Unit
     }
 }

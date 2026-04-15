@@ -17,14 +17,22 @@ sealed class AppDestination(
 
     // Main App Destinations
     data object MainTabs : AppDestination("main_tabs")
-    data object PharmacyMain : AppDestination("pharmacy_main")
-    data object WarehouseMain : AppDestination("warehouse_main")
-    data object PublicUserMain : AppDestination("public_main")
     data object Home : AppDestination("home")
     data object Resources : AppDestination("resources")
     data object CreateRequest : AppDestination("create_request")
     data object Orders : AppDestination("orders")
     data object Profile : AppDestination("profile")
+    data object EditProfile : AppDestination("edit_profile")
+    data object ChangePassword : AppDestination("change_password")
+    data object RequestList : AppDestination("request_list")
+    data object ForgotPassword : AppDestination("forgot_password")
+
+    // Stitch App Destinations
+    data object StitchHome : AppDestination("stitch_home")
+    data object StitchCreateOrder : AppDestination("stitch_create_order")
+    data object StitchMyOrders : AppDestination("stitch_my_orders")
+    data object StitchProfile : AppDestination("stitch_profile")
+    data object StitchWarehouses : AppDestination("stitch_warehouses")
     data object Notifications : AppDestination("notifications")
     data object Help : AppDestination("help")
     data object Compliance : AppDestination("compliance")

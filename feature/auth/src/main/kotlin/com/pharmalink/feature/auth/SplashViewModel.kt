@@ -1,48 +1,92 @@
 package com.pharmalink.feature.auth
 
-import com.pharmalink.core.datastore.DataStoreManager
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pharmalink.core.common.error.MissingPharmacyLinkageException
 import com.pharmalink.core.repository.AuthRepository
+import com.pharmalink.domain.model.AuthSessionState
+import com.pharmalink.domain.model.User
+import com.pharmalink.domain.model.UserSnapshot
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class SplashUiState(
     val isLoading: Boolean = true,
-    val destinationRoute: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 )
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val prefs: DataStoreManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SplashUiState())
     val uiState: StateFlow<SplashUiState> = _uiState.asStateFlow()
 
+    private var observeJob: Job? = null
+
     fun checkSession() {
-        viewModelScope.launch {
-            runCatching {
-                val role = prefs.accountType.first(); val user = authRepository.getCurrentUser().first()
-                val route = when {user==null||role==null->"login_route";role=="PHARMACY"->"pharmacy_main_route";role=="WAREHOUSE"->"warehouse_main_route";else->"public_main_route"}
-                _uiState.value = SplashUiState(isLoading = false, destinationRoute = route)
-            }.onFailure { error ->
-                Log.e("Auth", "Session check failed: ${error.message}", error)
-                // ✅ في حال الخطأ، نوجه لـ Login كملاذ آمن
-                _uiState.value = SplashUiState(
-                    isLoading = false,
-                    destinationRoute = "login_route",
-                    errorMessage = error.message
-                )
+        if (observeJob != null) return
+
+        observeJob = viewModelScope.launch {
+            _uiState.value = SplashUiState(isLoading = true)
+            when (
+                val authState = authRepository.observeAuthState()
+                    .first { state -> state !is AuthSessionState.Loading }
+            ) {
+                is AuthSessionState.Authenticated -> restoreSnapshotAndProceed(authState.user)
+                AuthSessionState.Unauthenticated -> {
+                    _uiState.value = SplashUiState(
+                        isLoading = false,
+                    )
+                }
+                AuthSessionState.Loading -> Unit
             }
         }
+    }
+
+    private suspend fun restoreSnapshotAndProceed(user: User) {
+        val existingSnapshot = authRepository.getUserSnapshot()
+        
+        if (existingSnapshot == null) {
+            runCatching {
+                authRepository.ensureProfileForCurrentUser(user).getOrThrow()
+                _uiState.value = SplashUiState(isLoading = false)
+            }.onFailure { error ->
+                _uiState.value = SplashUiState(
+                    isLoading = false,
+                    errorMessage = error.message,
+                )
+            }
+        } else {
+            _uiState.value = SplashUiState(isLoading = false)
+            viewModelScope.launch {
+                verifyIdentityInBackground(user, existingSnapshot)
+            }
+        }
+    }
+
+    private suspend fun verifyIdentityInBackground(user: User, cachedSnapshot: UserSnapshot) {
+        authRepository.bootstrapAuthenticatedUser(user)
+            .onSuccess { newSnapshot ->
+                if (newSnapshot.pharmacyId != cachedSnapshot.pharmacyId) {
+                    // Silent update already handled by saveUserSnapshot in bootstrap
+                }
+            }
+            .onFailure { error ->
+                if (error is MissingPharmacyLinkageException) {
+                    authRepository.clearUserSnapshot()
+                    _uiState.value = SplashUiState(
+                        isLoading = false,
+                        errorMessage = error.message,
+                    )
+                }
+            }
     }
 }

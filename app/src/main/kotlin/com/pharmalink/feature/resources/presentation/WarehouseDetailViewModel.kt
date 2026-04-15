@@ -41,21 +41,41 @@ class WarehouseDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val warehouse = repository.getWarehouse(warehouseId)
-            if (warehouse == null) {
-                _uiState.value = WarehouseDetailUiState(
-                    ScreenState.Error(context.getString(R.string.resources_error_warehouse_not_found)),
-                )
-                return@launch
-            }
-            val shipments = repository.getWarehouseShipments(warehouseId)
-            _uiState.value = WarehouseDetailUiState(
-                screenState = ScreenState.Success(
-                    WarehouseDetailContent(
-                        warehouse = warehouse,
-                        shipments = shipments,
-                    ),
-                ),
+            repository.getWarehouse(warehouseId).fold(
+                onSuccess = { warehouse ->
+                    if (warehouse == null) {
+                        _uiState.value = WarehouseDetailUiState(
+                            ScreenState.Error(context.getString(R.string.resources_error_warehouse_not_found)),
+                        )
+                        return@fold
+                    }
+                    repository.getWarehouseShipments(warehouseId).fold(
+                        onSuccess = { shipments ->
+                            _uiState.value = WarehouseDetailUiState(
+                                screenState = ScreenState.Success(
+                                    WarehouseDetailContent(
+                                        warehouse = warehouse,
+                                        shipments = shipments,
+                                    ),
+                                ),
+                            )
+                        },
+                        onFailure = { e ->
+                            _uiState.value = WarehouseDetailUiState(
+                                ScreenState.Error(
+                                    e.message ?: context.getString(R.string.resources_error_warehouse_not_found),
+                                ),
+                            )
+                        },
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = WarehouseDetailUiState(
+                        ScreenState.Error(
+                            e.message ?: context.getString(R.string.resources_error_warehouse_not_found),
+                        ),
+                    )
+                },
             )
         }
     }

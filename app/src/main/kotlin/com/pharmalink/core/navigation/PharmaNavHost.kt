@@ -9,89 +9,123 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.pharmalink.core.common.ui.UiState
+import com.pharmalink.domain.model.AuthSessionState
+import com.pharmalink.feature.auth.AuthViewModel
 import com.pharmalink.feature.auth.LoginViewModel
 import com.pharmalink.feature.auth.SignUpViewModel
 import com.pharmalink.feature.auth.SplashViewModel
+import com.pharmalink.feature.auth.screens.ForgotPasswordScreen
 import com.pharmalink.feature.auth.screens.LoginScreen
 import com.pharmalink.feature.auth.screens.SignUpScreen
 import com.pharmalink.feature.auth.screens.SplashScreen
 import com.pharmalink.feature.main.navigation.PharmaNavigator
+
+private val authRoutes = setOf(
+    AppDestination.Splash.route,
+    AppDestination.Login.route,
+    AppDestination.SignUp.route,
+    AppDestination.ForgotPassword.route,
+)
 
 @Composable
 fun PharmaNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val splashViewModel: SplashViewModel = hiltViewModel()
+    val authState by authViewModel.authState.collectAsStateWithLifecycle()
+    val splashState by splashViewModel.uiState.collectAsStateWithLifecycle()
+    val logoutState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    LaunchedEffect(Unit) {
+        splashViewModel.checkSession()
+    }
+
+    LaunchedEffect(authState, currentRoute, splashState.isLoading) {
+        if (splashState.isLoading || authState is AuthSessionState.Loading || currentRoute == null) {
+            return@LaunchedEffect
+        }
+
+        val hasAuthenticatedSession = authState is AuthSessionState.Authenticated
+
+        when {
+            currentRoute == AppDestination.Splash.route -> {
+                val destination = if (hasAuthenticatedSession) {
+                    AppDestination.MainTabs.route
+                } else {
+                    AppDestination.Login.route
+                }
+                navController.navigate(destination) {
+                    popUpTo(AppDestination.Splash.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+
+            !hasAuthenticatedSession &&
+                currentRoute == AppDestination.MainTabs.route -> {
+                navController.navigate(AppDestination.Login.route) {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+
+            hasAuthenticatedSession && currentRoute in authRoutes -> {
+                navController.navigate(AppDestination.MainTabs.route) {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(logoutState) {
+        if (logoutState is UiState.Error) {
+            // No-op for now; logout stays on current screen and error remains in viewmodel state.
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = AppDestination.Splash.route,
         modifier = modifier,
     ) {
-        // ✅ Splash screen for session checking
         composable(AppDestination.Splash.route) {
-            val viewModel: SplashViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            
-            // ✅ استدعاء فحص الجلسة عند الدخول
-            LaunchedEffect(Unit) {
-                viewModel.checkSession()
-            }
-            
-            // ✅ التوجيه بناءً على نتيجة الفحص
-            LaunchedEffect(state.destinationRoute) {
-                state.destinationRoute?.let { route ->
-                    navController.navigate(route) {
-                        popUpTo(AppDestination.Splash.route) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-            }
-            
-            // ✅ عرض شاشة التحميل
-            SplashScreen()
+            SplashScreen(
+                onNavigateToLogin = {},
+            )
         }
-        
+
         composable(AppDestination.Login.route) {
             val loginViewModel: LoginViewModel = hiltViewModel()
             val loginState by loginViewModel.uiState.collectAsStateWithLifecycle()
-
-            // ✅ تأكد من استخدام isSuccess بدلاً من isLoginSuccessful
-            LaunchedEffect(loginState.isLoginSuccessful) {
-                if (loginState.isLoginSuccessful) {
-                    navController.navigate(AppDestination.MainTabs.route) {
-                        popUpTo(AppDestination.Login.route) { inclusive = true }
-                        launchSingleTop = true  // ✅ منع تكرار الشاشات في الـ back stack
-                    }
-                }
-            }
 
             LoginScreen(
                 uiState = loginState,
                 onPhoneNumberChange = loginViewModel::updatePhoneNumber,
                 onPasswordChange = loginViewModel::updatePassword,
                 onLoginClick = loginViewModel::login,
-                onForgotPasswordClick = { /* TODO: Implement forgot password */ },
+                onForgotPasswordClick = {
+                    navController.navigate(AppDestination.ForgotPassword.route) {
+                        launchSingleTop = true
+                    }
+                },
                 onSignUpClick = {
                     navController.navigate(AppDestination.SignUp.route) {
                         launchSingleTop = true
                     }
                 },
-                onGuestClick = { /* TODO: Implement guest mode */ },
+                onGuestClick = null,
             )
         }
+
         composable(AppDestination.SignUp.route) {
             val signUpViewModel: SignUpViewModel = hiltViewModel()
             val signUpState by signUpViewModel.uiState.collectAsStateWithLifecycle()
-
-            // ✅ استخدام isSuccess بدلاً من isSignUpSuccessful
-            LaunchedEffect(signUpState.isSuccess) {
-                if (signUpState.isSuccess) {
-                    navController.navigate(AppDestination.MainTabs.route) {
-                        popUpTo(AppDestination.SignUp.route) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-            }
 
             SignUpScreen(
                 uiState = signUpState,
@@ -108,13 +142,17 @@ fun PharmaNavHost(
                 onLoginClick = { navController.popBackStack() },
             )
         }
+
+        composable(AppDestination.ForgotPassword.route) {
+            ForgotPasswordScreen(
+                onBackToLogin = { navController.popBackStack() },
+            )
+        }
+
         composable(AppDestination.MainTabs.route) {
             PharmaNavigator(
                 onProfileLogout = {
-                    navController.navigate(AppDestination.Login.route) {
-                        popUpTo(AppDestination.MainTabs.route) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                    authViewModel.logout()
                 },
             )
         }

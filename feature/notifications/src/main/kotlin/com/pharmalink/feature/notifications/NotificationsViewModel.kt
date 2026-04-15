@@ -11,6 +11,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -74,7 +75,15 @@ class NotificationsViewModel @Inject constructor(
                         ScreenState.Success(filtered.groupedSections())
                     },
                 )
-            }.collect { _state.value = it }
+            }
+                .catch { error ->
+                    _state.value = _state.value.copy(
+                        screenState = ScreenState.Error(
+                            error.message ?: "تعذر تحميل الإشعارات حاليًا.",
+                        ),
+                    )
+                }
+                .collect { _state.value = it }
         }
     }
 

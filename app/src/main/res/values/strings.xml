@@ -74,6 +74,11 @@
     <string name="orders_filter_date">التاريخ</string>
     <string name="orders_empty_title">لا توجد طلبات</string>
     <string name="orders_empty_subtitle">ستظهر طلباتك هنا عند إنشاء طلب جديد</string>
+    <string name="request_empty_subtitle">ابدأ بإنشاء طلب جديد</string>
+
+    <string name="request_sent_title">تم الإرسال</string>
+    <string name="request_sent_message">تم إرسال الطلب بنجاح</string>
+    <string name="request_view_my_requests">عرض طلباتي</string>
 
     <string name="messages_title">الرسائل</string>
     <string name="action_back">رجوع</string>
