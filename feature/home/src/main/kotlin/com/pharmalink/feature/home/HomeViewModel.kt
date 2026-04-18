@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 import com.pharmalink.data.repository.PharmaRepository
+import com.pharmalink.domain.model.AccountType
 import kotlinx.coroutines.async
 
 @HiltViewModel
@@ -28,7 +29,10 @@ class HomeViewModel @Inject constructor(
 
     fun loadHomeData() {
         viewModelScope.launch {
-            val currentUserName = authRepository.getUserSnapshot()?.displayName?.ifBlank { "مستخدم" } ?: "مستخدم"
+            val userSnapshot = authRepository.getUserSnapshot()
+            val currentUserName = userSnapshot?.displayName?.ifBlank { "مستخدم" } ?: "مستخدم"
+            val accountType = userSnapshot?.accountType
+            val canAddMedicine = accountType == AccountType.WAREHOUSE
             
             _uiState.value = HomeUiState.Loading
             
@@ -49,6 +53,8 @@ class HomeViewModel @Inject constructor(
                     userName = currentUserName,
                     stats = stats,
                     featuredWarehouses = warehouses,
+                    accountType = accountType,
+                    canAddMedicine = canAddMedicine,
                     alertMessage = stats.alertMessage
                 )
             }

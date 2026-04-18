@@ -12,10 +12,11 @@ data class ProfileUiState(
     val profileImageUrl: String? = null,
     val settingsOptions: List<SettingItem> = listOf(
         SettingItem("الإشعارات", "تعديل إعدادات الإشعارات"),
-        SettingItem("الأمان والخصوصية", "تغيير كلمة المرور، المصادقة الثنائية"),
         SettingItem("اللغة", "العربية"),
-        SettingItem("المساعدة والدعم", "الأسئلة الشائعة، التواصل معنا"),
         SettingItem("حول التطبيق", "الإصدار، سياسة الخصوصية"),
+        SettingItem("الأمان والخصوصية", "تغيير كلمة المرور، المصادقة الثنائية"),
+        SettingItem("المساعدة والدعم", "الأسئلة الشائعة ومسارات الدعم المباشر"),
+        SettingItem("التواصل معنا", "الهاتف، البريد الإلكتروني، وواتساب"),
     ),
 ) {
     companion object {

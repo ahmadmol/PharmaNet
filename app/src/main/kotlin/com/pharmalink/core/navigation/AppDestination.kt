@@ -10,7 +10,7 @@ sealed class AppDestination(
 ) {
     // Auth Destinations
     data object Splash : AppDestination("splash")
-    
+
     data object Login : AppDestination("login")
 
     data object SignUp : AppDestination("signup")
@@ -35,6 +35,8 @@ sealed class AppDestination(
     data object StitchWarehouses : AppDestination("stitch_warehouses")
     data object Notifications : AppDestination("notifications")
     data object Help : AppDestination("help")
+    data object AboutApp : AppDestination("about_app")
+    data object ContactUs : AppDestination("contact_us")
     data object Compliance : AppDestination("compliance")
 
     data object WarehouseDetail : AppDestination(

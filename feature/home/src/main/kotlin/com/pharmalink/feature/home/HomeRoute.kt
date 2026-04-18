@@ -13,6 +13,7 @@ fun NavController.navigateToHome() = navigate(HOME_ROUTE)
 fun NavGraphBuilder.homeScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToOrders: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
@@ -23,6 +24,7 @@ fun NavGraphBuilder.homeScreen(
             viewModel = viewModel,
             onNavigateToHome = onNavigateToHome,
             onNavigateToOrders = onNavigateToOrders,
+            onNavigateToNotifications = onNavigateToNotifications,
             onNavigateToProfile = onNavigateToProfile,
             onNavigateToWarehouses = onNavigateToWarehouses,
             onNavigateToCreateRequest = onNavigateToCreateRequest,

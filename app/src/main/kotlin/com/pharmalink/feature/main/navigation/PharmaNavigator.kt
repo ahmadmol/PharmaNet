@@ -4,14 +4,13 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.FabPosition
@@ -22,12 +21,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -37,32 +36,30 @@ import com.pharmalink.core.navigation.AppDestination
 import com.pharmalink.core.navigation.matchesDestination
 import com.pharmalink.core.navigation.navigateToInnerTopLevel
 import com.pharmalink.designsystem.theme.ClinicalCanvas
-import com.pharmalink.designsystem.theme.PharmaGradients
-import com.pharmalink.designsystem.theme.StitchShellTokens
-import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.NotificationDestination
 import com.pharmalink.feature.compliance.presentation.ComplianceScreen
+import com.pharmalink.feature.help.presentation.AboutAppScreen
+import com.pharmalink.feature.help.presentation.ContactUsScreen
 import com.pharmalink.feature.help.presentation.HelpScreen
 import com.pharmalink.feature.home.homeScreen
 import com.pharmalink.feature.notifications.NotificationsScreen
-import com.pharmalink.feature.warehouses.WarehousesScreen
-import com.pharmalink.feature.request.CreateRequestScreen
-import com.pharmalink.feature.request.RequestListScreen
-import com.pharmalink.feature.request.RequestDetailsScreen
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.pharmalink.feature.orders.OrdersScreen
 import com.pharmalink.feature.orders.presentation.OrderDetailScreen
 import com.pharmalink.feature.profile.ChangePasswordScreen
 import com.pharmalink.feature.profile.EditProfileScreen
 import com.pharmalink.feature.profile.ProfileScreen
-import com.pharmalink.feature.tracking.DeliveryTrackingScreen
+import com.pharmalink.feature.request.CreateRequestScreen
+import com.pharmalink.feature.request.RequestDetailsScreen
+import com.pharmalink.feature.request.RequestListScreen
 import com.pharmalink.feature.resources.presentation.WarehouseDetailScreen
+import com.pharmalink.feature.tracking.DeliveryTrackingScreen
+import com.pharmalink.feature.warehouses.WarehousesScreen
 
 private val bottomBarRoutes = setOf(
     AppDestination.Home.route,
     AppDestination.Resources.route,
     AppDestination.CreateRequest.route,
-    AppDestination.Orders.route,
+    AppDestination.RequestList.route,
     AppDestination.Profile.route,
 )
 
@@ -78,7 +75,7 @@ fun PharmaNavigator(
     val tabSelectedIndex = when {
         currentRoute.matchesDestination(AppDestination.Home) -> 0
         currentRoute.matchesDestination(AppDestination.Resources) -> 1
-        currentRoute.matchesDestination(AppDestination.Orders) -> 2
+        currentRoute.matchesDestination(AppDestination.RequestList) -> 2
         currentRoute.matchesDestination(AppDestination.Profile) -> 3
         else -> -1
     }
@@ -90,12 +87,15 @@ fun PharmaNavigator(
             currentRoute.matchesDestination(AppDestination.WarehouseDetail) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Notifications) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Help) -> navController.popBackStack()
+            currentRoute.matchesDestination(AppDestination.AboutApp) -> navController.popBackStack()
+            currentRoute.matchesDestination(AppDestination.ContactUs) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Compliance) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.EditProfile) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.ChangePassword) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.RequestDetail) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.OrderDetail) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.DeliveryTracking) -> navController.popBackStack()
+            currentRoute.matchesDestination(AppDestination.Orders) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Home) -> Unit
             currentRoute in bottomBarRoutes -> {
                 navController.navigateToInnerTopLevel(AppDestination.Home)
@@ -104,12 +104,13 @@ fun PharmaNavigator(
         }
     }
 
-    val dimens = MaterialTheme.dimens
     val fabScale by animateFloatAsState(
         targetValue = if (currentRoute.matchesDestination(AppDestination.CreateRequest)) 0.94f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "fab_scale",
     )
+    val layoutDirection = LocalLayoutDirection.current
+    val removeTopInsetForCurrentRoute = currentRoute.matchesDestination(AppDestination.Resources)
 
     Scaffold(
         modifier = modifier,
@@ -120,31 +121,21 @@ fun PharmaNavigator(
                 FloatingActionButton(
                     onClick = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
                     modifier = Modifier
-                        .size(dimens.fabSize)
-                        .offset(y = 32.dp)
-                        .scale(fabScale)
-                        .border(3.dp, StitchShellTokens.fabRing, RoundedCornerShape(22.dp)),
-                    shape = RoundedCornerShape(22.dp),
-                    containerColor = Color.Transparent,
-                    contentColor = Color.White,
+                        .size(56.dp)
+                        .scale(fabScale),
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                     elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = dimens.fabElevation,
-                        pressedElevation = 4.dp,
+                        defaultElevation = 4.dp,
+                        pressedElevation = 6.dp,
                     ),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(PharmaGradients.fabOrange, RoundedCornerShape(22.dp)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Add,
-                            contentDescription = stringResource(R.string.add_medicine),
-                            tint = Color.White,
-                            modifier = Modifier.size(dimens.fabIconSize),
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = stringResource(R.string.add_medicine),
+                        modifier = Modifier.size(24.dp),
+                    )
                 }
             }
         },
@@ -156,7 +147,7 @@ fun PharmaNavigator(
                         when (route) {
                             AppDestination.Home.route -> navController.navigateToInnerTopLevel(AppDestination.Home)
                             AppDestination.Resources.route -> navController.navigateToInnerTopLevel(AppDestination.Resources)
-                            AppDestination.Orders.route -> navController.navigateToInnerTopLevel(AppDestination.Orders)
+                            AppDestination.RequestList.route -> navController.navigateToInnerTopLevel(AppDestination.RequestList)
                             AppDestination.Profile.route -> navController.navigateToInnerTopLevel(AppDestination.Profile)
                         }
                     },
@@ -167,7 +158,12 @@ fun PharmaNavigator(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(
+                    start = innerPadding.calculateStartPadding(layoutDirection),
+                    top = if (removeTopInsetForCurrentRoute) 0.dp else innerPadding.calculateTopPadding(),
+                    end = innerPadding.calculateEndPadding(layoutDirection),
+                    bottom = innerPadding.calculateBottomPadding(),
+                ),
         ) {
             NavHost(
                 navController = navController,
@@ -176,6 +172,9 @@ fun PharmaNavigator(
                 homeScreen(
                     onNavigateToHome = { navController.navigateToInnerTopLevel(AppDestination.Home) },
                     onNavigateToOrders = { navController.navigateToInnerTopLevel(AppDestination.Orders) },
+                    onNavigateToNotifications = {
+                        navController.navigate(AppDestination.Notifications.route) { launchSingleTop = true }
+                    },
                     onNavigateToProfile = { navController.navigateToInnerTopLevel(AppDestination.Profile) },
                     onNavigateToWarehouses = { navController.navigateToInnerTopLevel(AppDestination.Resources) },
                     onNavigateToCreateRequest = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
@@ -192,7 +191,9 @@ fun PharmaNavigator(
                     CreateRequestScreen(
                         viewModel = hiltViewModel(),
                         onNavigateToRequestList = { navController.navigate(AppDestination.RequestList.route) },
-                        onNavigateToRequestDetails = { requestId -> navController.navigate(AppDestination.RequestDetail.createRoute(requestId)) },
+                        onNavigateToRequestDetails = { requestId ->
+                            navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
+                        },
                     )
                 }
                 composable(AppDestination.Orders.route) {
@@ -205,7 +206,9 @@ fun PharmaNavigator(
                 composable(AppDestination.RequestList.route) {
                     RequestListScreen(
                         onNavigateToCreateRequest = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
-                        onNavigateToRequestDetails = { requestId -> navController.navigate(AppDestination.RequestDetail.createRoute(requestId)) }
+                        onNavigateToRequestDetails = { requestId ->
+                            navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
+                        },
                     )
                 }
                 composable(AppDestination.Profile.route) {
@@ -213,6 +216,9 @@ fun PharmaNavigator(
                         onLogout = onProfileLogout,
                         onEditProfile = { navController.navigate(AppDestination.EditProfile.route) },
                         onChangePassword = { navController.navigate(AppDestination.ChangePassword.route) },
+                        onOpenHelpSupport = { navController.navigate(AppDestination.Help.route) },
+                        onOpenAboutApp = { navController.navigate(AppDestination.AboutApp.route) },
+                        onOpenContactUs = { navController.navigate(AppDestination.ContactUs.route) },
                     )
                 }
                 composable(AppDestination.Notifications.route) {
@@ -224,18 +230,23 @@ fun PharmaNavigator(
                                     notification.destinationId?.let { orderId ->
                                         navController.navigate(AppDestination.OrderDetail.createRoute(orderId))
                                     }
+
                                 NotificationDestination.REQUEST ->
                                     notification.destinationId?.let { requestId ->
                                         navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
                                     }
+
                                 NotificationDestination.WAREHOUSE ->
                                     notification.destinationId?.let { warehouseId ->
                                         navController.navigate(AppDestination.WarehouseDetail.createRoute(warehouseId))
                                     }
+
                                 NotificationDestination.COMPLIANCE ->
                                     navController.navigate(AppDestination.Compliance.route)
+
                                 NotificationDestination.HELP ->
                                     navController.navigate(AppDestination.Help.route)
+
                                 null -> Unit
                             }
                         },
@@ -245,6 +256,17 @@ fun PharmaNavigator(
                     HelpScreen(
                         onBack = { navController.popBackStack() },
                         onOpenCompliance = { navController.navigate(AppDestination.Compliance.route) },
+                        onOpenContactUs = { navController.navigate(AppDestination.ContactUs.route) },
+                    )
+                }
+                composable(AppDestination.AboutApp.route) {
+                    AboutAppScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(AppDestination.ContactUs.route) {
+                    ContactUsScreen(
+                        onBack = { navController.popBackStack() },
                     )
                 }
                 composable(AppDestination.Compliance.route) {

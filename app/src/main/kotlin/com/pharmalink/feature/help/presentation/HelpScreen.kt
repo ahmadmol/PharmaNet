@@ -3,6 +3,7 @@ package com.pharmalink.feature.help.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,38 +12,50 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContactSupport
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Phone
-import androidx.compose.material.icons.outlined.ReportProblem
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,60 +71,74 @@ import com.pharmalink.designsystem.components.StatusTone
 import com.pharmalink.designsystem.theme.PharmaGradients
 import com.pharmalink.designsystem.theme.dimens
 
+data class HelpCategory(
+    val icon: ImageVector,
+    val title: String,
+    val subtitle: String,
+)
+
 @Composable
 fun HelpScreen(
     onBack: () -> Unit = {},
     onOpenCompliance: () -> Unit = {},
+    onOpenContactUs: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HelpViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val d = MaterialTheme.dimens
     var expandedQuestion by rememberSaveable { mutableStateOf<String?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
-    PharmaScreenScaffold(
-        title = stringResource(R.string.help_center_title),
-        onBack = onBack,
-        navigationContentDescription = stringResource(R.string.common_back),
-        modifier = modifier,
-        actions = {
-            TextButton(onClick = onOpenCompliance) {
-                Text(stringResource(R.string.help_compliance_action))
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        PharmaScreenScaffold(
+            title = stringResource(R.string.help_center_title),
+            onBack = onBack,
+            navigationContentDescription = stringResource(R.string.common_back),
+            modifier = modifier,
+            actions = {
+                TextButton(onClick = onOpenCompliance) {
+                    Text(stringResource(R.string.help_compliance_action))
+                }
+            },
+        ) {
+            PharmaScreenState(
+                screenState = state.screenState,
+                loading = PharmaStateSpec(
+                    title = stringResource(R.string.help_center_title),
+                    subtitle = stringResource(R.string.help_loading_subtitle),
+                    tone = PharmaStateTone.Loading,
+                ),
+                empty = PharmaStateSpec(
+                    title = stringResource(R.string.help_center_title),
+                    subtitle = stringResource(R.string.help_error_subtitle),
+                ),
+                error = PharmaStateSpec(
+                    title = stringResource(R.string.help_center_title),
+                    subtitle = stringResource(R.string.help_error_subtitle),
+                    tone = PharmaStateTone.Error,
+                ),
+                offline = PharmaStateSpec(
+                    title = stringResource(R.string.help_center_title),
+                    subtitle = stringResource(R.string.help_error_subtitle),
+                    tone = PharmaStateTone.Offline,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = d.spaceL, vertical = d.spaceXL),
+            ) { content ->
+                HelpContent(
+                    content = content,
+                    expandedQuestion = expandedQuestion,
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { searchQuery = it },
+                    onQuestionToggle = { question ->
+                        expandedQuestion = if (expandedQuestion == question) null else question
+                    },
+                    onOpenCompliance = onOpenCompliance,
+                    onOpenContactUs = onOpenContactUs,
+                )
             }
-        },
-    ) {
-        PharmaScreenState(
-            screenState = state.screenState,
-            loading = PharmaStateSpec(
-                title = stringResource(R.string.help_center_title),
-                subtitle = stringResource(R.string.help_loading_subtitle),
-                tone = PharmaStateTone.Loading,
-            ),
-            empty = PharmaStateSpec(
-                title = stringResource(R.string.help_center_title),
-                subtitle = stringResource(R.string.help_error_subtitle),
-            ),
-            error = PharmaStateSpec(
-                title = stringResource(R.string.help_center_title),
-                subtitle = stringResource(R.string.help_error_subtitle),
-                tone = PharmaStateTone.Error,
-            ),
-            offline = PharmaStateSpec(
-                title = stringResource(R.string.help_center_title),
-                subtitle = stringResource(R.string.help_error_subtitle),
-                tone = PharmaStateTone.Offline,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = d.spaceL, vertical = d.spaceXL),
-        ) { content ->
-            HelpContent(
-                content = content,
-                expandedQuestion = expandedQuestion,
-                onQuestionToggle = { question ->
-                    expandedQuestion = if (expandedQuestion == question) null else question
-                },
-            )
         }
     }
 }
@@ -120,9 +147,57 @@ fun HelpScreen(
 private fun HelpContent(
     content: HelpContent,
     expandedQuestion: String?,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
     onQuestionToggle: (String) -> Unit,
+    onOpenCompliance: () -> Unit,
+    onOpenContactUs: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
+    val categories = remember(content) {
+        listOf(
+            HelpCategory(
+                icon = Icons.Outlined.Description,
+                title = "متابعة الطلبات",
+                subtitle = "إرشادات سريعة للحالات الحرجة والتوريد المتأخر.",
+            ),
+            HelpCategory(
+                icon = Icons.Outlined.Shield,
+                title = "الامتثال",
+                subtitle = "تنبيهات الرخص والوثائق والمسارات التنظيمية.",
+            ),
+            HelpCategory(
+                icon = Icons.Outlined.Settings,
+                title = "الحساب والإعدادات",
+                subtitle = "اللغة وكلمة المرور والوصول الآمن للحساب.",
+            ),
+            HelpCategory(
+                icon = Icons.Outlined.ContactSupport,
+                title = "التواصل السريع",
+                subtitle = "اختر القناة المناسبة قبل تصعيد الحالة.",
+            ),
+        )
+    }
+    val filteredGuides = remember(content.guides, searchQuery) {
+        if (searchQuery.isBlank()) {
+            content.guides
+        } else {
+            content.guides.filter {
+                it.title.contains(searchQuery, ignoreCase = true) ||
+                    it.description.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+    val filteredFaq = remember(content.faq, searchQuery) {
+        if (searchQuery.isBlank()) {
+            content.faq
+        } else {
+            content.faq.filter {
+                it.question.contains(searchQuery, ignoreCase = true) ||
+                    it.answer.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -130,7 +205,20 @@ private fun HelpContent(
         verticalArrangement = Arrangement.spacedBy(d.spaceL),
     ) {
         item {
-            HelpHeader(content)
+            HelpHeroCard(
+                content = content,
+                searchQuery = searchQuery,
+                onSearchQueryChange = onSearchQueryChange,
+            )
+        }
+        item {
+            PharmaSectionHeader(
+                title = "ابدأ من هنا",
+                subtitle = "بطاقات مختصرة تقرّبك من نوع الدعم الذي تحتاجه الآن.",
+            )
+        }
+        item {
+            HelpCategoryGrid(categories = categories)
         }
         item {
             PharmaSectionHeader(
@@ -141,7 +229,28 @@ private fun HelpContent(
         items(content.channels, key = { it.title }) { channel ->
             SupportChannelCard(channel)
         }
-
+        item {
+            PharmaSectionHeader(
+                title = stringResource(R.string.help_guides_title),
+                subtitle = stringResource(R.string.help_guides_subtitle),
+            )
+        }
+        if (filteredGuides.isEmpty()) {
+            item {
+                SearchEmptyCard(
+                    title = "لا توجد إرشادات مطابقة",
+                    subtitle = "جرّب كلمات أقصر أو افتح قنوات الدعم المباشر أدناه.",
+                )
+            }
+        } else {
+            items(filteredGuides, key = { it.title }) { guide ->
+                HelpInfoCard(
+                    icon = Icons.Outlined.Description,
+                    title = guide.title,
+                    subtitle = guide.description,
+                )
+            }
+        }
         item {
             PharmaSectionHeader(
                 title = stringResource(R.string.help_report_issue_steps_title),
@@ -151,49 +260,43 @@ private fun HelpContent(
         item {
             ReportIssueCard()
         }
-
-        item {
-            PharmaSectionHeader(
-                title = stringResource(R.string.help_guides_title),
-                subtitle = stringResource(R.string.help_guides_subtitle),
-            )
-        }
-        items(content.guides, key = { it.title }) { guide ->
-            HelpInfoCard(
-                icon = Icons.Outlined.Description,
-                title = guide.title,
-                subtitle = guide.description,
-            )
-        }
-
         item {
             PharmaSectionHeader(
                 title = stringResource(R.string.help_faq_title_phase3),
                 subtitle = stringResource(R.string.help_faq_subtitle),
             )
         }
-        items(content.faq, key = { it.question }) { faq ->
-            FaqCard(
-                item = faq,
-                expanded = expandedQuestion == faq.question,
-                onToggle = { onQuestionToggle(faq.question) },
-            )
+        if (filteredFaq.isEmpty()) {
+            item {
+                SearchEmptyCard(
+                    title = "لا توجد أسئلة مطابقة",
+                    subtitle = "البحث الحالي يعمل محليًا على المحتوى الثابت فقط وسيتم توسيعه لاحقًا.",
+                )
+            }
+        } else {
+            items(filteredFaq, key = { it.question }) { faq ->
+                FaqCard(
+                    item = faq,
+                    expanded = expandedQuestion == faq.question,
+                    onToggle = { onQuestionToggle(faq.question) },
+                )
+            }
         }
-
         item {
-            HelpInfoCard(
-                icon = Icons.Outlined.ReportProblem,
-                title = stringResource(R.string.help_report_issue_title),
-                subtitle = stringResource(R.string.help_issue_todo),
-                badgeLabel = stringResource(R.string.help_badge_placeholder),
-                badgeTone = StatusTone.Pending,
+            SupportCtaCard(
+                onOpenCompliance = onOpenCompliance,
+                onOpenContactUs = onOpenContactUs,
             )
         }
     }
 }
 
 @Composable
-private fun HelpHeader(content: HelpContent) {
+private fun HelpHeroCard(
+    content: HelpContent,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+) {
     val d = MaterialTheme.dimens
 
     Card(
@@ -203,12 +306,12 @@ private fun HelpHeader(content: HelpContent) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(PharmaGradients.headerBlueToGreen)
+                .background(PharmaGradients.headerBlueToGreenHorizontal)
                 .padding(d.spaceL),
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             Text(
-                text = content.pharmacyName,
+                text = content.pharmacyName.ifBlank { "PharmaLink" },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -217,6 +320,33 @@ private fun HelpHeader(content: HelpContent) {
                 text = stringResource(R.string.help_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White.copy(alpha = 0.92f),
+            )
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(d.radiusXL),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = null,
+                    )
+                },
+                placeholder = {
+                    Text("ابحث في الأسئلة والإرشادات الحالية")
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = MaterialTheme.colorScheme.surface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.32f),
+                ),
+            )
+            Text(
+                text = "البحث الحالي محلي داخل هذا المحتوى فقط، وسيتم ربط البحث الذكي لاحقًا دون نتائج وهمية.",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.88f),
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -240,6 +370,90 @@ private fun HelpHeader(content: HelpContent) {
             }
         }
     }
+}
+
+@Composable
+private fun HelpCategoryGrid(categories: List<HelpCategory>) {
+    val d = MaterialTheme.dimens
+
+    Column(verticalArrangement = Arrangement.spacedBy(d.spaceM)) {
+        categories.chunked(2).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+            ) {
+                rowItems.forEach { item ->
+                    HelpCategoryCard(
+                        category = item,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (rowItems.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HelpCategoryCard(
+    category: HelpCategory,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Card(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceS),
+        ) {
+            Surface(
+                shape = RoundedCornerShape(d.radiusL),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                contentColor = MaterialTheme.colorScheme.primary,
+            ) {
+                Icon(
+                    imageVector = category.icon,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(d.spaceS)
+                        .size(20.dp),
+                )
+            }
+            Text(
+                text = category.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = category.subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchEmptyCard(
+    title: String,
+    subtitle: String,
+) {
+    HelpInfoCard(
+        icon = Icons.Outlined.HelpOutline,
+        title = title,
+        subtitle = subtitle,
+        badgeLabel = "محلي",
+        badgeTone = StatusTone.Neutral,
+    )
 }
 
 @Composable
@@ -360,6 +574,61 @@ private fun FaqCard(
 }
 
 @Composable
+private fun SupportCtaCard(
+    onOpenCompliance: () -> Unit,
+    onOpenContactUs: () -> Unit,
+) {
+    val d = MaterialTheme.dimens
+
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(PharmaGradients.primaryHorizontal)
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Text(
+                text = "ما زلت تحتاج مساعدة؟",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+            Text(
+                text = "يمكنك فتح الامتثال مباشرة أو الانتقال إلى شاشة التواصل معنا. إنشاء التذاكر والبحث الذكي لم يُربطا بالخلفية بعد عمدًا.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.92f),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+            ) {
+                Button(
+                    onClick = onOpenContactUs,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                ) {
+                    Text("التواصل معنا")
+                }
+                OutlinedButton(
+                    onClick = onOpenCompliance,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                ) {
+                    Text("ملف الامتثال")
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun HelpInfoCard(
     icon: ImageVector,
     title: String,
@@ -412,7 +681,7 @@ private fun HelpInfoCard(
 @Composable
 private fun SupportChannel.icon(): ImageVector = when (type) {
     SupportChannelType.Operations -> Icons.Outlined.Phone
-    SupportChannelType.Email -> Icons.Outlined.Email
+    SupportChannelType.Email -> Icons.Outlined.Description
     SupportChannelType.Compliance -> Icons.Outlined.Shield
 }
 

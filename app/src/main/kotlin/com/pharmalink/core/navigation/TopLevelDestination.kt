@@ -18,6 +18,6 @@ data class TopLevelDestination(
 val topLevelDestinations = listOf(
     TopLevelDestination(AppDestination.Home.route, AppDestination.Home.route, Icons.Outlined.Home, R.string.home_screen),
     TopLevelDestination(AppDestination.Resources.route, AppDestination.Resources.route, Icons.Outlined.GridView, R.string.resources),
-    TopLevelDestination(AppDestination.Orders.route, AppDestination.Orders.route, Icons.Outlined.ShoppingCart, R.string.my_orders),
+    TopLevelDestination(AppDestination.RequestList.route, AppDestination.RequestList.route, Icons.Outlined.ShoppingCart, R.string.my_orders),
     TopLevelDestination(AppDestination.Profile.route, AppDestination.Profile.route, Icons.Outlined.Person, R.string.account),
 )

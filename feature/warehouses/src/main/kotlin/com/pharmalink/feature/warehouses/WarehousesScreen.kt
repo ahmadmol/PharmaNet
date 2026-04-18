@@ -129,7 +129,6 @@ private fun WarehousesContent(
         contentPadding = PaddingValues(bottom = d.spaceXL),
         verticalArrangement = Arrangement.spacedBy(d.spaceM),
     ) {
-        item { WarehousesHeader() }
         item {
             WarehousesSearchBar(
                 modifier = Modifier.padding(horizontal = d.spaceL),
@@ -189,36 +188,6 @@ private fun WarehousesContent(
             WarehousePromo(
                 modifier = Modifier.padding(horizontal = d.spaceL, vertical = d.spaceS),
             )
-        }
-    }
-}
-
-@Composable
-private fun WarehousesHeader() {
-    val d = MaterialTheme.dimens
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-        shadowElevation = 1.dp,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = d.spaceL, vertical = d.spaceM),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            HeaderIcon(icon = Icons.Outlined.Notifications, tint = PremiumUrgent)
-            Text(
-                text = "المستودعات والمصادر",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
-            )
-            HeaderIcon(icon = Icons.Outlined.Menu, tint = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -574,22 +543,6 @@ private fun StatusBadge(label: String, color: Color) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceXS),
         )
-    }
-}
-
-@Composable
-private fun HeaderIcon(icon: ImageVector, tint: Color) {
-    val d = MaterialTheme.dimens
-
-    Surface(
-        modifier = Modifier.size(40.dp),
-        shape = CircleShape,
-        color = Color.Transparent,
-        contentColor = tint,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(d.iconS))
-        }
     }
 }
 

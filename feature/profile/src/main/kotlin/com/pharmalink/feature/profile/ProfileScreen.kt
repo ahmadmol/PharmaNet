@@ -20,11 +20,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
@@ -66,7 +64,7 @@ import com.pharmalink.designsystem.stitch.components.StitchButton
 import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.designsystem.theme.PharmaBlue50
 import com.pharmalink.designsystem.theme.PharmaBlue500
-import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaBlue700
 import com.pharmalink.designsystem.theme.PharmaNeutral600
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.PremiumUrgent
@@ -83,6 +81,9 @@ fun ProfileScreen(
     onLogout: () -> Unit = {},
     onEditProfile: () -> Unit = {},
     onChangePassword: () -> Unit = {},
+    onOpenHelpSupport: () -> Unit = {},
+    onOpenAboutApp: () -> Unit = {},
+    onOpenContactUs: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -93,6 +94,9 @@ fun ProfileScreen(
             onLogout = onLogout,
             onEditProfile = onEditProfile,
             onChangePassword = onChangePassword,
+            onOpenHelpSupport = onOpenHelpSupport,
+            onOpenAboutApp = onOpenAboutApp,
+            onOpenContactUs = onOpenContactUs,
         )
     }
 }
@@ -103,6 +107,9 @@ private fun ProfileContent(
     onLogout: () -> Unit,
     onEditProfile: () -> Unit,
     onChangePassword: () -> Unit,
+    onOpenHelpSupport: () -> Unit,
+    onOpenAboutApp: () -> Unit,
+    onOpenContactUs: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
     val settingsGroups = remember(uiState.settingsOptions) {
@@ -141,6 +148,9 @@ private fun ProfileContent(
                 languagePreview = languagePreview,
                 onLanguageClick = { isLanguageSheetVisible = true },
                 onSecurityClick = onChangePassword,
+                onHelpSupportClick = onOpenHelpSupport,
+                onAboutClick = onOpenAboutApp,
+                onContactClick = onOpenContactUs,
                 modifier = Modifier.padding(horizontal = d.spaceL),
             )
         }
@@ -153,7 +163,7 @@ private fun ProfileContent(
         item {
             ProfileFooter(
                 text = uiState.settingsOptions
-                    .firstOrNull { it.title.contains("حول") }
+                    .firstOrNull { it.isAbout() }
                     ?.subtitle
                     .orEmpty(),
             )
@@ -173,22 +183,24 @@ private fun ProfileContent(
 private fun ProfileHeader() {
     val d = MaterialTheme.dimens
 
-    Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f), shadowElevation = 1.dp) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = d.spaceL, vertical = d.spaceM),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+        shadowElevation = 1.dp,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = d.spaceL, vertical = d.spaceM),
+            contentAlignment = Alignment.Center,
         ) {
-            HeaderCircleIcon(icon = Icons.AutoMirrored.Outlined.ArrowForward, onClick = {})
             Text(
                 text = "الملف الشخصي",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f),
             )
-            HeaderCircleIcon(icon = Icons.Outlined.Settings, onClick = {})
         }
     }
 }
@@ -227,14 +239,20 @@ private fun ProfileHeroSection(
                 }
             }
             Surface(
-                modifier = Modifier.align(Alignment.BottomStart).size(34.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .size(34.dp),
                 shape = CircleShape,
                 color = PharmaBlue500,
                 contentColor = Color.White,
                 border = BorderStroke(4.dp, ClinicalCanvas),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(d.iconS))
+                    Icon(
+                        Icons.Outlined.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(d.iconS),
+                    )
                 }
             }
         }
@@ -254,8 +272,16 @@ private fun ProfileHeroSection(
             textAlign = TextAlign.Center,
         )
         if (pharmacyAddress.isNotBlank()) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(d.spaceXS)) {
-                Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(d.iconXS))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(d.spaceXS),
+            ) {
+                Icon(
+                    Icons.Outlined.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(d.iconXS),
+                )
                 Text(
                     text = pharmacyAddress,
                     style = MaterialTheme.typography.labelMedium,
@@ -293,15 +319,28 @@ private fun ProfileSummaryCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    Brush.linearGradient(listOf(PharmaBlue500, MaterialTheme.colorScheme.primaryContainer)),
+                    Brush.linearGradient(
+                        colors = listOf(PharmaBlue500, PharmaBlue700),
+                    ),
                     RoundedCornerShape(d.radiusXXL),
                 )
                 .padding(d.spaceL),
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(d.spaceL), horizontalAlignment = Alignment.Start) {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.SpaceBetween) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(d.spaceL),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
                     Column(horizontalAlignment = Alignment.Start) {
-                        Text("ملخص الحساب", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.82f))
+                        Text(
+                            "ملخص الحساب",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.82f),
+                        )
                         Text(
                             text = uiState.accountType,
                             style = MaterialTheme.typography.headlineSmall,
@@ -309,15 +348,40 @@ private fun ProfileSummaryCard(
                             color = Color.White,
                         )
                     }
-                    Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.18f), contentColor = Color.White) {
-                        Icon(Icons.Outlined.Store, contentDescription = null, modifier = Modifier.padding(d.spaceS).size(d.iconM))
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.18f),
+                        contentColor = Color.White,
+                    ) {
+                        Icon(
+                            Icons.Outlined.Store,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(d.spaceS)
+                                .size(d.iconM),
+                        )
                     }
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(d.spaceM)) {
-                    SummaryInfo(label = "الصيدلية", value = uiState.pharmacyName, modifier = Modifier.weight(1f))
-                    SummaryInfo(label = "الهاتف", value = uiState.userPhone, modifier = Modifier.weight(1f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                ) {
+                    SummaryInfo(
+                        label = "الصيدلية",
+                        value = uiState.pharmacyName,
+                        modifier = Modifier.weight(1f),
+                    )
+                    SummaryInfo(
+                        label = "الهاتف",
+                        value = uiState.userPhone,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
-                SummaryInfo(label = "البريد الإلكتروني", value = uiState.userEmail, modifier = Modifier.fillMaxWidth())
+                SummaryInfo(
+                    label = "البريد الإلكتروني",
+                    value = uiState.userEmail,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
@@ -326,8 +390,20 @@ private fun ProfileSummaryCard(
 @Composable
 private fun SummaryInfo(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.Start) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.72f), maxLines = 1)
-        Text(value.ifBlank { "-" }, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.72f),
+            maxLines = 1,
+        )
+        Text(
+            value.ifBlank { "-" },
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -337,11 +413,18 @@ private fun ProfileSettingsSection(
     languagePreview: String,
     onLanguageClick: () -> Unit,
     onSecurityClick: () -> Unit,
+    onHelpSupportClick: () -> Unit,
+    onAboutClick: () -> Unit,
+    onContactClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
 
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(d.spaceS), horizontalAlignment = Alignment.Start) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(d.spaceS),
+        horizontalAlignment = Alignment.Start,
+    ) {
         Column(modifier = Modifier.padding(horizontal = d.spaceS), horizontalAlignment = Alignment.Start) {
             Text(
                 text = group.title,
@@ -363,7 +446,10 @@ private fun ProfileSettingsSection(
             shadowElevation = 1.dp,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.36f)),
         ) {
-            Column(modifier = Modifier.padding(vertical = d.spaceXS), verticalArrangement = Arrangement.spacedBy(d.spaceXXS)) {
+            Column(
+                modifier = Modifier.padding(vertical = d.spaceXS),
+                verticalArrangement = Arrangement.spacedBy(d.spaceXXS),
+            ) {
                 group.items.forEachIndexed { index, item ->
                     ProfileSettingRow(
                         item = item,
@@ -372,7 +458,10 @@ private fun ProfileSettingsSection(
                         onClick = when {
                             item.isLanguage() -> onLanguageClick
                             item.isSecurity() -> onSecurityClick
-                            else -> ({ })
+                            item.isAbout() -> onAboutClick
+                            item.isContact() -> onContactClick
+                            item.isHelpSupport() -> onHelpSupportClick
+                            else -> ({})
                         },
                     )
                 }
@@ -395,10 +484,12 @@ private fun ProfileSettingRow(
         isLanguage -> languagePreview
         item.isAbout() -> "v2.4"
         item.isNotification() -> "مفعل"
-        else -> "قريبا"
+        item.isHelpSupport() || item.isContact() || item.isSecurity() -> "متاح"
+        else -> "متاح"
     }
     val badgeColor = when {
         isLanguage || item.isNotification() -> PharmaSuccess
+        item.isHelpSupport() || item.isContact() || item.isSecurity() -> PharmaBlue500
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -430,7 +521,11 @@ private fun ProfileSettingRow(
                         Icon(icon, contentDescription = null, modifier = Modifier.size(d.iconS))
                     }
                 }
-                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     Text(
                         text = item.title,
                         style = MaterialTheme.typography.bodyMedium,
@@ -441,7 +536,11 @@ private fun ProfileSettingRow(
                     )
                     if (item.subtitle.isNotBlank()) {
                         Text(
-                            text = if (isLanguage) "اللغة الحالية: $languagePreview - لا يغير لغة التطبيق بعد" else item.subtitle,
+                            text = if (isLanguage) {
+                                "اللغة الحالية: $languagePreview - لا يغير لغة التطبيق بعد"
+                            } else {
+                                item.subtitle
+                            },
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 2,
@@ -510,7 +609,11 @@ private fun ProfileLogoutButton(
         ) {
             Icon(Icons.Outlined.Logout, contentDescription = null, modifier = Modifier.size(d.iconS))
             Spacer(Modifier.size(d.spaceS))
-            Text(text = stringResource(R.string.logout_button), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                text = stringResource(R.string.logout_button),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+            )
         }
     }
 }
@@ -522,42 +625,32 @@ private fun ProfileFooter(text: String) {
         style = MaterialTheme.typography.labelSmall,
         color = PharmaNeutral600.copy(alpha = 0.72f),
         textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().padding(bottom = MaterialTheme.dimens.spaceM),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = MaterialTheme.dimens.spaceM),
     )
-}
-
-@Composable
-private fun HeaderCircleIcon(icon: ImageVector, onClick: () -> Unit) {
-    val d = MaterialTheme.dimens
-
-    Surface(modifier = Modifier.size(40.dp), shape = CircleShape, color = PharmaNeutral100, contentColor = PharmaBlue500) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(),
-                    onClick = onClick,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(d.iconS))
-        }
-    }
 }
 
 private fun List<SettingItem>.groupForProfile(): List<SettingsGroup> {
     val general = filter { it.isNotification() || it.isLanguage() || it.isAbout() }
     val security = filter { it.isSecurity() }
-    val support = filter { it.isSupport() }
+    val support = filter { it.isHelpSupport() || it.isContact() }
     val grouped = general + security + support
     val fallback = filterNot { it in grouped }
 
     return buildList {
-        if (general.isNotEmpty()) add(SettingsGroup("الإعدادات العامة", "اللغة والتنبيهات ومعلومات التطبيق", general))
-        if (security.isNotEmpty()) add(SettingsGroup("الأمان والخصوصية", "خيارات جاهزة للتفعيل عند ربط الحساب", security))
-        if (support.isNotEmpty()) add(SettingsGroup("الدعم والمساعدة", "مداخل آمنة لرحلة الدعم القادمة", support))
-        if (fallback.isNotEmpty()) add(SettingsGroup("خيارات أخرى", "عناصر إضافية غير مصنفة", fallback))
+        if (general.isNotEmpty()) {
+            add(SettingsGroup("الإعدادات العامة", "اللغة والتنبيهات ومعلومات التطبيق", general))
+        }
+        if (security.isNotEmpty()) {
+            add(SettingsGroup("الأمان والخصوصية", "خيارات جاهزة للتفعيل عند ربط الحساب", security))
+        }
+        if (support.isNotEmpty()) {
+            add(SettingsGroup("الدعم والمساعدة", "مداخل آمنة ومباشرة لرحلة الدعم", support))
+        }
+        if (fallback.isNotEmpty()) {
+            add(SettingsGroup("خيارات أخرى", "عناصر إضافية غير مصنفة", fallback))
+        }
     }
 }
 
@@ -565,7 +658,8 @@ private fun settingIcon(title: String): ImageVector = when {
     SettingItem(title, "").isNotification() -> Icons.Outlined.Notifications
     SettingItem(title, "").isLanguage() -> Icons.Outlined.Language
     SettingItem(title, "").isSecurity() -> Icons.Outlined.Lock
-    SettingItem(title, "").isSupport() -> Icons.Outlined.HelpOutline
+    SettingItem(title, "").isHelpSupport() -> Icons.Outlined.HelpOutline
+    SettingItem(title, "").isContact() -> Icons.Outlined.Phone
     SettingItem(title, "").isAbout() -> Icons.Outlined.Info
     else -> Icons.Outlined.Settings
 }
@@ -578,8 +672,11 @@ private fun SettingItem.isSecurity(): Boolean =
     title.contains("أمان") || title.contains("خصوص") || title.contains("كلمة") ||
         title.contains("ط£ظ…ط§ظ†") || title.contains("ط®طµظˆطµ") || title.contains("ظƒظ„ظ…ط©")
 
-private fun SettingItem.isSupport(): Boolean =
+private fun SettingItem.isHelpSupport(): Boolean =
     title.contains("مساعدة") || title.contains("دعم") || title.contains("ظ…ط³ط§ط¹ط¯ط©") || title.contains("ط¯ط¹ظ…")
+
+private fun SettingItem.isContact(): Boolean =
+    title.contains("تواصل") || title.contains("اتصال") || title.contains("طھظˆط§طµظ„")
 
 private fun SettingItem.isAbout(): Boolean = title.contains("حول") || title.contains("ط­ظˆظ„")
 
@@ -592,6 +689,9 @@ fun ProfileScreenPreview() {
             onLogout = {},
             onEditProfile = {},
             onChangePassword = {},
+            onOpenHelpSupport = {},
+            onOpenAboutApp = {},
+            onOpenContactUs = {},
         )
     }
 }

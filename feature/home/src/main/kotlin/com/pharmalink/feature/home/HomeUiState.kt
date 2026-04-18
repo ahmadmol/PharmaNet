@@ -1,5 +1,6 @@
 package com.pharmalink.feature.home
 
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.HomeStats
 import com.pharmalink.domain.model.Warehouse
 
@@ -9,6 +10,8 @@ sealed class HomeUiState {
         val userName: String,
         val stats: HomeStats?,
         val featuredWarehouses: List<Warehouse>,
+        val accountType: AccountType? = null,
+        val canAddMedicine: Boolean = false,
         val alertMessage: String? = null,
         val isLoadingMore: Boolean = false,
         val error: String? = null

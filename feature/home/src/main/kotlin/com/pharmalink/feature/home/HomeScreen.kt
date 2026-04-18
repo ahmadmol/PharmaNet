@@ -46,10 +46,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.FastOutSlowInEasing
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -63,7 +63,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -92,15 +94,12 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToHome: () -> Unit,
     onNavigateToOrders: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.loadHomeData()
-    }
 
     when (val state = uiState) {
         is HomeUiState.Loading -> HomeLoadingState()
@@ -108,11 +107,13 @@ fun HomeScreen(
             HomeContent(
                 uiState = state,
                 onNavigateToOrders = onNavigateToOrders,
+                onNavigateToNotifications = onNavigateToNotifications,
                 onNavigateToProfile = onNavigateToProfile,
                 onNavigateToWarehouses = onNavigateToWarehouses,
                 onNavigateToCreateRequest = onNavigateToCreateRequest,
             )
         }
+
         is HomeUiState.Error -> {
             HomeErrorState(
                 message = state.message,
@@ -126,6 +127,7 @@ fun HomeScreen(
 private fun HomeContent(
     uiState: HomeUiState.Success,
     onNavigateToOrders: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
@@ -149,17 +151,16 @@ private fun HomeContent(
                 HomeHeader(
                     userName = uiState.userName,
                     onProfileClick = onNavigateToProfile,
-                    onSearchClick = onNavigateToWarehouses,
-                    onNotificationsClick = onNavigateToOrders,
+                    onNotificationsClick = onNavigateToNotifications,
                 )
             }
             item { HomeSearchCard(onSearchClick = onNavigateToWarehouses) }
             item { SectionHeader(title = "لمحة اليوم") }
-            item { 
+            item {
                 HomeStatsSection(
                     stats = uiState.stats,
-                    isLoading = uiState.isLoadingMore
-                ) 
+                    isLoading = uiState.isLoadingMore,
+                )
             }
             if (!uiState.alertMessage.isNullOrBlank()) {
                 item {
@@ -171,14 +172,10 @@ private fun HomeContent(
             }
             item {
                 QuickActionsSection(
-                    onFallbackAction = { index ->
-                        when (index) {
-                            0 -> onNavigateToCreateRequest()
-                            1 -> onNavigateToWarehouses()
-                            2 -> onNavigateToProfile()
-                            3 -> onNavigateToOrders()
-                        }
-                    },
+                    canAddMedicine = uiState.canAddMedicine,
+                    onQuickRequestClick = onNavigateToCreateRequest,
+                    onChatClick = onNavigateToProfile,
+                    onReportsClick = onNavigateToOrders,
                 )
             }
             item {
@@ -197,11 +194,11 @@ private fun HomeContent(
     }
 }
 
+
 @Composable
 private fun HomeHeader(
     userName: String,
     onProfileClick: () -> Unit,
-    onSearchClick: () -> Unit,
     onNotificationsClick: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
@@ -242,7 +239,6 @@ private fun HomeHeader(
             )
         }
 
-        HeaderIconButton(Icons.Outlined.Search, stringResource(R.string.home_search_placeholder), onSearchClick)
         Box {
             HeaderIconButton(Icons.Outlined.Notifications, stringResource(R.string.home_alerts_title), onNotificationsClick)
             Box(
@@ -308,11 +304,12 @@ private fun HomeStatsSection(
     
     val displayStats = remember(stats) {
         listOf(
-            StatItem("الطلبات اليوم", stats?.requestsTodayCount?.toString() ?: "0", "", stats?.requestsTodayTrend ?: ""),
-            StatItem("المخزون الكلي", stats?.totalInventoryCount?.toString() ?: "0", "", stats?.totalInventoryUnit ?: ""),
-            StatItem("المبيعات", stats?.weeklySalesAmount ?: "0", "", stats?.weeklySalesTrend ?: ""),
+            StatItem("الطلبات اليوم", stats?.requestsTodayCount?.toString() ?: "—", "", stats?.requestsTodayTrend ?: ""),
+            StatItem("المخزون الكلي", stats?.totalInventoryCount?.toString() ?: "—", "", stats?.totalInventoryUnit.orEmpty()),
+            StatItem("المبيعات", stats?.weeklySalesAmount ?: "—", "", stats?.weeklySalesTrend.orEmpty()),
         )
     }
+
 
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(d.spaceM)) {
         displayStats.chunked(2).forEach { rowStats ->
@@ -431,15 +428,31 @@ private fun HomeAlertCard(message: String, onReviewClick: () -> Unit) {
 }
 
 @Composable
-private fun QuickActionsSection(onFallbackAction: (Int) -> Unit) {
+private fun QuickActionsSection(
+    canAddMedicine: Boolean,
+    onQuickRequestClick: () -> Unit,
+    onChatClick: () -> Unit,
+    onReportsClick: () -> Unit,
+) {
     val d = MaterialTheme.dimens
 
-    val actions = listOf(
-        QuickActionItem(icon = Icons.Filled.FastRewind, text = "طلب سريع", onClick = {}),
-        QuickActionItem(icon = Icons.Filled.Add, text = "إضافة دواء", onClick = {}),
-        QuickActionItem(icon = Icons.Filled.Chat, text = "تواصل", onClick = {}),
-        QuickActionItem(icon = Icons.Filled.Newspaper, text = "تقارير", onClick = {}),
-    )
+    val actions = remember(canAddMedicine, onQuickRequestClick, onChatClick, onReportsClick) {
+        buildList {
+            add(QuickActionItem(icon = Icons.Filled.FastRewind, text = "طلب سريع", onClick = onQuickRequestClick))
+            if (canAddMedicine) {
+                add(
+                    QuickActionItem(
+                        icon = Icons.Filled.Add,
+                        text = "إضافة دواء",
+                        onClick = null,
+                        enabled = false,
+                    ),
+                )
+            }
+            add(QuickActionItem(icon = Icons.Filled.Chat, text = "تواصل", onClick = onChatClick))
+            add(QuickActionItem(icon = Icons.Filled.Newspaper, text = "تقارير", onClick = onReportsClick))
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -451,13 +464,14 @@ private fun QuickActionsSection(onFallbackAction: (Int) -> Unit) {
             actions.forEachIndexed { index, action ->
                 QuickActionItemCard(
                     action = action,
-                    onClick = {
-                        action.onClick()
-                        onFallbackAction(index)
-                    },
                     modifier = Modifier.weight(1f),
                     isPrimary = index == 0,
                 )
+            }
+            if (actions.size < 4) {
+                repeat(4 - actions.size) {
+                    Spacer(Modifier.weight(1f))
+                }
             }
         }
     }
@@ -466,27 +480,31 @@ private fun QuickActionsSection(onFallbackAction: (Int) -> Unit) {
 private data class QuickActionItem(
     val icon: ImageVector,
     val text: String,
-    val onClick: () -> Unit
+    val onClick: (() -> Unit)?,
+    val enabled: Boolean = true,
 )
 
 @Composable
 private fun QuickActionItemCard(
     action: QuickActionItem,
-    onClick: () -> Unit,
     isPrimary: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
     val iconContainer = if (isPrimary) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
     val iconColor = if (isPrimary) MaterialTheme.colorScheme.onSecondaryContainer else PharmaBlue500
+    val interactionSource = remember { MutableInteractionSource() }
 
     Column(
         modifier = modifier
+            .graphicsLayer { alpha = if (action.enabled) 1f else 0.48f }
             .clip(RoundedCornerShape(d.radiusL))
+
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(),
-                onClick = onClick,
+                enabled = action.enabled && action.onClick != null,
+                interactionSource = interactionSource,
+                indication = if (action.enabled) ripple() else null,
+                onClick = { action.onClick?.invoke() },
             )
             .padding(vertical = d.spaceXS),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -508,6 +526,7 @@ private fun QuickActionItemCard(
         )
     }
 }
+
 
 @Composable
 private fun DashboardPanel(content: @Composable () -> Unit) {
@@ -1023,12 +1042,6 @@ private fun HomeHeaderPlaceholder() {
                 .clip(CircleShape)
                 .shimmerEffect()
         )
-        Spacer(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .shimmerEffect()
-        )
     }
 }
 
@@ -1039,6 +1052,7 @@ private fun HomeScreenPreview() {
         HomeScreen(
             onNavigateToHome = {},
             onNavigateToOrders = {},
+            onNavigateToNotifications = {},
             onNavigateToProfile = {},
             onNavigateToWarehouses = {},
             onNavigateToCreateRequest = {},

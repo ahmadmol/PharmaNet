@@ -86,11 +86,11 @@ class SupabasePharmaRepository @Inject constructor(
 
         HomeStats(
             requestsTodayCount = requestsCount,
-            requestsTodayTrend = "+5%",
-            totalInventoryCount = 1250, // Placeholder until inventory table is ready
-            totalInventoryUnit = "وحدة",
-            weeklySalesAmount = "12.5K",
-            weeklySalesTrend = "+3.2%",
+            requestsTodayTrend = "", // Empty trend until calculated
+            totalInventoryCount = null, // Unsupported until a verified backend contract exists
+            totalInventoryUnit = null,
+            weeklySalesAmount = null, // Unsupported until a verified backend contract exists
+            weeklySalesTrend = null,
             alertMessage = if (requestsCount > 10) "لديك عدد كبير من الطلبات المعلقة" else null
         )
     }
@@ -287,9 +287,13 @@ class SupabasePharmaRepository @Inject constructor(
     }
 
     private suspend fun fetchRequests(): Result<List<Request>> = runCatching {
-        supabase.postgrest.from("requests").select(columns = Columns.ALL).decodeList<RequestDto>()
+        val pharmacyId = resolvePharmacyId()
+        supabase.postgrest.from("requests").select(columns = Columns.ALL) {
+            filter { eq("pharmacy_id", pharmacyId) }
+        }.decodeList<RequestDto>()
             .map { it.toDomain().getOrThrow() }
     }
+
 
     private suspend fun fetchNotifications(): Result<List<AppNotification>> = runCatching {
         val pharmacyId = resolvePharmacyId()
@@ -333,10 +337,15 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun getRequest(requestId: String): Result<Request?> =
         runCatching {
+            val pharmacyId = resolvePharmacyId()
             supabase.postgrest.from("requests").select {
-                filter { eq("id", requestId) }
+                filter {
+                    eq("id", requestId)
+                    eq("pharmacy_id", pharmacyId)
+                }
             }.decodeList<RequestDto>().firstOrNull()?.toDomain()?.getOrThrow()
         }
+
 
     override suspend fun getWarehouseShipments(warehouseId: String): Result<List<WarehouseShipment>> = Result.success(emptyList())
 
