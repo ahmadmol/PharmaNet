@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.data.repository.PharmaRepository
+import com.pharmalink.domain.mapper.toUserIdentity
+import com.pharmalink.domain.model.AccountType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.combine
@@ -40,12 +42,20 @@ class ProfileViewModel @Inject constructor(
                 pharmaRepository.observeProfile(),
             ) { snapshot, profile ->
                 currentProfileId = profile.id
+                val userIdentity = snapshot?.toUserIdentity()
+                val displayName = userIdentity?.displayName ?: snapshot?.displayName.orEmpty()
+                val organizationNameFallback = when (snapshot?.accountType) {
+                    AccountType.WAREHOUSE -> snapshot.warehouseName.ifBlank { snapshot.pharmacyName }
+                    AccountType.PHARMACY -> snapshot.pharmacyName
+                    else -> ""
+                }
+                val organizationName = userIdentity?.organizationName ?: organizationNameFallback
                 ProfileUiState(
-                    userName = profile.managerName.ifBlank { snapshot?.displayName.orEmpty().ifBlank { "مستخدم" } },
+                    userName = profile.managerName.ifBlank { displayName.ifBlank { "مستخدم" } },
                     userEmail = profile.contactEmail.ifBlank { snapshot?.email.orEmpty() },
                     userPhone = profile.contactPhone.ifBlank { snapshot?.phoneNumber.orEmpty() },
                     accountType = snapshot?.accountType?.name?.replace('_', ' ').orEmpty(),
-                    pharmacyName = profile.pharmacyName.ifBlank { snapshot?.pharmacyName.orEmpty() },
+                    pharmacyName = profile.pharmacyName.ifBlank { organizationName },
                     pharmacyAddress = profile.addressLine,
                 )
             }.collect { state ->

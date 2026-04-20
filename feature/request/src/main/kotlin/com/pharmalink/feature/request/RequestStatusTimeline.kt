@@ -8,17 +8,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.Icon
@@ -30,14 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.RequestStatus
@@ -195,35 +188,35 @@ private fun TimelineStepItem(
 private fun timelineSteps(currentStatus: RequestStatus): List<TimelineStep> {
     val allSteps = listOf(
         TimelineStep(
-            status = RequestStatus.SUBMITTED,
+            status = RequestStatus.PENDING,
             title = stringResource(R.string.request_timeline_submitted_title),
             subtitle = stringResource(R.string.request_timeline_submitted_subtitle),
-            isCompleted = currentStatus != RequestStatus.DRAFT,
-            isCurrent = currentStatus == RequestStatus.SUBMITTED,
+            isCompleted = currentStatus != RequestStatus.DRAFT && currentStatus != RequestStatus.CANCELLED,
+            isCurrent = currentStatus == RequestStatus.PENDING,
             icon = Icons.Outlined.Schedule,
         ),
         TimelineStep(
-            status = RequestStatus.UNDER_REVIEW,
-            title = stringResource(R.string.request_timeline_review_title),
-            subtitle = stringResource(R.string.request_timeline_review_subtitle),
-            isCompleted = listOf(RequestStatus.APPROVED, RequestStatus.COMPLETED, RequestStatus.REJECTED).contains(currentStatus),
-            isCurrent = currentStatus == RequestStatus.UNDER_REVIEW,
-            icon = Icons.Outlined.Check,
-        ),
-        TimelineStep(
-            status = RequestStatus.APPROVED,
+            status = RequestStatus.ACCEPTED,
             title = stringResource(R.string.request_timeline_approved_title),
             subtitle = stringResource(R.string.request_timeline_approved_subtitle),
-            isCompleted = currentStatus == RequestStatus.COMPLETED,
-            isCurrent = currentStatus == RequestStatus.APPROVED,
+            isCompleted = currentStatus == RequestStatus.IN_PROGRESS || currentStatus == RequestStatus.FULFILLED,
+            isCurrent = currentStatus == RequestStatus.ACCEPTED,
             icon = Icons.Outlined.Check,
         ),
         TimelineStep(
-            status = RequestStatus.COMPLETED,
+            status = RequestStatus.IN_PROGRESS,
+            title = stringResource(R.string.request_timeline_review_title),
+            subtitle = stringResource(R.string.request_timeline_review_subtitle),
+            isCompleted = currentStatus == RequestStatus.FULFILLED,
+            isCurrent = currentStatus == RequestStatus.IN_PROGRESS,
+            icon = Icons.Outlined.Check,
+        ),
+        TimelineStep(
+            status = RequestStatus.FULFILLED,
             title = stringResource(R.string.request_timeline_completed_title),
             subtitle = stringResource(R.string.request_timeline_completed_subtitle),
-            isCompleted = currentStatus == RequestStatus.COMPLETED,
-            isCurrent = currentStatus == RequestStatus.COMPLETED,
+            isCompleted = currentStatus == RequestStatus.FULFILLED,
+            isCurrent = currentStatus == RequestStatus.FULFILLED,
             icon = Icons.Outlined.Inventory2,
         ),
     )
@@ -231,7 +224,7 @@ private fun timelineSteps(currentStatus: RequestStatus): List<TimelineStep> {
     return if (currentStatus == RequestStatus.REJECTED) {
         listOf(
             TimelineStep(
-                status = RequestStatus.SUBMITTED,
+                status = RequestStatus.PENDING,
                 title = stringResource(R.string.request_timeline_submitted_title),
                 subtitle = stringResource(R.string.request_timeline_submitted_subtitle),
                 isCompleted = true,

@@ -61,6 +61,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pharmalink.designsystem.stitch.StitchTheme
 import com.pharmalink.designsystem.stitch.components.StitchButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.designsystem.theme.PharmaBlue50
 import com.pharmalink.designsystem.theme.PharmaBlue500
@@ -69,6 +71,7 @@ import com.pharmalink.designsystem.theme.PharmaNeutral600
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.domain.model.AccountType
 
 private val warehouseCategories = listOf(
     "الكل",
@@ -80,10 +83,17 @@ private val warehouseCategories = listOf(
 @Composable
 fun WarehousesScreen(
     viewModel: WarehousesViewModel = hiltViewModel(),
+    accountType: AccountType? = null,
     onWarehouseClick: (String) -> Unit = {},
+    onViewIncomingRequests: () -> Unit = {},
 ) {
+    val screenTitle = when (accountType) {
+        AccountType.WAREHOUSE -> "المستودعات في الشبكة"
+        else -> "المستودعات المتاحة"
+    }
     val uiState by viewModel.uiState.collectAsState()
     var selectedCategory by remember { mutableStateOf(warehouseCategories.first()) }
+    val isWarehouse = accountType == AccountType.WAREHOUSE
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         when {
@@ -106,6 +116,8 @@ fun WarehousesScreen(
                     selectedCategory = selectedCategory,
                     onCategorySelected = { selectedCategory = it },
                     onWarehouseClick = onWarehouseClick,
+                    isWarehouse = isWarehouse,
+                    onViewIncomingRequests = onViewIncomingRequests,
                 )
             }
         }
@@ -119,6 +131,8 @@ private fun WarehousesContent(
     selectedCategory: String,
     onCategorySelected: (String) -> Unit,
     onWarehouseClick: (String) -> Unit,
+    isWarehouse: Boolean = false,
+    onViewIncomingRequests: () -> Unit = {},
 ) {
     val d = MaterialTheme.dimens
 
@@ -182,6 +196,8 @@ private fun WarehousesContent(
                 item = item,
                 modifier = Modifier.padding(horizontal = d.spaceL),
                 onWarehouseClick = onWarehouseClick,
+                isWarehouse = isWarehouse,
+                onViewIncomingRequests = onViewIncomingRequests,
             )
         }
         item {
@@ -280,7 +296,14 @@ private fun WarehouseCard(
     item: WarehouseItem,
     modifier: Modifier = Modifier,
     onWarehouseClick: (String) -> Unit,
+    isWarehouse: Boolean = false,
+    onViewIncomingRequests: () -> Unit = {},
 ) {
+    val actionText = if (isWarehouse) {
+        "عرض الطلبات الواردة"
+    } else {
+        "اطلب الآن"
+    }
     val d = MaterialTheme.dimens
     val statusLabel = statusLabel(item.statusType)
     val statusColor = statusColor(item.statusType)
@@ -289,10 +312,16 @@ private fun WarehouseCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(),
-                onClick = { onWarehouseClick(item.id) },
+            .then(
+                if (!isWarehouse) {
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(),
+                        onClick = { onWarehouseClick(item.id) },
+                    )
+                } else {
+                    Modifier
+                }
             ),
         shape = RoundedCornerShape(d.radiusXXL),
         color = MaterialTheme.colorScheme.surface,
@@ -411,6 +440,24 @@ private fun WarehouseCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+            }
+
+            Button(
+                onClick = {
+                    if (isWarehouse) {
+                        onViewIncomingRequests()
+                    } else {
+                        onWarehouseClick(item.id)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isWarehouse) PharmaBlue500 else PharmaBlue500,
+                    contentColor = Color.White,
+                ),
+                enabled = true,
+            ) {
+                Text(actionText)
             }
         }
     }

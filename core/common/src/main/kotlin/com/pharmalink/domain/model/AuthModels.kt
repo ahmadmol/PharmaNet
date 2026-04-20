@@ -82,6 +82,9 @@ fun SignUpRequest.toProfileData(): Map<String, String> = buildMap {
         AccountType.PUBLIC_USER -> {
             // لا حقول إضافية
         }
+        AccountType.ADMIN -> {
+            // لا حقول إضافية للمسؤول
+        }
     }
 }
 

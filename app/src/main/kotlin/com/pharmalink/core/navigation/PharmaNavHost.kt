@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.pharmalink.core.common.ui.UiState
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.AuthSessionState
 import com.pharmalink.feature.auth.AuthViewModel
 import com.pharmalink.feature.auth.LoginViewModel
@@ -39,6 +40,9 @@ fun PharmaNavHost(
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
     val splashState by splashViewModel.uiState.collectAsStateWithLifecycle()
     val logoutState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val userSnapshot by authViewModel.userSnapshot.collectAsStateWithLifecycle()
+
+    val accountType = userSnapshot?.accountType
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
@@ -46,16 +50,18 @@ fun PharmaNavHost(
         splashViewModel.checkSession()
     }
 
-    LaunchedEffect(authState, currentRoute, splashState.isLoading) {
+    LaunchedEffect(authState, currentRoute, splashState.isLoading, userSnapshot, splashState.errorMessage) {
         if (splashState.isLoading || authState is AuthSessionState.Loading || currentRoute == null) {
             return@LaunchedEffect
         }
 
         val hasAuthenticatedSession = authState is AuthSessionState.Authenticated
+        val hasResolvedSnapshot = userSnapshot != null
+        val canEnterMainTabs = hasAuthenticatedSession && hasResolvedSnapshot && splashState.errorMessage == null
 
         when {
             currentRoute == AppDestination.Splash.route -> {
-                val destination = if (hasAuthenticatedSession) {
+                val destination = if (canEnterMainTabs) {
                     AppDestination.MainTabs.route
                 } else {
                     AppDestination.Login.route
@@ -66,7 +72,7 @@ fun PharmaNavHost(
                 }
             }
 
-            !hasAuthenticatedSession &&
+            (!hasAuthenticatedSession || !hasResolvedSnapshot) &&
                 currentRoute == AppDestination.MainTabs.route -> {
                 navController.navigate(AppDestination.Login.route) {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -74,7 +80,7 @@ fun PharmaNavHost(
                 }
             }
 
-            hasAuthenticatedSession && currentRoute in authRoutes -> {
+            canEnterMainTabs && currentRoute in authRoutes -> {
                 navController.navigate(AppDestination.MainTabs.route) {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                     launchSingleTop = true
@@ -150,10 +156,17 @@ fun PharmaNavHost(
         }
 
         composable(AppDestination.MainTabs.route) {
+            val mainTabsStartDestination = if (accountType == AccountType.WAREHOUSE) {
+                AppDestination.Resources.route
+            } else {
+                AppDestination.Home.route
+            }
             PharmaNavigator(
                 onProfileLogout = {
                     authViewModel.logout()
                 },
+                startDestination = mainTabsStartDestination,
+                accountType = accountType   // ← مهم جداً
             )
         }
     }

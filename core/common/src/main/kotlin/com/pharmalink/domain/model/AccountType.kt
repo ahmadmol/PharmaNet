@@ -7,4 +7,5 @@ enum class AccountType {
     PUBLIC_USER,
     PHARMACY,
     WAREHOUSE,
+    ADMIN,
 }

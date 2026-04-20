@@ -482,7 +482,7 @@ private fun ProfileSettingRow(
     val isLanguage = item.isLanguage()
     val badgeText = when {
         isLanguage -> languagePreview
-        item.isAbout() -> "v2.4"
+        item.isAbout() -> "متاح"
         item.isNotification() -> "مفعل"
         item.isHelpSupport() || item.isContact() || item.isSecurity() -> "متاح"
         else -> "متاح"

@@ -255,22 +255,25 @@ private fun StitchRequestActivityRow(
 @Composable
 private fun requestChipSpec(request: Request): Pair<String, StatusTone> {
     val urgentActive = request.priority == RequestPriority.URGENT &&
-        request.status != RequestStatus.COMPLETED &&
-        request.status != RequestStatus.REJECTED
+        request.status != RequestStatus.FULFILLED &&
+        request.status != RequestStatus.REJECTED &&
+        request.status != RequestStatus.CANCELLED
     if (urgentActive) {
         return stringResource(R.string.home_priority_urgent_chip) to StatusTone.Urgent
     }
     val label = when (request.status) {
         RequestStatus.DRAFT -> stringResource(R.string.home_status_draft)
-        RequestStatus.SUBMITTED -> stringResource(R.string.home_status_submitted)
-        RequestStatus.UNDER_REVIEW -> stringResource(R.string.home_status_under_review)
-        RequestStatus.APPROVED -> stringResource(R.string.home_status_approved)
-        RequestStatus.COMPLETED -> stringResource(R.string.home_status_completed)
+        RequestStatus.PENDING -> stringResource(R.string.home_status_submitted)
+        RequestStatus.IN_PROGRESS -> stringResource(R.string.home_status_under_review)
+        RequestStatus.ACCEPTED -> stringResource(R.string.home_status_approved)
+        RequestStatus.FULFILLED -> stringResource(R.string.home_status_completed)
         RequestStatus.REJECTED -> stringResource(R.string.home_status_rejected)
+        RequestStatus.CANCELLED -> stringResource(R.string.home_status_rejected) // Reuse rejected string for cancelled
     }
     val tone = when (request.status) {
-        RequestStatus.COMPLETED -> StatusTone.Success
+        RequestStatus.FULFILLED -> StatusTone.Success
         RequestStatus.REJECTED -> StatusTone.Warning
+        RequestStatus.CANCELLED -> StatusTone.Warning
         RequestStatus.DRAFT -> StatusTone.Neutral
         else -> StatusTone.Pending
     }

@@ -29,6 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,7 +53,9 @@ import com.pharmalink.designsystem.components.PharmaStateTone
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Request
+import com.pharmalink.domain.model.RequestStatus
 
 @Composable
 fun RequestDetailsScreen(
@@ -98,6 +101,11 @@ fun RequestDetailsScreen(
             RequestDetailsContent(
                 request = request,
                 onOpenOrder = onOpenOrder,
+                accountType = state.accountType,
+                isActionInProgress = state.isActionInProgress,
+                actionErrorMessage = state.actionErrorMessage,
+                onWarehouseAction = viewModel::updateRequestStatus,
+                onDismissActionError = viewModel::clearActionError,
             )
         }
     }
@@ -107,6 +115,11 @@ fun RequestDetailsScreen(
 private fun RequestDetailsContent(
     request: Request,
     onOpenOrder: (String) -> Unit,
+    accountType: AccountType?,
+    isActionInProgress: Boolean,
+    actionErrorMessage: String?,
+    onWarehouseAction: (RequestStatus) -> Unit,
+    onDismissActionError: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
 
@@ -124,6 +137,17 @@ private fun RequestDetailsContent(
             RequestStatusTimeline(
                 currentStatus = request.status,
                 modifier = Modifier.padding(vertical = d.spaceM),
+            )
+        }
+
+        item {
+            WarehouseLifecycleActionsCard(
+                accountType = accountType,
+                requestStatus = request.status,
+                isActionInProgress = isActionInProgress,
+                actionErrorMessage = actionErrorMessage,
+                onWarehouseAction = onWarehouseAction,
+                onDismissActionError = onDismissActionError,
             )
         }
         
@@ -149,6 +173,119 @@ private fun RequestDetailsContent(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun WarehouseLifecycleActionsCard(
+    accountType: AccountType?,
+    requestStatus: RequestStatus,
+    isActionInProgress: Boolean,
+    actionErrorMessage: String?,
+    onWarehouseAction: (RequestStatus) -> Unit,
+    onDismissActionError: () -> Unit,
+) {
+    if (accountType != AccountType.WAREHOUSE) return
+    val actions = warehouseActionsForStatus(requestStatus)
+    if (actions.isEmpty()) return
+    val d = MaterialTheme.dimens
+
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Text(
+                text = stringResource(R.string.request_details_warehouse_actions_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            if (isActionInProgress) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text(
+                        text = stringResource(R.string.request_action_updating),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            actions.forEach { action ->
+                PharmaButton(
+                    text = stringResource(action.labelRes),
+                    onClick = { onWarehouseAction(action.targetStatus) },
+                    enabled = !isActionInProgress,
+                    style = action.style,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            if (!actionErrorMessage.isNullOrBlank()) {
+                Text(
+                    text = actionErrorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                PharmaButton(
+                    text = stringResource(R.string.request_dismiss_error),
+                    onClick = onDismissActionError,
+                    enabled = !isActionInProgress,
+                    style = PharmaButtonStyle.Outlined,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+private data class WarehouseActionUi(
+    val targetStatus: RequestStatus,
+    val labelRes: Int,
+    val style: PharmaButtonStyle,
+)
+
+@Composable
+private fun warehouseActionsForStatus(status: RequestStatus): List<WarehouseActionUi> {
+    return when (status) {
+        RequestStatus.PENDING -> listOf(
+            WarehouseActionUi(
+                targetStatus = RequestStatus.ACCEPTED,
+                labelRes = R.string.request_action_accept,
+                style = PharmaButtonStyle.GradientAccent,
+            ),
+            WarehouseActionUi(
+                targetStatus = RequestStatus.REJECTED,
+                labelRes = R.string.request_action_reject,
+                style = PharmaButtonStyle.Outlined,
+            ),
+        )
+        RequestStatus.ACCEPTED -> listOf(
+            WarehouseActionUi(
+                targetStatus = RequestStatus.IN_PROGRESS,
+                labelRes = R.string.request_action_start_processing,
+                style = PharmaButtonStyle.GradientAccent,
+            ),
+        )
+        RequestStatus.IN_PROGRESS -> listOf(
+            WarehouseActionUi(
+                targetStatus = RequestStatus.FULFILLED,
+                labelRes = R.string.request_action_mark_fulfilled,
+                style = PharmaButtonStyle.GradientAccent,
+            ),
+        )
+        RequestStatus.REJECTED, RequestStatus.FULFILLED, RequestStatus.CANCELLED, RequestStatus.DRAFT -> emptyList()
     }
 }
 
@@ -410,4 +547,3 @@ private data class InfoItem(
     val label: String,
     val value: String,
 )
-

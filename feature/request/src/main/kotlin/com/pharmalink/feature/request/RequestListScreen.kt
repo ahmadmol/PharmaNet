@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Request
 import com.pharmalink.feature.request.R
 import com.pharmalink.domain.model.RequestStatus
@@ -60,6 +61,12 @@ fun RequestListScreen(
     viewModel: RequestListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isPharmacyUser = uiState.accountType == AccountType.PHARMACY
+    val headerTitle = if (uiState.accountType == AccountType.WAREHOUSE) {
+        stringResource(R.string.request_list_incoming_title)
+    } else {
+        stringResource(R.string.request_list_title)
+    }
 
     LaunchedEffect(uiState.errorMessage) {
         // Handle error display if needed
@@ -77,13 +84,15 @@ fun RequestListScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(R.string.request_list_title),
+                text = headerTitle,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
-            
-            Button(onClick = onNavigateToCreateRequest) {
-                Text(stringResource(R.string.request_create_new))
+
+            if (isPharmacyUser) {
+                Button(onClick = onNavigateToCreateRequest) {
+                    Text(stringResource(R.string.request_create_new))
+                }
             }
         }
 
@@ -156,18 +165,24 @@ fun RequestListScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = stringResource(R.string.request_empty_subtitle),
+                            text = if (isPharmacyUser) {
+                                stringResource(R.string.request_empty_subtitle)
+                            } else {
+                                stringResource(R.string.request_empty_incoming_subtitle)
+                            },
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
-                        
-                        Spacer(modifier = Modifier.height(MaterialTheme.dimens.spaceM))
-                        
-                        Button(
-                            onClick = { onNavigateToCreateRequest() }
-                        ) {
-                            Text(stringResource(R.string.request_create_first))
+
+                        if (isPharmacyUser) {
+                            Spacer(modifier = Modifier.height(MaterialTheme.dimens.spaceM))
+
+                            Button(
+                                onClick = { onNavigateToCreateRequest() }
+                            ) {
+                                Text(stringResource(R.string.request_create_first))
+                            }
                         }
                     }
                 }
@@ -210,11 +225,12 @@ private fun RequestStatusFilter(
 ) {
     val statuses = listOf(
         null to stringResource(R.string.request_filter_all),
-        RequestStatus.SUBMITTED to stringResource(R.string.request_status_submitted),
-        RequestStatus.UNDER_REVIEW to stringResource(R.string.request_status_under_review),
-        RequestStatus.APPROVED to stringResource(R.string.request_status_approved),
-        RequestStatus.COMPLETED to stringResource(R.string.request_status_completed),
-        RequestStatus.REJECTED to stringResource(R.string.request_status_rejected)
+        RequestStatus.PENDING to stringResource(R.string.request_status_submitted),
+        RequestStatus.ACCEPTED to stringResource(R.string.request_status_approved),
+        RequestStatus.IN_PROGRESS to stringResource(R.string.request_status_under_review),
+        RequestStatus.FULFILLED to stringResource(R.string.request_status_completed),
+        RequestStatus.REJECTED to stringResource(R.string.request_status_rejected),
+        RequestStatus.CANCELLED to stringResource(R.string.request_status_cancelled),
     )
 
     Row(
@@ -300,7 +316,7 @@ private fun RequestItemCard(
                 )
                 
                 Text(
-                    text = request.status.name,
+                    text = statusLabel(request.status),
                     style = MaterialTheme.typography.bodySmall,
                     color = getStatusColor(request.status)
                 )
@@ -319,12 +335,24 @@ private fun RequestItemCard(
 
 @Composable
 private fun getStatusColor(status: RequestStatus) = when (status) {
-    RequestStatus.SUBMITTED -> MaterialTheme.colorScheme.primary
-    RequestStatus.UNDER_REVIEW -> MaterialTheme.colorScheme.tertiary
-    RequestStatus.APPROVED -> MaterialTheme.colorScheme.primary
-    RequestStatus.COMPLETED -> MaterialTheme.colorScheme.primary
+    RequestStatus.PENDING -> MaterialTheme.colorScheme.primary
+    RequestStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
+    RequestStatus.ACCEPTED -> MaterialTheme.colorScheme.primary
+    RequestStatus.FULFILLED -> MaterialTheme.colorScheme.primary
     RequestStatus.REJECTED -> MaterialTheme.colorScheme.error
+    RequestStatus.CANCELLED -> MaterialTheme.colorScheme.onSurfaceVariant
     else -> MaterialTheme.colorScheme.onSurface
+}
+
+@Composable
+private fun statusLabel(status: RequestStatus): String = when (status) {
+    RequestStatus.PENDING -> stringResource(R.string.request_status_submitted)
+    RequestStatus.ACCEPTED -> stringResource(R.string.request_status_approved)
+    RequestStatus.IN_PROGRESS -> stringResource(R.string.request_status_under_review)
+    RequestStatus.FULFILLED -> stringResource(R.string.request_status_completed)
+    RequestStatus.REJECTED -> stringResource(R.string.request_status_rejected)
+    RequestStatus.CANCELLED -> stringResource(R.string.request_status_cancelled)
+    RequestStatus.DRAFT -> stringResource(R.string.request_status_draft)
 }
 
 @Composable

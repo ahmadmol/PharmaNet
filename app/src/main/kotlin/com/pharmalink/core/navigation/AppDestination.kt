@@ -19,6 +19,7 @@ sealed class AppDestination(
     data object MainTabs : AppDestination("main_tabs")
     data object Home : AppDestination("home")
     data object Resources : AppDestination("resources")
+    data object FeaturedWarehouses : AppDestination("featured_warehouses")
     data object CreateRequest : AppDestination("create_request")
     data object Orders : AppDestination("orders")
     data object Profile : AppDestination("profile")

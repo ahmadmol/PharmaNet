@@ -27,6 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 
 @Singleton
 class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
@@ -41,6 +42,10 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
 
     override fun observeOrders(): Flow<List<Order>> = orders.asStateFlow()
     override fun observeRequests(): Flow<List<Request>> = requests.asStateFlow()
+
+    override fun observeIncomingRequestsForWarehouse(warehouseId: String): Flow<List<Request>> =
+        requests.asStateFlow().map { list -> list.filter { it.warehouseId == warehouseId } }
+
     override fun observeWarehouses(): Flow<List<Warehouse>> = warehouses.asStateFlow()
     override fun observeNotifications(): Flow<List<AppNotification>> = notifications.asStateFlow()
     override fun observeProfile(): Flow<PharmacyProfile> = profile.asStateFlow()
@@ -91,7 +96,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             warehouseId = warehouse.id,
             warehouseName = warehouse.name,
             supplierName = warehouse.name,
-            status = RequestStatus.SUBMITTED,
+            status = RequestStatus.PENDING,
             createdAtLabel = "الآن",
             updatedAtLabel = "تم الإرسال الآن",
             relatedOrderId = orderId,
@@ -153,10 +158,17 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         return Result.success(Unit)
     }
 
-    override suspend fun updateRequest(request: Request): Result<Request> {
-        val idx = requests.value.indexOfFirst { it.id == request.id }
+    override suspend fun updateRequest(requestId: String, updates: com.pharmalink.domain.model.RequestUpdate): Result<Request> {
+        val idx = requests.value.indexOfFirst { it.id == requestId }
         return if (idx >= 0) {
-            val updated = request.copy(updatedAtLabel = "الآن")
+            val current = requests.value[idx]
+            val updated = current.copy(
+                status = updates.status ?: current.status,
+                warehouseId = updates.warehouseId ?: current.warehouseId,
+                warehouseName = updates.warehouseName ?: current.warehouseName,
+                notes = updates.notes ?: current.notes,
+                updatedAtLabel = "الآن"
+            )
             val mutable = requests.value.toMutableList()
             mutable[idx] = updated
             requests.value = mutable
@@ -177,7 +189,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         val idx = requests.value.indexOfFirst { it.id == requestId }
         return if (idx >= 0) {
             val mutable = requests.value.toMutableList()
-            mutable[idx] = mutable[idx].copy(status = RequestStatus.SUBMITTED, updatedAtLabel = "الآن")
+            mutable[idx] = mutable[idx].copy(status = RequestStatus.PENDING, updatedAtLabel = "الآن")
             requests.value = mutable
             Result.success(Unit)
         } else {
@@ -313,6 +325,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     private fun sampleRequests(): List<Request> = listOf(
         Request(
             id = "REQ-1284",
+            pharmacyId = "pharmacy_1",
             medicineName = "باراسيتامول 500 ملغ",
             medicineSubtitle = "",
             quantity = 2,
@@ -320,7 +333,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             notes = "نحتاج مخزون الأطفال قبل الفترة المسائية.",
             storageNotes = "",
             priority = RequestPriority.URGENT,
-            status = RequestStatus.UNDER_REVIEW,
+            status = RequestStatus.PENDING,
             warehouseId = "w1",
             warehouseName = "مستودع الشفاء",
             supplierName = "مستودع الشفاء",
@@ -330,6 +343,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         ),
         Request(
             id = "REQ-1283",
+            pharmacyId = "pharmacy_1",
             medicineName = "أموكسيسيلين شراب",
             medicineSubtitle = "",
             quantity = 1,
@@ -337,7 +351,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             notes = "إعادة تعبئة اعتيادية لنهاية الأسبوع.",
             storageNotes = "",
             priority = RequestPriority.NORMAL,
-            status = RequestStatus.APPROVED,
+            status = RequestStatus.ACCEPTED,
             warehouseId = "w2",
             warehouseName = "مستودع النور",
             supplierName = "مستودع النور",
@@ -347,6 +361,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         ),
         Request(
             id = "REQ-1282",
+            pharmacyId = "pharmacy_1",
             medicineName = "فيتامين د3",
             medicineSubtitle = "",
             quantity = 3,
@@ -354,7 +369,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             notes = "مخزون وقائي شهري.",
             storageNotes = "",
             priority = RequestPriority.NORMAL,
-            status = RequestStatus.COMPLETED,
+            status = RequestStatus.FULFILLED,
             warehouseId = "w3",
             warehouseName = "مستودع الأمل",
             supplierName = "مستودع الأمل",

@@ -1,6 +1,7 @@
 package com.pharmalink.core.datastore
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.userSnapshotDataStore: DataStore<Preferences> by preferencesDataStore(name = "user_snapshot")
+private const val TAG = "UserSnapshotStore"
 
 @Singleton
 class UserSnapshotStore @Inject constructor(
@@ -29,8 +31,12 @@ class UserSnapshotStore @Inject constructor(
         val userId = stringPreferencesKey("user_id")
         val phoneNumber = stringPreferencesKey("phone_number")
         val email = stringPreferencesKey("email")
+        // Legacy compatibility carrier keys (kept intentionally for migration safety).
         val pharmacyId = stringPreferencesKey("pharmacy_id")
         val pharmacyName = stringPreferencesKey("pharmacy_name")
+        // Role-native warehouse keys (Phase 2 additive).
+        val warehouseId = stringPreferencesKey("warehouse_id")
+        val warehouseName = stringPreferencesKey("warehouse_name")
         val accountType = stringPreferencesKey("account_type")
         val displayName = stringPreferencesKey("display_name")
     }
@@ -55,6 +61,8 @@ class UserSnapshotStore @Inject constructor(
             preferences[Keys.email] = snapshot.email
             preferences[Keys.pharmacyId] = snapshot.pharmacyId
             preferences[Keys.pharmacyName] = snapshot.pharmacyName
+            preferences[Keys.warehouseId] = snapshot.warehouseId
+            preferences[Keys.warehouseName] = snapshot.warehouseName
             preferences[Keys.accountType] = snapshot.accountType.name
             preferences[Keys.displayName] = snapshot.displayName
         }
@@ -70,18 +78,47 @@ class UserSnapshotStore @Inject constructor(
             return null
         }
 
+        val rawAccountType = preferences[Keys.accountType].orEmpty().trim()
+        if (rawAccountType.isBlank()) {
+            Log.w(TAG, "Discarding persisted snapshot for user=$userId because account_type is missing.")
+            return null
+        }
         val accountType = runCatching {
-            AccountType.valueOf(preferences[Keys.accountType].orEmpty())
-        }.getOrDefault(AccountType.PHARMACY)
+            AccountType.valueOf(rawAccountType)
+        }.getOrElse { error ->
+            Log.w(TAG, "Discarding persisted snapshot for user=$userId because account_type='$rawAccountType' is invalid.", error)
+            return null
+        }
+
+        val persistedPharmacyId = preferences[Keys.pharmacyId].orEmpty()
+        val persistedPharmacyName = preferences[Keys.pharmacyName].orEmpty()
+        val persistedWarehouseId = preferences[Keys.warehouseId].orEmpty()
+        val persistedWarehouseName = preferences[Keys.warehouseName].orEmpty()
+        // Phase 3 compatibility hydration:
+        // old snapshots may only have legacy carrier fields for WAREHOUSE.
+        val resolvedWarehouseId = if (accountType == AccountType.WAREHOUSE) {
+            persistedWarehouseId.ifBlank { persistedPharmacyId }
+        } else {
+            persistedWarehouseId
+        }
+        val resolvedWarehouseName = if (accountType == AccountType.WAREHOUSE) {
+            persistedWarehouseName.ifBlank { persistedPharmacyName }
+        } else {
+            persistedWarehouseName
+        }
 
         return UserSnapshot(
             userId = userId,
             phoneNumber = preferences[Keys.phoneNumber].orEmpty(),
             email = preferences[Keys.email].orEmpty(),
-            pharmacyId = preferences[Keys.pharmacyId].orEmpty(),
-            pharmacyName = preferences[Keys.pharmacyName].orEmpty(),
+            pharmacyId = persistedPharmacyId,
+            pharmacyName = persistedPharmacyName,
+            // Old snapshots do not have warehouse_* keys; hydrate from carrier for WAREHOUSE only.
+            warehouseId = resolvedWarehouseId,
+            warehouseName = resolvedWarehouseName,
             accountType = accountType,
             displayName = preferences[Keys.displayName].orEmpty(),
         )
     }
 }
+

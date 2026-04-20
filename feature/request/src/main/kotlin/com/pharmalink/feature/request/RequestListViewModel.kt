@@ -3,7 +3,10 @@ package com.pharmalink.feature.request
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.data.repository.PharmaRepository
+import com.pharmalink.domain.mapper.toUserIdentity
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,12 +23,14 @@ data class RequestListUiState(
     val requests: List<Request> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val selectedStatus: RequestStatus? = null
+    val selectedStatus: RequestStatus? = null,
+    val accountType: AccountType? = null,
 )
 
 @HiltViewModel
 class RequestListViewModel @Inject constructor(
     private val pharmaRepository: PharmaRepository,
+    private val authRepository: AuthRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -43,7 +48,30 @@ class RequestListViewModel @Inject constructor(
         requestsJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-            pharmaRepository.observeRequests()
+            // Get user identity for role-based flow selection
+            val userSnapshot = authRepository.getUserSnapshot()
+            val userIdentity = userSnapshot?.toUserIdentity()
+            val accountType = userIdentity?.role ?: userSnapshot?.accountType
+            val warehouseId = userIdentity?.organizationId
+            _uiState.value = _uiState.value.copy(accountType = accountType)
+
+            if (accountType == AccountType.WAREHOUSE && warehouseId.isNullOrBlank()) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    requests = emptyList(),
+                    errorMessage = context.getString(R.string.error_permission),
+                )
+                return@launch
+            }
+
+            // Select appropriate data flow based on account type
+            val requestsFlow = if (accountType == AccountType.WAREHOUSE && !warehouseId.isNullOrBlank()) {
+                pharmaRepository.observeIncomingRequestsForWarehouse(warehouseId)
+            } else {
+                pharmaRepository.observeRequests()
+            }
+
+            requestsFlow
                 .catch { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

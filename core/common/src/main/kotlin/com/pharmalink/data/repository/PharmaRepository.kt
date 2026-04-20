@@ -9,6 +9,7 @@ import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
 import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.Request
+import com.pharmalink.domain.model.RequestUpdate
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.domain.model.WarehouseShipment
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +24,8 @@ interface PharmaRepository {
     fun observeOrders(): Flow<List<Order>>
 
     fun observeRequests(): Flow<List<Request>>
+
+    fun observeIncomingRequestsForWarehouse(warehouseId: String): Flow<List<Request>>
 
     fun observeWarehouses(): Flow<List<Warehouse>>
 
@@ -50,7 +53,7 @@ interface PharmaRepository {
 
     suspend fun createRequest(request: Request): Result<Request>
 
-    suspend fun updateRequest(request: Request): Result<Request>
+    suspend fun updateRequest(requestId: String, updates: RequestUpdate): Result<Request>
 
     suspend fun deleteRequest(requestId: String): Result<Unit>
 

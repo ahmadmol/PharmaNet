@@ -146,7 +146,14 @@ class SupabaseAuthRepository @Inject constructor(
                         val userInfo = status.session.user
                             ?: auth.currentUserOrNull()
                             ?: return@map AuthSessionState.Unauthenticated
-                        AuthSessionState.Authenticated(mapUser(userInfo))
+                        runCatching { mapUser(userInfo) }
+                            .onFailure { error ->
+                                Log.e("AUTH_DEBUG", "Invalid authenticated user metadata for ${userInfo.id}; forcing Unauthenticated.", error)
+                            }
+                            .fold(
+                                onSuccess = { AuthSessionState.Authenticated(it) },
+                                onFailure = { AuthSessionState.Unauthenticated },
+                            )
                     }
                     is SessionStatus.NotAuthenticated -> AuthSessionState.Unauthenticated
                     is SessionStatus.RefreshFailure -> AuthSessionState.Unauthenticated
@@ -176,16 +183,50 @@ class SupabaseAuthRepository @Inject constructor(
             throw MissingPharmacyLinkageException(authUser.id)
         }
 
+        val accountType = parsePersistedAccountType(
+            value = profileRow.accountType,
+            userId = authUser.id,
+        )
+
+        // Phase 3 role-native session adoption:
+        // Prefer explicit warehouse fields first; keep pharmacy_* as temporary compatibility carrier.
+        val resolvedWarehouseId = profileRow.warehouseId.orEmpty()
+            .ifBlank { profileRow.pharmacyId.orEmpty() }
+        val resolvedWarehouseName = profileRow.warehouseName.orEmpty()
+            .ifBlank { user.warehouseName }
+            .ifBlank { profileRow.pharmacyName.orEmpty() }
+        val resolvedPharmacyName = profileRow.pharmacyName.orEmpty()
+            .ifBlank { user.pharmacyName }
+
         val snapshot = UserSnapshot(
             userId = authUser.id,
             phoneNumber = user.phoneNumber,
             email = authUser.email.orEmpty(),
-            pharmacyId = profileRow.pharmacyId.orEmpty(),
-            pharmacyName = profileRow.pharmacyName.orEmpty().ifBlank { user.pharmacyName },
-            accountType = parsePersistedAccountType(
-                value = profileRow.accountType,
-                userId = authUser.id,
-            ),
+            // Compatibility mode:
+            // - PHARMACY uses pharmacy fields as native source.
+            // - WAREHOUSE dual-writes both explicit warehouse fields and legacy pharmacy carrier.
+            // - PUBLIC_USER/ADMIN remain organization-empty.
+            pharmacyId = when (accountType) {
+                AccountType.WAREHOUSE -> resolvedWarehouseId
+                AccountType.ADMIN -> ""
+                AccountType.PUBLIC_USER -> ""
+                else -> profileRow.pharmacyId.orEmpty()
+            },
+            pharmacyName = when (accountType) {
+                AccountType.WAREHOUSE -> resolvedWarehouseName
+                AccountType.ADMIN -> ""
+                AccountType.PUBLIC_USER -> ""
+                else -> resolvedPharmacyName
+            },
+            warehouseId = when (accountType) {
+                AccountType.WAREHOUSE -> resolvedWarehouseId
+                else -> ""
+            },
+            warehouseName = when (accountType) {
+                AccountType.WAREHOUSE -> resolvedWarehouseName
+                else -> ""
+            },
+            accountType = accountType,
             displayName = profileRow.fullName.orEmpty().ifBlank { user.fullName },
         )
         saveUserSnapshot(snapshot).getOrThrow()
@@ -263,9 +304,18 @@ class SupabaseAuthRepository @Inject constructor(
             info.email?.substringBefore("@")?.let { "+$it" } ?: ""
         }
 
+        val rawAccountType = metaString("account_type").trim()
         val accountType = runCatching {
-            AccountType.valueOf(metaString("account_type"))
-        }.getOrDefault(AccountType.PHARMACY)
+            require(rawAccountType.isNotBlank()) {
+                "User metadata account_type is missing for user ${info.id}."
+            }
+            AccountType.valueOf(rawAccountType)
+        }.getOrElse { cause ->
+            throw IllegalStateException(
+                "User ${info.id} has invalid account_type metadata '$rawAccountType'.",
+                cause,
+            )
+        }
 
         return User(
             id = info.id,
@@ -320,4 +370,6 @@ private data class ProfileRowDto(
     @SerialName("account_type") val accountType: String? = null,
     @SerialName("pharmacy_id") val pharmacyId: String? = null,
     @SerialName("pharmacy_name") val pharmacyName: String? = null,
+    @SerialName("warehouse_id") val warehouseId: String? = null,
+    @SerialName("warehouse_name") val warehouseName: String? = null,
 )

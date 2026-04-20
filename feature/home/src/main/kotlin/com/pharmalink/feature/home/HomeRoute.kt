@@ -16,6 +16,7 @@ fun NavGraphBuilder.homeScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToWarehouses: () -> Unit,
+    onNavigateToFeaturedWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
 ) {
     composable(route = HOME_ROUTE) {
@@ -27,6 +28,7 @@ fun NavGraphBuilder.homeScreen(
             onNavigateToNotifications = onNavigateToNotifications,
             onNavigateToProfile = onNavigateToProfile,
             onNavigateToWarehouses = onNavigateToWarehouses,
+            onNavigateToFeaturedWarehouses = onNavigateToFeaturedWarehouses,
             onNavigateToCreateRequest = onNavigateToCreateRequest,
         )
     }

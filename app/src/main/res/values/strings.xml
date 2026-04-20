@@ -193,4 +193,44 @@
     <string name="resources_search_start_title">ابدأ بالبحث</string>
     <string name="resources_recommended_heading">موصى بها</string>
     <string name="resources_all_warehouses_heading">جميع المستودعات</string>
+
+    <!-- About app -->
+    <string name="about_title">حول التطبيق</string>
+    <string name="about_tile_version">الإصدار</string>
+    <string name="about_tile_layout">الواجهة</string>
+    <string name="about_tile_layout_value">RTL</string>
+    <string name="about_tile_support">الدعم</string>
+    <string name="about_tile_support_value">مباشر</string>
+    <string name="about_features_section_title">خدماتنا المميزة</string>
+    <string name="about_features_section_subtitle">ترجمة مرجعية الواجهة إلى بطاقات وخطوات عملية داخل تصميم PharmaLink الحالي.</string>
+    <string name="about_values_section_title">قيمنا الجوهرية</string>
+    <string name="about_values_section_subtitle">المهمة ليست مجرد شاشة جميلة، بل رحلة تشغيلية مستقرة وواضحة وقابلة للتوسع.</string>
+    <string name="about_hero_version_badge">VERSION %1$s</string>
+    <string name="about_hero_title">الرعاية الصحية باللمسة الرقمية</string>
+    <string name="about_hero_subtitle">PharmaLink يقدّم تجربة عربية أنيقة لإدارة الطلبات والمستودعات والامتثال والدعم من داخل تطبيق واحد.</string>
+    <string name="about_hero_caption">هوية واضحة • بطاقات راقية • معلومات قابلة للفهم فورًا</string>
+    <string name="about_feature_one_title">تشغيل الصيدلية من شاشة واحدة</string>
+    <string name="about_feature_one_description">نجمع الطلبات والمستودعات والملف الشخصي والدعم ضمن رحلة عربية واضحة وسريعة للفريق.</string>
+    <string name="about_feature_two_title">ثقة وخصوصية افتراضيًا</string>
+    <string name="about_feature_two_description">بنية نظيفة وصلاحيات واضحة وتجهيزات جاهزة لربط الحماية والامتثال دون بعثرة التجربة.</string>
+    <string name="about_feature_three_title">تصميم عربي RTL أصيل</string>
+    <string name="about_feature_three_description">كل هذه الشاشات مبنية مباشرة بـ Compose وتلتزم بهوية التطبيق الحالية من دون أي WebView أو تحويل HTML.</string>
+    <string name="about_value_one_title">الوضوح أولًا</string>
+    <string name="about_value_one_description">الواجهة تركز على المعلومة المهمة والقرار التالي بدل ازدحام العناصر والزينة غير المفيدة.</string>
+    <string name="about_value_two_title">الموثوقية التشغيلية</string>
+    <string name="about_value_two_description">نترك الوظائف الخلفية غير المربوطة واضحة بصياغة صادقة بدل ادعاء نجاحات غير حقيقية.</string>
+    <string name="about_value_three_title">خدمة قابلة للنمو</string>
+    <string name="about_value_three_description">تمهيد جاهز لإضافة مزيد من التكاملات والخدمات مع الحفاظ على بساطة التجربة الحالية.</string>
+    <string name="about_commitment_title">التزامنا</string>
+    <string name="about_commitment_body">نستمر في تحسين التجربة بشكل تدريجي، مع الحفاظ على بساطة الواجهة ودقة المعلومات وسلامة المسار التشغيلي.</string>
+    <string name="about_cta_primary">تواصل معنا</string>
+    <string name="about_cta_secondary">من نحن</string>
+    <string name="about_vision_title">رؤيتنا</string>
+    <string name="about_vision_body">نقود التحول الرقمي الدوائي عبر منصة عربية موثوقة، تسهّل إدارة التوريد اليومي وترفع جودة القرار من أول نظرة.</string>
+    <string name="about_stat_one_title">مستخدم نشط</string>
+    <string name="about_stat_one_value">50K+</string>
+    <string name="about_stat_two_title">رضا العملاء</string>
+    <string name="about_stat_two_value">99%%</string>
+    <string name="about_footer_note">نواصل بناء تجربة دوائية رقمية احترافية تخدم الصيدليات بكفاءة.</string>
+    <string name="about_footer_meta">PharmaLink • Version %1$s</string>
 </resources>

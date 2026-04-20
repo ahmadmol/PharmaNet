@@ -16,4 +16,33 @@
     <string name="warehouse_last_updated">آخر تحديث: %s</string>
     <string name="error_network">خطأ في الشبكة. تحقق من اتصالك بالإنترنت.</string>
     <string name="error_permission">ليس لديك صلاحية للقيام بهذا الإجراء.</string>
+
+    <string name="featured_warehouses_screen_title">المستودعات المميزة</string>
+    <string name="featured_warehouses_back_cd">الرجوع من المستودعات المميزة</string>
+    <string name="featured_hero_badge">اختيار PharmaLink</string>
+    <string name="featured_hero_title">مستودعات عالية الاعتمادية لتوريد أسرع</string>
+    <string name="featured_hero_subtitle">شبكة مستودعات منتقاة بجاهزية مخزون مرتفعة وخيارات توصيل مرنة لدعم التشغيل اليومي.</string>
+    <string name="featured_filter_all">الكل</string>
+    <string name="featured_filter_fast_delivery">توصيل سريع</string>
+    <string name="featured_filter_high_stock">مخزون مرتفع</string>
+    <string name="featured_filter_cold_chain">سلسلة تبريد</string>
+    <string name="featured_results_count">%1$d مستودع مميز</string>
+    <string name="featured_empty_state">لا توجد نتائج مطابقة للفلتر المحدد حاليًا.</string>
+    <string name="featured_priority_premium">مميز</string>
+    <string name="featured_priority_fast">سريع</string>
+    <string name="featured_priority_reliable">موثوق</string>
+    <string name="featured_metric_delivery">التوصيل</string>
+    <string name="featured_metric_stock">توفر المخزون</string>
+    <string name="featured_metric_stock_value">%1$d%%</string>
+    <string name="featured_chip_cold_chain">يدعم سلسلة التبريد</string>
+    <string name="featured_search_placeholder">ابحث عن مستودع مميز أو مدينة</string>
+    <string name="featured_results_title">أفضل المستودعات لك</string>
+    <string name="featured_sort_recommended">موصى به</string>
+    <string name="featured_hero_kpi">%1$d مستودعات مختارة بعناية</string>
+    <string name="featured_loading_message">جاري تحميل المستودعات المميزة...</string>
+    <string name="featured_retry_loading">إعادة المحاولة</string>
+    <string name="featured_error_loading_failed">فشل تحميل المستودعات المميزة. حاول مرة أخرى.</string>
+    <string name="featured_empty_source_state">لا توجد مستودعات مميزة متاحة حالياً.</string>
+    <string name="featured_location_fallback">موقع غير محدد</string>
+    <string name="featured_delivery_fallback">توصيل حسب الجاهزية</string>
 </resources>

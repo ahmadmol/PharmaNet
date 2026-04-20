@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -20,12 +21,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -36,7 +40,9 @@ import com.pharmalink.core.navigation.AppDestination
 import com.pharmalink.core.navigation.matchesDestination
 import com.pharmalink.core.navigation.navigateToInnerTopLevel
 import com.pharmalink.designsystem.theme.ClinicalCanvas
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.NotificationDestination
+import com.pharmalink.feature.auth.AuthViewModel
 import com.pharmalink.feature.compliance.presentation.ComplianceScreen
 import com.pharmalink.feature.help.presentation.AboutAppScreen
 import com.pharmalink.feature.help.presentation.ContactUsScreen
@@ -53,6 +59,7 @@ import com.pharmalink.feature.request.RequestDetailsScreen
 import com.pharmalink.feature.request.RequestListScreen
 import com.pharmalink.feature.resources.presentation.WarehouseDetailScreen
 import com.pharmalink.feature.tracking.DeliveryTrackingScreen
+import com.pharmalink.feature.warehouses.FeaturedWarehousesScreen
 import com.pharmalink.feature.warehouses.WarehousesScreen
 
 private val bottomBarRoutes = setOf(
@@ -66,21 +73,47 @@ private val bottomBarRoutes = setOf(
 @Composable
 fun PharmaNavigator(
     onProfileLogout: () -> Unit,
+    startDestination: String = AppDestination.Home.route,
     modifier: Modifier = Modifier,
+    accountType: AccountType?,   // ← مهم جداً
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val userSnapshot by authViewModel.userSnapshot.collectAsState()
+    val accountType = userSnapshot?.accountType
 
-    val tabSelectedIndex = when {
-        currentRoute.matchesDestination(AppDestination.Home) -> 0
-        currentRoute.matchesDestination(AppDestination.Resources) -> 1
-        currentRoute.matchesDestination(AppDestination.RequestList) -> 2
-        currentRoute.matchesDestination(AppDestination.Profile) -> 3
-        else -> -1
+    val currentTab = when {
+        currentRoute.matchesDestination(AppDestination.Home) -> AppDestination.Home
+        currentRoute.matchesDestination(AppDestination.Resources) -> AppDestination.Resources
+        currentRoute.matchesDestination(AppDestination.CreateRequest) -> AppDestination.CreateRequest
+        currentRoute.matchesDestination(AppDestination.RequestList) -> AppDestination.RequestList
+        currentRoute.matchesDestination(AppDestination.Profile) -> AppDestination.Profile
+        else -> AppDestination.Home
     }
 
-    val isBottomBarVisible = currentRoute in bottomBarRoutes
+    val visibleTabs = when (accountType) {
+        AccountType.WAREHOUSE ->
+            listOf(AppDestination.Home, AppDestination.Resources, AppDestination.RequestList, AppDestination.Profile)
+        AccountType.ADMIN ->
+            listOf(AppDestination.Home, AppDestination.Profile)
+        else ->
+            listOf(
+                AppDestination.Home,
+                AppDestination.Resources,
+                AppDestination.CreateRequest,
+                AppDestination.RequestList,
+                AppDestination.Profile,
+            )
+    }
+
+    val safeSelectedTab = if (currentTab !in visibleTabs) AppDestination.Home else currentTab
+
+    val tabSelectedIndex = visibleTabs.indexOf(safeSelectedTab)
+
+    val visibleTabRoutes = visibleTabs.map { it.route }.toSet()
+    val isBottomBarVisible = currentRoute in visibleTabRoutes
 
     BackHandler(enabled = true) {
         when {
@@ -88,6 +121,7 @@ fun PharmaNavigator(
             currentRoute.matchesDestination(AppDestination.Notifications) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Help) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.AboutApp) -> navController.popBackStack()
+            currentRoute.matchesDestination(AppDestination.FeaturedWarehouses) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.ContactUs) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.Compliance) -> navController.popBackStack()
             currentRoute.matchesDestination(AppDestination.EditProfile) -> navController.popBackStack()
@@ -115,43 +149,70 @@ fun PharmaNavigator(
     Scaffold(
         modifier = modifier,
         containerColor = ClinicalCanvas,
-        floatingActionButtonPosition = FabPosition.Center,
-        floatingActionButton = {
-            if (isBottomBarVisible) {
-                FloatingActionButton(
-                    onClick = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
-                    modifier = Modifier
-                        .size(56.dp)
-                        .scale(fabScale),
-                    shape = CircleShape,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 4.dp,
-                        pressedElevation = 6.dp,
-                    ),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Add,
-                        contentDescription = stringResource(R.string.add_medicine),
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            }
-        },
+//        floatingActionButtonPosition = FabPosition.Center,
+//        floatingActionButton = {
+//            if (isBottomBarVisible && accountType != AccountType.WAREHOUSE && accountType != AccountType.ADMIN) {
+//                FloatingActionButton(
+//                    onClick = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
+//                    modifier = Modifier
+//                        .size(56.dp)
+//                        .scale(fabScale),
+//                    shape = CircleShape,
+//                    containerColor = MaterialTheme.colorScheme.primary,
+//                    contentColor = MaterialTheme.colorScheme.onPrimary,
+//                    elevation = FloatingActionButtonDefaults.elevation(
+//                        defaultElevation = 4.dp,
+//                        pressedElevation = 6.dp,
+//                    ),
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Rounded.Add,
+//                        contentDescription = stringResource(R.string.add_medicine),
+//                        modifier = Modifier.size(24.dp),
+//                    )
+//                }
+//            }
+//        },
         bottomBar = {
             if (isBottomBarVisible) {
-                PharmaBottomNavigation(
-                    selectedItem = tabSelectedIndex,
-                    onTabSelected = { route, _ ->
-                        when (route) {
-                            AppDestination.Home.route -> navController.navigateToInnerTopLevel(AppDestination.Home)
-                            AppDestination.Resources.route -> navController.navigateToInnerTopLevel(AppDestination.Resources)
-                            AppDestination.RequestList.route -> navController.navigateToInnerTopLevel(AppDestination.RequestList)
-                            AppDestination.Profile.route -> navController.navigateToInnerTopLevel(AppDestination.Profile)
+                Box {
+                    PharmaBottomNavigation(
+                        selectedItem = tabSelectedIndex,
+                        onTabSelected = { route, _ ->
+                            when (route) {
+                                AppDestination.Home.route -> navController.navigateToInnerTopLevel(AppDestination.Home)
+                                AppDestination.Resources.route -> navController.navigateToInnerTopLevel(AppDestination.Resources)
+                                AppDestination.RequestList.route -> navController.navigateToInnerTopLevel(AppDestination.RequestList)
+                                AppDestination.Profile.route -> navController.navigateToInnerTopLevel(AppDestination.Profile)
+                            }
+                        },
+                    )
+
+                    if (accountType != AccountType.WAREHOUSE && accountType != AccountType.ADMIN) {
+                        FloatingActionButton(
+                            onClick = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .offset(y = (0).dp)
+                                .size(56.dp)
+                                .scale(fabScale)
+                                .zIndex(1f),
+                            shape = CircleShape,
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            elevation = FloatingActionButtonDefaults.elevation(
+                                defaultElevation = 4.dp,
+                                pressedElevation = 6.dp,
+                            ),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = stringResource(R.string.add_medicine),
+                                modifier = Modifier.size(24.dp),
+                            )
                         }
-                    },
-                )
+                    }
+                }
             }
         },
     ) { innerPadding ->
@@ -167,7 +228,7 @@ fun PharmaNavigator(
         ) {
             NavHost(
                 navController = navController,
-                startDestination = AppDestination.Home.route,
+                startDestination = startDestination,
             ) {
                 homeScreen(
                     onNavigateToHome = { navController.navigateToInnerTopLevel(AppDestination.Home) },
@@ -177,11 +238,22 @@ fun PharmaNavigator(
                     },
                     onNavigateToProfile = { navController.navigateToInnerTopLevel(AppDestination.Profile) },
                     onNavigateToWarehouses = { navController.navigateToInnerTopLevel(AppDestination.Resources) },
+                    onNavigateToFeaturedWarehouses = { navController.navigate(AppDestination.FeaturedWarehouses.route) },
                     onNavigateToCreateRequest = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
                 )
                 composable(AppDestination.Resources.route) {
                     WarehousesScreen(
                         viewModel = hiltViewModel(),
+                        accountType = accountType,
+                        onWarehouseClick = { warehouseId ->
+                            navController.navigate(AppDestination.WarehouseDetail.createRoute(warehouseId))
+                        },
+                        onViewIncomingRequests = { navController.navigateToInnerTopLevel(AppDestination.RequestList) },
+                    )
+                }
+                composable(AppDestination.FeaturedWarehouses.route) {
+                    FeaturedWarehousesScreen(
+                        onBack = { navController.popBackStack() },
                         onWarehouseClick = { warehouseId ->
                             navController.navigate(AppDestination.WarehouseDetail.createRoute(warehouseId))
                         },
@@ -262,6 +334,8 @@ fun PharmaNavigator(
                 composable(AppDestination.AboutApp.route) {
                     AboutAppScreen(
                         onBack = { navController.popBackStack() },
+                        onPrimaryCtaClick = { navController.navigate(AppDestination.ContactUs.route) },
+                        onSecondaryCtaClick = { navController.navigate(AppDestination.Help.route) },
                     )
                 }
                 composable(AppDestination.ContactUs.route) {

@@ -3,9 +3,11 @@ package com.pharmalink.feature.help.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,10 +20,13 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,82 +38,90 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.pharmalink.BuildConfig
 import com.pharmalink.R
-import com.pharmalink.designsystem.components.PharmaOutlinedTile
 import com.pharmalink.designsystem.components.PharmaScreenScaffold
 import com.pharmalink.designsystem.components.PharmaSectionHeader
+import com.pharmalink.designsystem.theme.PharmaBlue500
 import com.pharmalink.designsystem.theme.PharmaBlue700
-import com.pharmalink.designsystem.theme.PharmaBlue900
 import com.pharmalink.designsystem.theme.PharmaGradients
 import com.pharmalink.designsystem.theme.dimens
 
 data class AboutFeature(
     val icon: ImageVector,
-    val title: String,
-    val description: String,
+    val titleRes: Int,
+    val descriptionRes: Int,
 )
 
 data class AboutValue(
     val icon: ImageVector,
-    val title: String,
-    val description: String,
+    val titleRes: Int,
+    val descriptionRes: Int,
 )
 
 @Composable
 fun AboutAppScreen(
     onBack: () -> Unit = {},
+    onPrimaryCtaClick: () -> Unit,
+    onSecondaryCtaClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         PharmaScreenScaffold(
-            title = "حول التطبيق",
+            title = stringResource(R.string.about_title),
             onBack = onBack,
             navigationContentDescription = stringResource(R.string.common_back),
             modifier = modifier,
         ) {
-            AboutAppContent()
+            AboutAppContent(
+                onPrimaryCtaClick = onPrimaryCtaClick,
+                onSecondaryCtaClick = onSecondaryCtaClick,
+            )
         }
     }
 }
 
 @Composable
-private fun AboutAppContent() {
+private fun AboutAppContent(
+    onPrimaryCtaClick: () -> Unit,
+    onSecondaryCtaClick: () -> Unit,
+) {
     val d = MaterialTheme.dimens
     val features = listOf(
         AboutFeature(
             icon = Icons.Outlined.Store,
-            title = "تشغيل الصيدلية من شاشة واحدة",
-            description = "نجمع الطلبات والمستودعات والملف الشخصي والدعم ضمن رحلة عربية واضحة وسريعة للفريق.",
+            titleRes = R.string.about_feature_one_title,
+            descriptionRes = R.string.about_feature_one_description,
         ),
         AboutFeature(
             icon = Icons.Outlined.Lock,
-            title = "ثقة وخصوصية افتراضيًا",
-            description = "بنية نظيفة وصلاحيات واضحة وتجهيزات جاهزة لربط الحماية والامتثال دون بعثرة التجربة.",
+            titleRes = R.string.about_feature_two_title,
+            descriptionRes = R.string.about_feature_two_description,
         ),
         AboutFeature(
             icon = Icons.Outlined.Language,
-            title = "تصميم عربي RTL أصيل",
-            description = "كل هذه الشاشات مبنية مباشرة بـ Compose وتلتزم بهوية التطبيق الحالية من دون أي WebView أو تحويل HTML.",
+            titleRes = R.string.about_feature_three_title,
+            descriptionRes = R.string.about_feature_three_description,
         ),
     )
     val values = listOf(
         AboutValue(
             icon = Icons.Outlined.CheckCircleOutline,
-            title = "الوضوح أولًا",
-            description = "الواجهة تركز على المعلومة المهمة والقرار التالي بدل ازدحام العناصر والزينة غير المفيدة.",
+            titleRes = R.string.about_value_one_title,
+            descriptionRes = R.string.about_value_one_description,
         ),
         AboutValue(
             icon = Icons.Outlined.Info,
-            title = "الموثوقية التشغيلية",
-            description = "نترك الوظائف الخلفية غير المربوطة واضحة بصياغة صادقة بدل ادعاء نجاحات غير حقيقية.",
+            titleRes = R.string.about_value_two_title,
+            descriptionRes = R.string.about_value_two_description,
         ),
         AboutValue(
             icon = Icons.Outlined.Language,
-            title = "خدمة قابلة للنمو",
-            description = "تمهيد جاهز لإضافة مزيد من التكاملات والخدمات مع الحفاظ على بساطة التجربة الحالية.",
+            titleRes = R.string.about_value_three_title,
+            descriptionRes = R.string.about_value_three_description,
         ),
     )
 
@@ -117,112 +130,104 @@ private fun AboutAppContent() {
         verticalArrangement = Arrangement.spacedBy(d.spaceL),
     ) {
         item {
-            AboutHeroCard()
-        }
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-            ) {
-                PharmaOutlinedTile(
-                    title = "الإصدار",
-                    value = BuildConfig.VERSION_NAME,
-                    modifier = Modifier.weight(1f),
-                )
-                PharmaOutlinedTile(
-                    title = "الواجهة",
-                    value = "RTL",
-                    modifier = Modifier.weight(1f),
-                )
-                PharmaOutlinedTile(
-                    title = "الدعم",
-                    value = "مباشر",
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-        item {
-            PharmaSectionHeader(
-                title = "خدماتنا المميزة",
-                subtitle = "ترجمة مرجعية الواجهة إلى بطاقات وخطوات عملية داخل تصميم PharmaLink الحالي.",
+            AboutHeroCard(
+                onPrimaryCtaClick = onPrimaryCtaClick,
+                onSecondaryCtaClick = onSecondaryCtaClick,
             )
         }
-        items(features) { feature ->
-            AboutFeatureCard(feature)
-        }
+        item { AboutIllustrationCard() }
+        item { AboutVisionCard() }
+        item { AboutStatsRow() }
+
         item {
             PharmaSectionHeader(
-                title = "قيمنا الجوهرية",
-                subtitle = "المهمة ليست مجرد شاشة جميلة، بل رحلة تشغيلية مستقرة وواضحة وقابلة للتوسع.",
+                title = stringResource(R.string.about_features_section_title),
+                subtitle = stringResource(R.string.about_features_section_subtitle),
             )
         }
-        items(values) { value ->
-            AboutValueCard(value)
+        items(features) { feature -> AboutFeatureCard(feature) }
+
+        item {
+            PharmaSectionHeader(
+                title = stringResource(R.string.about_values_section_title),
+                subtitle = stringResource(R.string.about_values_section_subtitle),
+            )
         }
+        items(values) { value -> AboutValueCard(value) }
+
+        item { AboutCommitmentCard() }
+        item { AboutFooterMeta() }
     }
 }
 
 @Composable
-private fun AboutHeroCard() {
+private fun AboutHeroCard(
+    onPrimaryCtaClick: () -> Unit,
+    onSecondaryCtaClick: () -> Unit,
+) {
     val d = MaterialTheme.dimens
 
     Card(
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = RoundedCornerShape(d.radiusXXL),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = PharmaGradients.primaryHorizontal,
-                    shape = RoundedCornerShape(d.radiusXXL),
-                )
+                .background(brush = PharmaGradients.primaryDiagonal)
                 .padding(d.spaceL),
         ) {
-            androidx.compose.foundation.layout.Column(
-                verticalArrangement = Arrangement.spacedBy(d.spaceM),
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(d.spaceM)) {
                 Surface(
                     shape = CircleShape,
                     color = Color.White.copy(alpha = 0.18f),
                     contentColor = Color.White,
                 ) {
                     Text(
-                        text = "VERSION ${BuildConfig.VERSION_NAME}",
+                        text = stringResource(R.string.about_hero_version_badge, BuildConfig.VERSION_NAME),
                         modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceXS),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                     )
                 }
                 Text(
-                    text = "الرعاية الصحية باللمسة الرقمية",
+                    text = stringResource(R.string.about_hero_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
                 )
                 Text(
-                    text = "PharmaLink يقدّم تجربة عربية أنيقة لإدارة الطلبات والمستودعات والامتثال والدعم من داخل تطبيق واحد.",
+                    text = stringResource(R.string.about_hero_subtitle),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.94f),
                 )
-                Surface(
-                    shape = RoundedCornerShape(d.radiusXL),
-                    color = Color.White.copy(alpha = 0.12f),
-                    contentColor = Color.White,
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceS),
-                        horizontalArrangement = Arrangement.spacedBy(d.spaceS),
-                        verticalAlignment = Alignment.CenterVertically,
+                    Button(
+                        onClick = onPrimaryCtaClick,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(d.radiusXL),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Store,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
                         Text(
-                            text = "هوية واضحة • بطاقات راقية • معلومات قابلة للفهم فورًا",
-                            style = MaterialTheme.typography.labelMedium,
+                            text = stringResource(R.string.about_cta_primary),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onSecondaryCtaClick,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(d.radiusXL),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.about_cta_secondary),
                             fontWeight = FontWeight.SemiBold,
                         )
                     }
@@ -233,11 +238,135 @@ private fun AboutHeroCard() {
 }
 
 @Composable
+private fun AboutIllustrationCard() {
+    val d = MaterialTheme.dimens
+
+    Card(
+        shape = RoundedCornerShape(d.radiusXXL),
+        colors = CardDefaults.cardColors(containerColor = PharmaBlue700),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(186.dp)
+                .background(brush = PharmaGradients.cardBlue),
+            contentAlignment = Alignment.Center,
+        ) {
+            Surface(
+                modifier = Modifier.size(110.dp),
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.14f),
+                contentColor = Color.White,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Outlined.Store,
+                        contentDescription = null,
+                        modifier = Modifier.size(52.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AboutVisionCard() {
+    val d = MaterialTheme.dimens
+
+    Card(
+        shape = RoundedCornerShape(d.radiusXL),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+        ) {
+            Text(
+                text = stringResource(R.string.about_vision_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = PharmaBlue700,
+            )
+            Text(
+                text = stringResource(R.string.about_vision_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AboutStatsRow() {
+    val d = MaterialTheme.dimens
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+    ) {
+        StatTile(
+            title = stringResource(R.string.about_stat_one_title),
+            value = stringResource(R.string.about_stat_one_value),
+            modifier = Modifier.weight(1f),
+            containerColor = PharmaBlue500,
+            contentColor = Color.White,
+        )
+        StatTile(
+            title = stringResource(R.string.about_stat_two_title),
+            value = stringResource(R.string.about_stat_two_value),
+            modifier = Modifier.weight(1f),
+            containerColor = Color(0xFFDFF5FF),
+            contentColor = PharmaBlue700,
+        )
+    }
+}
+
+@Composable
+private fun StatTile(
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    contentColor: Color,
+) {
+    val d = MaterialTheme.dimens
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(d.radiusXL),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = d.spaceL, horizontal = d.spaceM),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = contentColor,
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                color = contentColor.copy(alpha = 0.85f),
+            )
+        }
+    }
+}
+
+@Composable
 private fun AboutFeatureCard(feature: AboutFeature) {
     val d = MaterialTheme.dimens
 
     Card(
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(d.radiusXL),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
@@ -250,7 +379,7 @@ private fun AboutFeatureCard(feature: AboutFeature) {
         ) {
             Surface(
                 shape = RoundedCornerShape(d.radiusL),
-                color = PharmaBlue900.copy(alpha = 0.08f),
+                color = PharmaBlue700.copy(alpha = 0.1f),
                 contentColor = PharmaBlue700,
             ) {
                 Icon(
@@ -261,14 +390,14 @@ private fun AboutFeatureCard(feature: AboutFeature) {
                         .size(20.dp),
                 )
             }
-            androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = feature.title,
+                    text = stringResource(feature.titleRes),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = feature.description,
+                    text = stringResource(feature.descriptionRes),
                     modifier = Modifier.padding(top = d.spaceXS),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -283,7 +412,7 @@ private fun AboutValueCard(value: AboutValue) {
     val d = MaterialTheme.dimens
 
     Card(
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(d.radiusXL),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
@@ -299,19 +428,72 @@ private fun AboutValueCard(value: AboutValue) {
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
             )
-            androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = value.title,
+                    text = stringResource(value.titleRes),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = value.description,
+                    text = stringResource(value.descriptionRes),
                     modifier = Modifier.padding(top = d.spaceXS),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AboutCommitmentCard() {
+    val d = MaterialTheme.dimens
+
+    Card(
+        shape = RoundedCornerShape(d.radiusXXL),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceS),
+        ) {
+            Text(
+                text = stringResource(R.string.about_commitment_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = stringResource(R.string.about_commitment_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AboutFooterMeta() {
+    val d = MaterialTheme.dimens
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = d.spaceS, bottom = d.spaceL),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+    ) {
+        Text(
+            text = stringResource(R.string.about_footer_note),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.about_footer_meta, BuildConfig.VERSION_NAME),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }

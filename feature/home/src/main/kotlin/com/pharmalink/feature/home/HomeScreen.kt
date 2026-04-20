@@ -97,6 +97,7 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToWarehouses: () -> Unit,
+    onNavigateToFeaturedWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -110,9 +111,11 @@ fun HomeScreen(
                 onNavigateToNotifications = onNavigateToNotifications,
                 onNavigateToProfile = onNavigateToProfile,
                 onNavigateToWarehouses = onNavigateToWarehouses,
+                onNavigateToFeaturedWarehouses = onNavigateToFeaturedWarehouses,
                 onNavigateToCreateRequest = onNavigateToCreateRequest,
             )
         }
+
 
         is HomeUiState.Error -> {
             HomeErrorState(
@@ -130,6 +133,7 @@ private fun HomeContent(
     onNavigateToNotifications: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToWarehouses: () -> Unit,
+    onNavigateToFeaturedWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
@@ -186,7 +190,7 @@ private fun HomeContent(
                     Spacer(Modifier.height(d.spaceXL))
                     FeaturedWarehousesSection(
                         warehouses = uiState.featuredWarehouses,
-                        onViewAll = onNavigateToWarehouses,
+                        onViewAll = onNavigateToFeaturedWarehouses,
                     )
                 }
             }
@@ -598,7 +602,11 @@ private fun FeaturedWarehousesSection(warehouses: List<Warehouse>, onViewAll: ()
     val d = MaterialTheme.dimens
 
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(d.spaceS)) {
-        SectionHeader(title = stringResource(R.string.featured_warehouses_title), actionText = "استكشف", onActionClick = onViewAll)
+        SectionHeader(
+            title = stringResource(R.string.featured_warehouses_title),
+            actionText = stringResource(R.string.featured_warehouses_action),
+            onActionClick = onViewAll,
+        )
         if (warehouses.isEmpty()) {
             EmptyCard(text = "لا توجد مستودعات مميزة حالياً")
         } else {
@@ -1055,6 +1063,7 @@ private fun HomeScreenPreview() {
             onNavigateToNotifications = {},
             onNavigateToProfile = {},
             onNavigateToWarehouses = {},
+            onNavigateToFeaturedWarehouses = {},
             onNavigateToCreateRequest = {},
         )
     }

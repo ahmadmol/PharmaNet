@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 import com.pharmalink.data.repository.PharmaRepository
+import com.pharmalink.domain.mapper.toUserIdentity
 import com.pharmalink.domain.model.AccountType
+import com.pharmalink.domain.model.OrganizationType
 import kotlinx.coroutines.async
 
 @HiltViewModel
@@ -30,9 +32,17 @@ class HomeViewModel @Inject constructor(
     fun loadHomeData() {
         viewModelScope.launch {
             val userSnapshot = authRepository.getUserSnapshot()
+            val userIdentity = userSnapshot?.toUserIdentity()
+            val identityMatches = userIdentity?.role == userSnapshot?.accountType
+            val isWarehouseFromIdentity =
+                userIdentity?.organizationType == OrganizationType.WAREHOUSE
             val currentUserName = userSnapshot?.displayName?.ifBlank { "مستخدم" } ?: "مستخدم"
             val accountType = userSnapshot?.accountType
-            val canAddMedicine = accountType == AccountType.WAREHOUSE
+            val canAddMedicine = if (userIdentity != null) {
+                isWarehouseFromIdentity
+            } else {
+                accountType == AccountType.WAREHOUSE
+            }
             
             _uiState.value = HomeUiState.Loading
             

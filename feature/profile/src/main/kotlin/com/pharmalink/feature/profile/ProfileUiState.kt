@@ -1,5 +1,6 @@
 package com.pharmalink.feature.profile
 
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.UserSnapshot
 
 data class ProfileUiState(
@@ -26,8 +27,14 @@ data class ProfileUiState(
                 userEmail = snapshot?.email.orEmpty(),
                 userPhone = snapshot?.phoneNumber.orEmpty(),
                 accountType = snapshot?.accountType?.name?.replace('_', ' ') ?: "",
-                pharmacyName = snapshot?.pharmacyName.orEmpty(),
-                pharmacyAddress = snapshot?.pharmacyId.orEmpty(),
+                pharmacyName = when (snapshot?.accountType) {
+                    AccountType.WAREHOUSE -> snapshot.warehouseName.ifBlank { snapshot.pharmacyName }
+                    else -> snapshot?.pharmacyName.orEmpty()
+                },
+                pharmacyAddress = when (snapshot?.accountType) {
+                    AccountType.WAREHOUSE -> snapshot.warehouseId.ifBlank { snapshot.pharmacyId }
+                    else -> snapshot?.pharmacyId.orEmpty()
+                },
             )
     }
 }

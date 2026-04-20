@@ -47,7 +47,8 @@ class PharmaBackedRequestRepository @Inject constructor(
     override suspend fun createRequest(request: Request): Result<Request> =
         pharma.createRequest(request)
 
-    override suspend fun updateRequest(request: Request): Result<Request> = pharma.updateRequest(request)
+    override suspend fun updateRequest(requestId: String, updates: com.pharmalink.domain.model.RequestUpdate): Result<Request> = 
+        pharma.updateRequest(requestId, updates)
 
     override suspend fun deleteRequest(requestId: String): Result<Unit> = pharma.deleteRequest(requestId)
 

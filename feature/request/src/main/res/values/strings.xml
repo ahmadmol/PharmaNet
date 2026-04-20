@@ -82,10 +82,19 @@
     <string name="request_status_approved">موافق عليه</string>
     <string name="request_status_completed">مكتمل</string>
     <string name="request_status_rejected">مرفوض</string>
+    <string name="request_status_cancelled">ملغى</string>
+    <string name="request_status_draft">مسودة</string>
     <string name="request_view_details">عرض التفاصيل</string>
     <string name="request_create_another">إنشاء طلب آخر</string>
     <string name="request_dismiss_error">تجاهل الخطأ</string>
     <string name="request_retry_loading">إعادة المحاولة</string>
     <string name="request_loading_message">جاري تحميل الطلبات...</string>
     <string name="request_create_first">إنشاء أول طلب</string>
-</resources>
+    <string name="request_list_incoming_title">Incoming Requests</string>
+    <string name="request_empty_incoming_subtitle">No incoming requests assigned to your warehouse.</string>
+    <string name="request_details_warehouse_actions_title">Warehouse Actions</string>
+    <string name="request_action_accept">Accept</string>
+    <string name="request_action_reject">Reject</string>
+    <string name="request_action_start_processing">Start Processing</string>
+    <string name="request_action_mark_fulfilled">Mark Fulfilled</string>
+    <string name="request_action_updating">Updating request...</string></resources>

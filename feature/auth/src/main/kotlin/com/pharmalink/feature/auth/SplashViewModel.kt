@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pharmalink.core.common.error.MissingPharmacyLinkageException
 import com.pharmalink.core.repository.AuthRepository
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.AuthSessionState
 import com.pharmalink.domain.model.User
 import com.pharmalink.domain.model.UserSnapshot
@@ -75,7 +76,9 @@ class SplashViewModel @Inject constructor(
     private suspend fun verifyIdentityInBackground(user: User, cachedSnapshot: UserSnapshot) {
         authRepository.bootstrapAuthenticatedUser(user)
             .onSuccess { newSnapshot ->
-                if (newSnapshot.pharmacyId != cachedSnapshot.pharmacyId) {
+                // Phase 3 migration note:
+                // compare role-native org fields first; carrier deltas are still observed for compatibility.
+                if (hasOrganizationContextChanged(cachedSnapshot, newSnapshot)) {
                     // Silent update already handled by saveUserSnapshot in bootstrap
                 }
             }
@@ -89,4 +92,21 @@ class SplashViewModel @Inject constructor(
                 }
             }
     }
+
+    private fun hasOrganizationContextChanged(
+        cachedSnapshot: UserSnapshot,
+        newSnapshot: UserSnapshot,
+    ): Boolean =
+        when (newSnapshot.accountType) {
+            AccountType.PHARMACY ->
+                newSnapshot.pharmacyId != cachedSnapshot.pharmacyId ||
+                    newSnapshot.pharmacyName != cachedSnapshot.pharmacyName
+            AccountType.WAREHOUSE ->
+                newSnapshot.warehouseId != cachedSnapshot.warehouseId ||
+                    newSnapshot.warehouseName != cachedSnapshot.warehouseName ||
+                    newSnapshot.pharmacyId != cachedSnapshot.pharmacyId ||
+                    newSnapshot.pharmacyName != cachedSnapshot.pharmacyName
+            AccountType.ADMIN, AccountType.PUBLIC_USER -> false
+        }
 }
+

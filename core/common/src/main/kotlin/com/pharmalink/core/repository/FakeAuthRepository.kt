@@ -117,8 +117,11 @@ class FakeAuthRepository @Inject constructor() : AuthRepository {
             userId = user.id,
             phoneNumber = user.phoneNumber,
             email = user.email,
-            pharmacyId = "pharmacy123",
-            pharmacyName = user.pharmacyName,
+            // Keep legacy carrier populated for compatibility during migration.
+            pharmacyId = if (user.accountType == AccountType.WAREHOUSE) "warehouse123" else "pharmacy123",
+            pharmacyName = if (user.accountType == AccountType.WAREHOUSE) user.warehouseName else user.pharmacyName,
+            warehouseId = if (user.accountType == AccountType.WAREHOUSE) "warehouse123" else "",
+            warehouseName = if (user.accountType == AccountType.WAREHOUSE) user.warehouseName else "",
             accountType = user.accountType,
             displayName = user.fullName,
         )

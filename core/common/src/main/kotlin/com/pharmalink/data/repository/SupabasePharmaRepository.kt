@@ -3,6 +3,8 @@ package com.pharmalink.data.repository
 import android.util.Log
 import com.pharmalink.core.common.error.MissingPharmacyLinkageException
 import com.pharmalink.core.repository.AuthRepository
+import com.pharmalink.domain.mapper.toUserIdentity
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.AppNotification
 import com.pharmalink.domain.model.ComplianceOverview
 import com.pharmalink.domain.model.DeliveryTracking
@@ -20,7 +22,6 @@ import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.domain.model.WarehouseShipment
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import java.time.Instant
@@ -79,7 +80,11 @@ class SupabasePharmaRepository @Inject constructor(
     }
 
     override suspend fun fetchHomeStats(): Result<HomeStats> = runCatching {
-        val pharmacyId = resolvePharmacyId()
+        val pharmacyId = resolvePharmacyIdOrNull()
+        if (pharmacyId == null) {
+            Log.w(TAG, "fetchHomeStats fallback: non-PHARMACY or missing pharmacy linkage, returning defaults.")
+            return@runCatching defaultHomeStats()
+        }
         val requestsCount = supabase.postgrest.from("requests").select(columns = Columns.raw("id")) {
             filter { eq("pharmacy_id", pharmacyId) }
         }.decodeList<RequestIdRow>().size
@@ -162,6 +167,35 @@ class SupabasePharmaRepository @Inject constructor(
         }
     }
 
+    override fun observeIncomingRequestsForWarehouse(warehouseId: String): Flow<List<Request>> = flow {
+        Log.d(TAG, "=== OBSERVE INCOMING REQUESTS FOR WAREHOUSE INITIALIZED ===")
+        val initialRequests = fetchIncomingRequestsForWarehouse(warehouseId).getOrThrow()
+        Log.d(TAG, "Initial incoming requests count for warehouse $warehouseId: ${initialRequests.size}")
+        emit(initialRequests)
+        try {
+            Log.d(TAG, "Starting realtime subscription to 'requests' table for warehouse...")
+            realtime.tableChanges("requests").collect { event ->
+                Log.d(TAG, "=== WAREHOUSE REQUESTS REALTIME EVENT ===")
+                Log.d(TAG, "Event type: ${event::class.simpleName}")
+
+                val updatedRequests = fetchIncomingRequestsForWarehouse(warehouseId).getOrThrow()
+                Log.d(TAG, "Updated incoming requests count: ${updatedRequests.size}")
+                updatedRequests.forEach { request ->
+                    Log.d(TAG, "Request: ID=${request.id}, Status=${request.status}, WarehouseID=${request.warehouseId}")
+                }
+                emit(updatedRequests)
+            }
+        } catch (e: CancellationException) {
+            Log.d(TAG, "Warehouse requests realtime subscription cancelled")
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "observeIncomingRequestsForWarehouse realtime collect failed", e)
+            Log.e(TAG, "Realtime error type: ${e::class.simpleName}")
+            Log.e(TAG, "Realtime error message: ${e.message}")
+            throw e
+        }
+    }
+
     override fun observeNotifications(): Flow<List<AppNotification>> = flow {
         val initialNotifications = fetchNotifications().getOrThrow()
         emit(initialNotifications)
@@ -184,12 +218,20 @@ class SupabasePharmaRepository @Inject constructor(
         ) { snapshot, _ -> snapshot }
             .mapLatest { snapshot ->
                 if (snapshot == null) {
-                    error("Authenticated profile snapshot is unavailable.")
+                    // Logout/session-race safe fallback: never crash collectors on null snapshot.
+                    Log.w(TAG, "observeProfile fallback: snapshot unavailable, emitting placeholder profile.")
+                    placeholderProfile()
                 } else {
-                    fetchProfile(snapshot.userId)
-                        .getOrThrow()
-                        .toDomain(snapshot.email)
-                        .getOrThrow()
+                    runCatching {
+                        fetchProfile(snapshot.userId)
+                            .getOrThrow()
+                            .toDomain(snapshot.email)
+                            .getOrThrow()
+                    }.onFailure { error ->
+                        Log.e(TAG, "observeProfile fallback: failed to fetch/decode profile for ${snapshot.userId}", error)
+                    }.getOrElse {
+                        placeholderProfile()
+                    }
                 }
             }
 
@@ -239,7 +281,11 @@ class SupabasePharmaRepository @Inject constructor(
         read: Boolean,
         notificationId: String? = null,
     ): Result<Unit> = runCatching {
-        val pharmacyId = resolvePharmacyId()
+        val pharmacyId = resolvePharmacyIdOrNull()
+        if (pharmacyId == null) {
+            Log.w(TAG, "updateNotificationsReadState no-op: non-PHARMACY or missing pharmacy linkage.")
+            return@runCatching Unit
+        }
         if (notificationId != null) {
             requireOwnedNotification(
                 pharmacyId = pharmacyId,
@@ -287,16 +333,51 @@ class SupabasePharmaRepository @Inject constructor(
     }
 
     private suspend fun fetchRequests(): Result<List<Request>> = runCatching {
-        val pharmacyId = resolvePharmacyId()
+        val identity = resolveAccessContext()
+
+        when (identity.role) {
+            AccountType.PHARMACY -> {
+                val orgId = identity.organizationId
+                    ?: error("PHARMACY user missing organizationId")
+                supabase.postgrest.from("requests").select(columns = Columns.ALL) {
+                    filter { eq("pharmacy_id", orgId) }
+                }.decodeList<RequestDto>()
+                    .map { it.toDomain().getOrThrow() }
+            }
+            AccountType.WAREHOUSE -> {
+                val orgId = identity.organizationId
+                    ?: error("WAREHOUSE user missing organizationId")
+                supabase.postgrest.from("requests").select(columns = Columns.ALL) {
+                    filter { eq("warehouse_id", orgId) }
+                }.decodeList<RequestDto>()
+                    .map { it.toDomain().getOrThrow() }
+            }
+            AccountType.ADMIN -> {
+                // ADMIN sees all requests (no filter)
+                supabase.postgrest.from("requests").select(columns = Columns.ALL)
+                    .decodeList<RequestDto>()
+                    .map { it.toDomain().getOrThrow() }
+            }
+            AccountType.PUBLIC_USER -> {
+                // PUBLIC_USER has no request access
+                emptyList()
+            }
+        }
+    }
+
+    private suspend fun fetchIncomingRequestsForWarehouse(warehouseId: String): Result<List<Request>> = runCatching {
         supabase.postgrest.from("requests").select(columns = Columns.ALL) {
-            filter { eq("pharmacy_id", pharmacyId) }
+            filter { eq("warehouse_id", warehouseId) }
         }.decodeList<RequestDto>()
             .map { it.toDomain().getOrThrow() }
     }
 
-
     private suspend fun fetchNotifications(): Result<List<AppNotification>> = runCatching {
-        val pharmacyId = resolvePharmacyId()
+        val pharmacyId = resolvePharmacyIdOrNull()
+        if (pharmacyId == null) {
+            Log.w(TAG, "fetchNotifications fallback: non-PHARMACY or missing pharmacy linkage, returning empty list.")
+            return@runCatching emptyList()
+        }
         supabase.postgrest.from("app_notifications").select(columns = Columns.ALL) {
             filter { eq("pharmacy_id", pharmacyId) }
         }
@@ -337,13 +418,39 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun getRequest(requestId: String): Result<Request?> =
         runCatching {
-            val pharmacyId = resolvePharmacyId()
-            supabase.postgrest.from("requests").select {
-                filter {
-                    eq("id", requestId)
-                    eq("pharmacy_id", pharmacyId)
+            val identity = resolveAccessContext()
+
+            when (identity.role) {
+                AccountType.PHARMACY -> {
+                    val orgId = identity.organizationId
+                        ?: error("PHARMACY user missing organizationId")
+                    supabase.postgrest.from("requests").select {
+                        filter {
+                            eq("id", requestId)
+                            eq("pharmacy_id", orgId)  // Ownership check
+                        }
+                    }.decodeList<RequestDto>().firstOrNull()?.toDomain()?.getOrThrow()
                 }
-            }.decodeList<RequestDto>().firstOrNull()?.toDomain()?.getOrThrow()
+                AccountType.WAREHOUSE -> {
+                    val orgId = identity.organizationId
+                        ?: error("WAREHOUSE user missing organizationId")
+                    supabase.postgrest.from("requests").select {
+                        filter {
+                            eq("id", requestId)
+                            eq("warehouse_id", orgId)  // Ownership check
+                        }
+                    }.decodeList<RequestDto>().firstOrNull()?.toDomain()?.getOrThrow()
+                }
+                AccountType.ADMIN -> {
+                    // ADMIN can view any request by ID
+                    supabase.postgrest.from("requests").select {
+                        filter { eq("id", requestId) }
+                    }.decodeList<RequestDto>().firstOrNull()?.toDomain()?.getOrThrow()
+                }
+                AccountType.PUBLIC_USER -> {
+                    null // PUBLIC_USER cannot view requests
+                }
+            }
         }
 
 
@@ -356,16 +463,28 @@ class SupabasePharmaRepository @Inject constructor(
             Log.d(TAG, "Medicine: ${request.medicineName}")
             Log.d(TAG, "Quantity: ${request.quantity} ${request.unit}")
             Log.d(TAG, "Priority: ${request.priority.name}")
-            Log.d(TAG, "Status: ${request.status.name}")
             Log.d(TAG, "Warehouse ID: ${request.warehouseId}")
             Log.d(TAG, "Warehouse Name: ${request.warehouseName}")
-            
-            val pharmacyId = resolvePharmacyId()
+
+            // Role check: Only PHARMACY can create requests
+            val identity = resolveAccessContext()
+            Log.d(TAG, "User role: ${identity.role}, orgId: ${identity.organizationId}")
+
+            require(identity.role == AccountType.PHARMACY) {
+                "Only PHARMACY users can create requests"
+            }
+
+            val pharmacyId = identity.organizationId
+                ?: throw IllegalStateException("PHARMACY user missing organizationId")
             Log.d(TAG, "Resolved pharmacy ID: $pharmacyId")
-            
+
             val createdAt = System.currentTimeMillis().toString()
             Log.d(TAG, "Created at timestamp: $createdAt")
-            
+
+            // Force status to DRAFT - initial state for all new requests
+            val initialStatus = RequestStatus.DRAFT.name
+            Log.d(TAG, "Initial status: $initialStatus (forced to DRAFT)")
+
             val reqInsert = RequestInsertDto(
                 pharmacyId = pharmacyId,
                 warehouseId = request.warehouseId,
@@ -376,25 +495,26 @@ class SupabasePharmaRepository @Inject constructor(
                 priority = request.priority.name,
                 warehouseName = request.warehouseName,
                 supplierName = request.supplierName,
-                status = request.status.name,
+                status = initialStatus,
             )
-            
+
             Log.d(TAG, "Attempting to insert request into Supabase...")
             val insertedRequest = supabase.postgrest.from("requests").insert(reqInsert) {
                 select(Columns.ALL)
             }.decodeSingle<RequestDto>()
-            
+
             Log.d(TAG, "✅ REQUEST INSERT SUCCESS!")
             Log.d(TAG, "Returned request ID: ${insertedRequest.id}")
+            Log.d(TAG, "Returned request status: ${insertedRequest.status}")
             Log.d(TAG, "Returned request warehouse ID: ${insertedRequest.warehouseId}")
             Log.d(TAG, "Returned request warehouse: ${insertedRequest.warehouseName}")
             Log.d(TAG, "Returned request supplier: ${insertedRequest.supplierName}")
-            
+
             val domainRequest = insertedRequest.toDomain().getOrThrow()
             Log.d(TAG, "✅ CREATE REQUEST FLOW COMPLETED")
             Log.d(TAG, "Final domain request ID: ${domainRequest.id}")
             Log.d(TAG, "Final domain request status: ${domainRequest.status}")
-            
+
             domainRequest
         }.onFailure { exception ->
             Log.e(TAG, "=== CREATE REQUEST FAILURE ===")
@@ -405,27 +525,42 @@ class SupabasePharmaRepository @Inject constructor(
             Log.e(TAG, "createRequest failed", exception)
         }
 
-    private suspend fun resolvePharmacyId(): String = runCatching {
-        Log.d(TAG, "=== RESOLVE PHARMACY ID DEBUG ===")
-        val currentUser = supabase.auth.currentUserOrNull()
-        Log.d(TAG, "Current auth user: ${currentUser?.id ?: "NULL"}")
-        Log.d(TAG, "Current auth email: ${currentUser?.email ?: "NULL"}")
+    /**
+     * Returns pharmacy organization id only for PHARMACY users.
+     * Non-PHARMACY roles intentionally receive null and should use safe defaults.
+     */
+    private suspend fun resolvePharmacyIdOrNull(): String? {
+        val snapshot = authRepository.getUserSnapshot() ?: run {
+            Log.w(TAG, "resolvePharmacyIdOrNull: no snapshot available.")
+            return null
+        }
+        if (snapshot.accountType != AccountType.PHARMACY) {
+            return null
+        }
+        return snapshot.toUserIdentity().organizationId?.takeIf { it.isNotBlank() }
+    }
 
-        val uid = currentUser?.id
-            ?: error("No authenticated user found while resolving pharmacy linkage.")
-        Log.d(TAG, "Looking up profile for user ID: $uid")
+    /**
+     * Strict PHARMACY linkage resolver used only when pharmacy linkage is mandatory.
+     * Throws MissingPharmacyLinkageException for PHARMACY paths with absent linkage.
+     */
+    private suspend fun resolvePharmacyId(): String {
+        val snapshot = authRepository.getUserSnapshot()
+        if (snapshot?.accountType != AccountType.PHARMACY) {
+            throw IllegalStateException("resolvePharmacyId called for non-PHARMACY context.")
+        }
+        return resolvePharmacyIdOrNull()
+            ?: throw MissingPharmacyLinkageException(snapshot.userId)
+    }
 
-        val profile = fetchProfilePharmacyRow(uid).getOrThrow()
-        Log.d(TAG, "Profile found: PharmacyID=${profile.pharmacyId}")
-
-        val pharmacyId = profile.pharmacyId?.takeIf { it.isNotBlank() }
-            ?: throw MissingPharmacyLinkageException(uid)
-        Log.d(TAG, "✅ PHARMACY ID RESOLVED: $pharmacyId")
-        pharmacyId
-    }.onFailure { exception ->
-        Log.e(TAG, "❌ PHARMACY ID RESOLUTION FAILED", exception)
-        Log.e(TAG, "Exception type: ${exception::class.simpleName}")
-        Log.e(TAG, "Exception message: ${exception.message}")
+    /**
+     * Resolves the current user's access context including role and organization ID.
+     * This is the role-aware replacement for resolvePharmacyId().
+     */
+    private suspend fun resolveAccessContext(): com.pharmalink.domain.model.UserIdentity = runCatching {
+        val userSnapshot = authRepository.getUserSnapshot()
+            ?: error("No user snapshot available")
+        userSnapshot.toUserIdentity()
     }.getOrThrow()
 
     private fun verifyUpdatedProfileRow(
@@ -461,11 +596,79 @@ class SupabasePharmaRepository @Inject constructor(
             else -> rows.single()
         }
 
-    override suspend fun updateRequest(request: Request): Result<Request> =
-        unsupportedFeatureFailure(
-            featureName = "Updating requests",
-            reason = "The app can read requests, but the writable request update contract is not provable from the visible schema or DTOs.",
-        )
+    override suspend fun updateRequest(requestId: String, updates: com.pharmalink.domain.model.RequestUpdate): Result<Request> =
+        runCatching {
+            Log.d(TAG, "=== UPDATE REQUEST ===")
+            Log.d(TAG, "Request ID: $requestId")
+            Log.d(TAG, "Updates: status=${updates.status}, warehouseId=${updates.warehouseId}")
+
+            val identity = resolveAccessContext()
+            Log.d(TAG, "User role: ${identity.role}, orgId: ${identity.organizationId}")
+
+            // Fetch current request
+            val currentRequest = getRequest(requestId).getOrThrow()
+                ?: throw IllegalArgumentException("Request not found: $requestId")
+            Log.d(TAG, "Current request status: ${currentRequest.status}")
+
+            // Ownership check
+            when (identity.role) {
+                AccountType.PHARMACY -> {
+                    // Explicit ownership check: PHARMACY can only update their own requests
+                    require(currentRequest.pharmacyId == identity.organizationId) {
+                        "Not authorized to update this request"
+                    }
+                    require(currentRequest.status != RequestStatus.FULFILLED && 
+                            currentRequest.status != RequestStatus.REJECTED) {
+                        "Cannot update request in ${currentRequest.status} status"
+                    }
+                }
+                AccountType.WAREHOUSE -> {
+                    require(currentRequest.warehouseId == identity.organizationId) {
+                        "Not authorized to update this request"
+                    }
+                }
+                AccountType.ADMIN -> {
+                    // No lifecycle status transition permission in Phase 0D.1
+                    if (updates.status != null && updates.status != currentRequest.status) {
+                        throw IllegalStateException("ADMIN cannot change request lifecycle status in Phase 0D.1")
+                    }
+                }
+                AccountType.PUBLIC_USER -> {
+                    throw IllegalStateException("PUBLIC_USER cannot update requests")
+                }
+            }
+
+            // Transition validation
+            if (updates.status != null && updates.status != currentRequest.status) {
+                require(com.pharmalink.domain.model.RequestTransitions.canTransition(
+                    currentRequest.status,
+                    updates.status,
+                    identity.role
+                )) {
+                    "Invalid status transition: ${currentRequest.status} -> ${updates.status} for role ${identity.role}"
+                }
+                Log.d(TAG, "Status transition valid: ${currentRequest.status} -> ${updates.status}")
+            }
+
+            // Build update DTO
+            val updateDto = RequestUpdateDto(
+                status = updates.status?.name,
+                warehouseId = updates.warehouseId,
+                warehouseName = updates.warehouseName,
+                notes = updates.notes,
+            )
+
+            // Apply update via Supabase
+            val updatedRequest = supabase.postgrest.from("requests").update(updateDto) {
+                select(Columns.ALL)
+                filter { eq("id", requestId) }
+            }.decodeSingle<RequestDto>()
+
+            Log.d(TAG, "✅ REQUEST UPDATE SUCCESS")
+            updatedRequest.toDomain().getOrThrow()
+        }.onFailure { exception ->
+            Log.e(TAG, "❌ UPDATE REQUEST FAILED", exception)
+        }
 
     override suspend fun deleteRequest(requestId: String): Result<Unit> =
         unsupportedFeatureFailure(
@@ -490,7 +693,11 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun deleteNotification(notificationId: String): Result<Unit> =
         runCatching {
-            val pharmacyId = resolvePharmacyId()
+            val pharmacyId = resolvePharmacyIdOrNull()
+            if (pharmacyId == null) {
+                Log.w(TAG, "deleteNotification no-op: non-PHARMACY or missing pharmacy linkage.")
+                return@runCatching Unit
+            }
             requireOwnedNotification(
                 pharmacyId = pharmacyId,
                 notificationId = notificationId,
@@ -506,7 +713,11 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun deleteAllNotifications(): Result<Unit> =
         runCatching {
-            val pharmacyId = resolvePharmacyId()
+            val pharmacyId = resolvePharmacyIdOrNull()
+            if (pharmacyId == null) {
+                Log.w(TAG, "deleteAllNotifications no-op: non-PHARMACY or missing pharmacy linkage.")
+                return@runCatching Unit
+            }
             supabase.postgrest.from("app_notifications").delete {
                 filter { eq("pharmacy_id", pharmacyId) }
             }
@@ -547,6 +758,16 @@ class SupabasePharmaRepository @Inject constructor(
             featureName = "Deleting orders",
             reason = "Delete semantics and tenant/RLS guarantees for orders are not provable from the current codebase.",
         )
+
+    private fun defaultHomeStats(): HomeStats = HomeStats(
+        requestsTodayCount = 0,
+        requestsTodayTrend = "",
+        totalInventoryCount = null,
+        totalInventoryUnit = null,
+        weeklySalesAmount = null,
+        weeklySalesTrend = null,
+        alertMessage = null,
+    )
 
     private fun placeholderProfile(): PharmacyProfile = PharmacyProfile(
         id = "local",
@@ -720,6 +941,7 @@ private data class OrderDto(
 @Serializable
 private data class RequestDto(
     val id: String,
+    @SerialName("pharmacy_id") val pharmacyId: String,
     @SerialName("medicine_name") val medicineName: String,
     @SerialName("medicine_subtitle") val medicineSubtitle: String = "",
     val quantity: Int = 0,
@@ -766,6 +988,7 @@ private data class RequestDto(
 
         Request(
             id = id,
+            pharmacyId = pharmacyId,
             medicineName = medicineName,
             medicineSubtitle = medicineSubtitle,
             quantity = quantity,
@@ -887,6 +1110,15 @@ private data class RequestInsertDto(
     val status: String,
 )
 
+@Serializable
+private data class RequestUpdateDto(
+    val status: String? = null,
+    @SerialName("warehouse_id") val warehouseId: String? = null,
+    @SerialName("warehouse_name") val warehouseName: String? = null,
+    val notes: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
 private val isoDisplayFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault())
 
@@ -910,3 +1142,4 @@ private fun String.toNotificationCategory(): NotificationCategory = Notification
 
 private fun String.toNotificationDestination(): NotificationDestination? =
     runCatching { NotificationDestination.valueOf(this) }.getOrNull()
+

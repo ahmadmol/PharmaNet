@@ -310,5 +310,6 @@ private fun isFormValid(uiState: SignUpUiState): Boolean {
         AccountType.PUBLIC_USER -> base
         AccountType.PHARMACY -> base && uiState.pharmacyName.isNotEmpty()
         AccountType.WAREHOUSE -> base && uiState.warehouseName.isNotEmpty() && uiState.warehouseLocation.isNotEmpty()
+        AccountType.ADMIN -> base
     }
 }
