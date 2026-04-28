@@ -43,6 +43,8 @@ class SplashViewModel @Inject constructor(
             ) {
                 is AuthSessionState.Authenticated -> restoreSnapshotAndProceed(authState.user)
                 AuthSessionState.Unauthenticated -> {
+                    // Hardening: unauthenticated app start must not keep a stale snapshot around.
+                    authRepository.clearUserSnapshot()
                     _uiState.value = SplashUiState(
                         isLoading = false,
                     )

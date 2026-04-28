@@ -5,6 +5,7 @@ import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.AuthSessionState
 import com.pharmalink.domain.model.LoginRequest
 import com.pharmalink.domain.model.SignUpRequest
+import com.pharmalink.domain.model.SignUpResult
 import com.pharmalink.domain.model.User
 import com.pharmalink.domain.model.UserSnapshot
 import javax.inject.Inject
@@ -41,22 +42,36 @@ class FakeAuthRepository @Inject constructor() : AuthRepository {
         }
     }
 
-    override suspend fun signUp(request: SignUpRequest): Result<User> {
+    override suspend fun signUp(request: SignUpRequest): Result<SignUpResult> {
         delay(1000)
 
         val normalized = SyrianPhone.normalizeToE164Digits(request.phoneNumber)
         return if (normalized != null && request.password.isNotEmpty()) {
+            val user = User(
+                id = "user${System.currentTimeMillis()}",
+                fullName = request.fullName,
+                pharmacyName = if (request.accountType == AccountType.PHARMACY) request.pharmacyName else "",
+                phoneNumber = "+$normalized",
+                accountType = request.accountType,
+                pharmacyLocation = if (request.accountType == AccountType.PHARMACY) request.pharmacyLocation else "",
+                warehouseName = if (request.accountType == AccountType.WAREHOUSE) request.warehouseName else "",
+                warehouseLocation = if (request.accountType == AccountType.WAREHOUSE) request.warehouseLocation else "",
+                isActive = true,
+            )
+
+            val requiresManualLogin = request.accountType == AccountType.PHARMACY ||
+                request.accountType == AccountType.WAREHOUSE ||
+                request.accountType == AccountType.ADMIN
+
+            if (requiresManualLogin) {
+                authState.value = AuthSessionState.Unauthenticated
+                snapshotState.value = null
+            }
+
             Result.success(
-                User(
-                    id = "user${System.currentTimeMillis()}",
-                    fullName = request.fullName,
-                    pharmacyName = if (request.accountType == AccountType.PHARMACY) request.pharmacyName else "",
-                    phoneNumber = "+$normalized",
-                    accountType = request.accountType,
-                    pharmacyLocation = if (request.accountType == AccountType.PHARMACY) request.pharmacyLocation else "",
-                    warehouseName = if (request.accountType == AccountType.WAREHOUSE) request.warehouseName else "",
-                    warehouseLocation = if (request.accountType == AccountType.WAREHOUSE) request.warehouseLocation else "",
-                    isActive = true,
+                SignUpResult(
+                    user = user,
+                    requiresManualLogin = requiresManualLogin,
                 ),
             )
         } else {

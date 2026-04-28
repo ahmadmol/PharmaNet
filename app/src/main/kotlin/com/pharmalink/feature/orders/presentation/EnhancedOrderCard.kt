@@ -51,9 +51,13 @@ fun EnhancedOrderCard(
     val progress by animateFloatAsState(
         targetValue = when (order.status) {
             OrderStatus.PENDING -> 0.25f
-            OrderStatus.APPROVED -> 0.5f
+            OrderStatus.CONFIRMED,
+            OrderStatus.IN_PROGRESS,
+            OrderStatus.READY_FOR_PICKUP,
+            OrderStatus.OUT_FOR_DELIVERY -> 0.5f
             OrderStatus.DELIVERED -> 1.0f
-            OrderStatus.REJECTED -> 0.0f
+            OrderStatus.REJECTED,
+            OrderStatus.CANCELLED -> 0.0f
         },
         animationSpec = tween(300),
         label = "progress"
@@ -89,7 +93,7 @@ fun EnhancedOrderCard(
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = order.requestId,
+                        text = order.requestId.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -133,7 +137,7 @@ fun EnhancedOrderCard(
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = order.warehouseName,
+                        text = order.warehouseName.orEmpty(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -182,9 +186,13 @@ fun EnhancedOrderCard(
                         modifier = Modifier.fillMaxWidth(),
                         color = when (order.status) {
                             OrderStatus.PENDING -> MaterialTheme.colorScheme.primary
-                            OrderStatus.APPROVED -> Color(0xFF4CAF50) // Success green
+                            OrderStatus.CONFIRMED,
+                            OrderStatus.IN_PROGRESS,
+                            OrderStatus.READY_FOR_PICKUP,
+                            OrderStatus.OUT_FOR_DELIVERY -> Color(0xFF4CAF50) // Success green
                             OrderStatus.DELIVERED -> Color(0xFF4CAF50) // Success green
-                            else -> MaterialTheme.colorScheme.primary
+                            OrderStatus.REJECTED,
+                            OrderStatus.CANCELLED -> MaterialTheme.colorScheme.error
                         },
                     )
                 }
@@ -200,7 +208,7 @@ fun EnhancedOrderCard(
             ) {
                 Column {
                     Text(
-                        text = order.createdAtLabel,
+                        text = formatInstantToDisplay(order.createdAt),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -225,7 +233,11 @@ fun EnhancedOrderCard(
                     }
                 }
                 
-                if (order.status == OrderStatus.APPROVED || order.status == OrderStatus.DELIVERED) {
+                if (order.status == OrderStatus.CONFIRMED || 
+                    order.status == OrderStatus.IN_PROGRESS ||
+                    order.status == OrderStatus.READY_FOR_PICKUP ||
+                    order.status == OrderStatus.OUT_FOR_DELIVERY || 
+                    order.status == OrderStatus.DELIVERED) {
                     Icon(
                         imageVector = Icons.Outlined.LocalShipping,
                         contentDescription = null,
@@ -236,4 +248,13 @@ fun EnhancedOrderCard(
             }
         }
     }
+}
+
+private fun formatInstantToDisplay(instant: java.time.Instant?): String {
+    return instant?.let {
+        val formatter = java.time.format.DateTimeFormatter
+            .ofPattern("yyyy/MM/dd")
+            .withZone(java.time.ZoneId.systemDefault())
+        formatter.format(it)
+    } ?: "-"
 }

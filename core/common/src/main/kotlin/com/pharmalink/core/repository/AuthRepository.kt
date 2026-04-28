@@ -3,6 +3,7 @@ package com.pharmalink.core.repository
 import com.pharmalink.domain.model.AuthSessionState
 import com.pharmalink.domain.model.LoginRequest
 import com.pharmalink.domain.model.SignUpRequest
+import com.pharmalink.domain.model.SignUpResult
 import com.pharmalink.domain.model.User
 import com.pharmalink.domain.model.UserSnapshot
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
  */
 interface AuthRepository {
     suspend fun login(request: LoginRequest): Result<User>
-    suspend fun signUp(request: SignUpRequest): Result<User>
+    suspend fun signUp(request: SignUpRequest): Result<SignUpResult>
     suspend fun requestPasswordReset(identifier: String): Result<Unit>
     suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit>
     suspend fun logout(): Result<Unit>

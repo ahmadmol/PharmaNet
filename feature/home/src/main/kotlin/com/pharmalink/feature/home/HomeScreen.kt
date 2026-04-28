@@ -85,6 +85,7 @@ import com.pharmalink.designsystem.theme.PharmaNeutral600
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.HomeStats
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.feature.home.R
@@ -99,6 +100,7 @@ fun HomeScreen(
     onNavigateToWarehouses: () -> Unit,
     onNavigateToFeaturedWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
+    onNavigateToMedicineSearch: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -113,6 +115,7 @@ fun HomeScreen(
                 onNavigateToWarehouses = onNavigateToWarehouses,
                 onNavigateToFeaturedWarehouses = onNavigateToFeaturedWarehouses,
                 onNavigateToCreateRequest = onNavigateToCreateRequest,
+                onNavigateToMedicineSearch = onNavigateToMedicineSearch,
             )
         }
 
@@ -135,8 +138,10 @@ private fun HomeContent(
     onNavigateToWarehouses: () -> Unit,
     onNavigateToFeaturedWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
+    onNavigateToMedicineSearch: () -> Unit = {},
 ) {
     val d = MaterialTheme.dimens
+    val isPublicUser = uiState.accountType == AccountType.PUBLIC_USER
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         LazyColumn(
@@ -156,9 +161,10 @@ private fun HomeContent(
                     userName = uiState.userName,
                     onProfileClick = onNavigateToProfile,
                     onNotificationsClick = onNavigateToNotifications,
+                    showNotifications = !isPublicUser,
                 )
             }
-            item { HomeSearchCard(onSearchClick = onNavigateToWarehouses) }
+            item { HomeSearchCard(onSearchClick = onNavigateToMedicineSearch) }
             item { SectionHeader(title = "لمحة اليوم") }
             item {
                 HomeStatsSection(
@@ -184,10 +190,12 @@ private fun HomeContent(
             }
             item {
                 DashboardPanel {
-                    RecentActivitiesSection(
-                        onViewAll = onNavigateToOrders,
-                    )
-                    Spacer(Modifier.height(d.spaceXL))
+                    if (!isPublicUser) {
+                        RecentActivitiesSection(
+                            onViewAll = onNavigateToOrders,
+                        )
+                        Spacer(Modifier.height(d.spaceXL))
+                    }
                     FeaturedWarehousesSection(
                         warehouses = uiState.featuredWarehouses,
                         onViewAll = onNavigateToFeaturedWarehouses,
@@ -204,6 +212,7 @@ private fun HomeHeader(
     userName: String,
     onProfileClick: () -> Unit,
     onNotificationsClick: () -> Unit,
+    showNotifications: Boolean,
 ) {
     val d = MaterialTheme.dimens
 
@@ -243,15 +252,17 @@ private fun HomeHeader(
             )
         }
 
-        Box {
-            HeaderIconButton(Icons.Outlined.Notifications, stringResource(R.string.home_alerts_title), onNotificationsClick)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 8.dp, end = 8.dp)
-                    .size(8.dp)
-                    .background(PremiumUrgent, CircleShape),
-            )
+        if (showNotifications) {
+            Box {
+                HeaderIconButton(Icons.Outlined.Notifications, stringResource(R.string.home_alerts_title), onNotificationsClick)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 8.dp, end = 8.dp)
+                        .size(8.dp)
+                        .background(PremiumUrgent, CircleShape),
+                )
+            }
         }
     }
 }

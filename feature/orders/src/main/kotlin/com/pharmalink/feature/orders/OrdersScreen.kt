@@ -369,9 +369,13 @@ private fun OrderCard(
 private fun OrderStatusChip(order: OrderItem) {
     val color = when (order.statusType) {
         OrderStatus.PENDING -> PharmaNeutral600
-        OrderStatus.APPROVED -> PharmaBlue500
+        OrderStatus.CONFIRMED,
+        OrderStatus.IN_PROGRESS,
+        OrderStatus.READY_FOR_PICKUP,
+        OrderStatus.OUT_FOR_DELIVERY -> PharmaBlue500
         OrderStatus.DELIVERED -> PharmaSuccess
-        OrderStatus.REJECTED -> PremiumUrgent
+        OrderStatus.REJECTED,
+        OrderStatus.CANCELLED -> PremiumUrgent
     }
 
     Surface(shape = CircleShape, color = color.copy(alpha = 0.12f), contentColor = color) {
@@ -388,8 +392,13 @@ private fun OrderStatusChip(order: OrderItem) {
 private fun OrderProgressTimeline(status: OrderStatus) {
     val d = MaterialTheme.dimens
     val activeIndex = when (status) {
-        OrderStatus.PENDING, OrderStatus.REJECTED -> 0
-        OrderStatus.APPROVED -> 1
+        OrderStatus.PENDING, 
+        OrderStatus.REJECTED,
+        OrderStatus.CANCELLED -> 0
+        OrderStatus.CONFIRMED,
+        OrderStatus.IN_PROGRESS,
+        OrderStatus.READY_FOR_PICKUP,
+        OrderStatus.OUT_FOR_DELIVERY -> 1
         OrderStatus.DELIVERED -> 2
     }
     val labels = listOf("قيد المراجعة", "قيد الشحن", "تم التوصيل")
@@ -497,7 +506,10 @@ private fun OrdersEmptyScreen(onRefresh: () -> Unit) {
 
 private fun OrderItem.matchesTab(tab: OrdersTab): Boolean = when (tab) {
     OrdersTab.Completed -> statusType == OrderStatus.DELIVERED
-    OrdersTab.Shipping -> statusType == OrderStatus.APPROVED
+    OrdersTab.Shipping -> statusType == OrderStatus.CONFIRMED || 
+                            statusType == OrderStatus.IN_PROGRESS ||
+                            statusType == OrderStatus.READY_FOR_PICKUP ||
+                            statusType == OrderStatus.OUT_FOR_DELIVERY
     OrdersTab.Review -> statusType == OrderStatus.PENDING || statusType == OrderStatus.REJECTED
 }
 
@@ -513,7 +525,7 @@ fun OrdersScreenPreview() {
                     orderNumber = "#109",
                     date = "٢٠٢٦/٠٤/١٢",
                     status = "قيد الشحن",
-                    statusType = OrderStatus.APPROVED,
+                    statusType = OrderStatus.CONFIRMED,
                     totalAmount = "250.00 ر.س",
                     warehouseName = "مستودع الأمل",
                     medicineName = "دواء",

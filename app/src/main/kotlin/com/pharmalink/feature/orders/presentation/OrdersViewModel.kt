@@ -37,11 +37,19 @@ class OrdersViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             repository.observeOrders().collectLatest { orders ->
+                // Active/Shipping statuses for "Approved" tab
+                val activeStatuses = setOf(
+                    OrderStatus.CONFIRMED,
+                    OrderStatus.IN_PROGRESS,
+                    OrderStatus.READY_FOR_PICKUP,
+                    OrderStatus.OUT_FOR_DELIVERY
+                )
+                
                 _state.value = OrdersUiState(
                     screenState = if (orders.isEmpty()) ScreenState.Empty else ScreenState.Success(orders),
                     pending = orders.filter { it.status == OrderStatus.PENDING },
-                    approved = orders.filter { it.status == OrderStatus.APPROVED },
-                    rejected = orders.filter { it.status == OrderStatus.REJECTED },
+                    approved = orders.filter { it.status in activeStatuses },
+                    rejected = orders.filter { it.status == OrderStatus.REJECTED || it.status == OrderStatus.CANCELLED },
                     delivered = orders.filter { it.status == OrderStatus.DELIVERED },
                     isRefreshing = _state.value.isRefreshing,
                     isOffline = false,

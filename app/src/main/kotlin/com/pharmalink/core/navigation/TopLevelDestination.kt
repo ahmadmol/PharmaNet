@@ -3,6 +3,7 @@ package com.pharmalink.core.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -20,4 +21,14 @@ val topLevelDestinations = listOf(
     TopLevelDestination(AppDestination.Resources.route, AppDestination.Resources.route, Icons.Outlined.GridView, R.string.resources),
     TopLevelDestination(AppDestination.RequestList.route, AppDestination.RequestList.route, Icons.Outlined.ShoppingCart, R.string.my_orders),
     TopLevelDestination(AppDestination.Profile.route, AppDestination.Profile.route, Icons.Outlined.Person, R.string.account),
+    TopLevelDestination(AppDestination.Orders.route, AppDestination.Orders.route, Icons.Outlined.ShoppingCart, R.string.orders_screen_title),
+    TopLevelDestination(
+        AppDestination.Notifications.route,
+        AppDestination.Notifications.route,
+        Icons.Outlined.NotificationsNone,
+        R.string.profile_settings_notifications,
+    ),
 )
+
+fun topLevelDestinationFor(route: String): TopLevelDestination? =
+    topLevelDestinations.firstOrNull { it.route == route }

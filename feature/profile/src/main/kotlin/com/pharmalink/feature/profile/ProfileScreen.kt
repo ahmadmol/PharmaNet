@@ -308,6 +308,11 @@ private fun ProfileSummaryCard(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val organizationLabel = when {
+        uiState.accountType.contains("PHARMACY", ignoreCase = true) -> "الصيدلية"
+        uiState.accountType.contains("WAREHOUSE", ignoreCase = true) -> "المستودع"
+        else -> "الجهة"
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -367,7 +372,7 @@ private fun ProfileSummaryCard(
                     horizontalArrangement = Arrangement.spacedBy(d.spaceM),
                 ) {
                     SummaryInfo(
-                        label = "الصيدلية",
+                        label = organizationLabel,
                         value = uiState.pharmacyName,
                         modifier = Modifier.weight(1f),
                     )

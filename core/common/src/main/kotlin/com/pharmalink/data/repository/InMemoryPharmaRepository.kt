@@ -12,8 +12,10 @@ import com.pharmalink.domain.model.Medicine
 import com.pharmalink.domain.model.NotificationCategory
 import com.pharmalink.domain.model.NotificationDestination
 import com.pharmalink.domain.model.NotificationType
+import com.pharmalink.domain.model.FulfillmentType
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
+import com.pharmalink.domain.model.OrderType
 import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestPriority
@@ -101,19 +103,32 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             updatedAtLabel = "تم الإرسال الآن",
             relatedOrderId = orderId,
         )
+        val now = java.time.Instant.now()
         val createdOrder = Order(
             id = orderId,
-            requestId = requestId,
+            medicineId = "med_${createdRequest.medicineName.hashCode()}",
             medicineName = createdRequest.medicineName,
-            status = OrderStatus.PENDING,
-            warehouseId = warehouse.id,
-            warehouseName = warehouse.name,
-            supplierName = warehouse.name,
             quantity = createdRequest.quantity,
             unit = createdRequest.unit,
-            createdAtLabel = "الآن",
+            status = OrderStatus.PENDING,
+            orderType = OrderType.PHARMACY_WAREHOUSE,
+            fulfillmentType = FulfillmentType.DELIVERY,
+            pharmacyId = createdRequest.pharmacyId,
+            warehouseId = warehouse.id,
+            customerId = null,
+            requestId = requestId,
+            totalPriceCents = null,
+            currency = "SAR",
+            deliveryAddress = null,
+            deliveryPhone = null,
+            notes = null,
+            createdAt = now,
+            updatedAt = now,
+            confirmedAt = null,
+            fulfilledAt = null,
+            warehouseName = warehouse.name,
+            supplierName = warehouse.name,
             etaLabel = warehouse.estimatedDeliveryLabel,
-            lastUpdateLabel = "بانتظار موافقة المورد",
             isUrgent = createdRequest.priority == RequestPriority.URGENT,
         )
 
@@ -223,7 +238,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         val idx = orders.value.indexOfFirst { it.id == orderId }
         return if (idx >= 0) {
             val mutable = orders.value.toMutableList()
-            mutable[idx] = mutable[idx].copy(status = status, lastUpdateLabel = "الآن")
+            mutable[idx] = mutable[idx].copy(status = status, updatedAt = java.time.Instant.now())
             orders.value = mutable
             Result.success(Unit)
         } else {
@@ -243,13 +258,58 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         else Result.failure(IllegalArgumentException("Order not found"))
     }
 
+    // ==================== B2C Customer Order Methods (Phase 4.3B) ====================
+    // Note: InMemory repository does not support B2C operations - use SupabasePharmaRepository
+
+    override suspend fun createCustomerOrder(
+        medicineId: String,
+        medicineName: String,
+        quantity: Int,
+        unit: String,
+        pharmacyId: String,
+        fulfillmentType: FulfillmentType,
+        deliveryAddress: String?,
+        deliveryPhone: String?,
+        notes: String?,
+    ): Result<Order> = Result.failure(
+        UnsupportedOperationException("createCustomerOrder is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
+    override suspend fun cancelCustomerOrder(orderId: String): Result<Unit> = Result.failure(
+        UnsupportedOperationException("cancelCustomerOrder is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
+    override suspend fun confirmOrder(orderId: String, totalPriceCents: Long): Result<Order> = Result.failure(
+        UnsupportedOperationException("confirmOrder is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
+    override suspend fun rejectOrder(orderId: String): Result<Order> = Result.failure(
+        UnsupportedOperationException("rejectOrder is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
+    override suspend fun markOrderReadyForPickup(orderId: String): Result<Order> = Result.failure(
+        UnsupportedOperationException("markOrderReadyForPickup is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
+    override suspend fun markOrderOutForDelivery(orderId: String): Result<Order> = Result.failure(
+        UnsupportedOperationException("markOrderOutForDelivery is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
+    override suspend fun markOrderDelivered(orderId: String): Result<Order> = Result.failure(
+        UnsupportedOperationException("markOrderDelivered is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
+    override suspend fun getMyOrders(customerId: String): Result<List<Order>> = Result.failure(
+        UnsupportedOperationException("getMyOrders is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
     private fun buildDeliveryTrackingForDemo(order: Order): DeliveryTracking {
         val oid = order.id
         return when {
             oid.contains("1") || order.status == OrderStatus.PENDING -> DeliveryTracking(
                 orderId = oid,
                 delegate = DeliveryDelegate(name = "أحمد محمد", phone = "+966501234567", isActive = true),
-                startPoint = order.warehouseName,
+                startPoint = order.warehouseName ?: "",
                 destinationPoint = "صيدلية فارمالينك",
                 currentStatus = DeliveryStatus.IN_TRANSIT,
                 departureTime = "2:30 م",
@@ -266,10 +326,10 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
                 routePolyline = null,
                 lastLocationTimestamp = System.currentTimeMillis(),
             )
-            oid.contains("2") || order.status == OrderStatus.APPROVED -> DeliveryTracking(
+            oid.contains("2") || order.status == OrderStatus.CONFIRMED -> DeliveryTracking(
                 orderId = oid,
                 delegate = null,
-                startPoint = order.warehouseName,
+                startPoint = order.warehouseName ?: "",
                 destinationPoint = "صيدلية العميل",
                 currentStatus = DeliveryStatus.PREPARING,
                 departureTime = null,
@@ -289,7 +349,7 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             else -> DeliveryTracking(
                 orderId = oid,
                 delegate = DeliveryDelegate(name = "محمد خالد", phone = "+966557654321", isActive = true),
-                startPoint = order.warehouseName,
+                startPoint = order.warehouseName ?: "",
                 destinationPoint = "صيدلية الشفاء",
                 currentStatus = DeliveryStatus.DELIVERED,
                 departureTime = "10:00 ص",
@@ -379,12 +439,120 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         ),
     )
 
-    private fun sampleOrders(): List<Order> = listOf(
-        Order("ORD-881", "REQ-1284", "باراسيتامول 500 ملغ", OrderStatus.PENDING, "w1", "مستودع الشفاء", "مستودع الشفاء", 2, "علبة", "اليوم 09:10", "خلال ساعتين", "بانتظار موافقة المورد", true),
-        Order("ORD-880", "REQ-1283", "أموكسيسيلين شراب", OrderStatus.APPROVED, "w2", "مستودع النور", "مستودع النور", 1, "زجاجة", "اليوم 08:30", "خلال 3 ساعات", "جاري التحضير", false),
-        Order("ORD-879", "REQ-1282", "فيتامين د3", OrderStatus.DELIVERED, "w3", "مستودع الأمل", "مستودع الأمل", 3, "عبوة", "أمس", null, "تم التسليم بنجاح", false),
-        Order("ORD-878", "REQ-1281", "مكمل الزنك", OrderStatus.REJECTED, "w4", "حياة للإمداد", "حياة للإمداد", 1, "عبوة", "أمس", null, "غير متوفر في هذه الدورة", false),
-    )
+    private fun sampleOrders(): List<Order> {
+        val now = java.time.Instant.now()
+        val yesterday = now.minus(java.time.Duration.ofDays(1))
+        return listOf(
+            Order(
+                id = "ORD-881",
+                medicineId = "med_001",
+                medicineName = "باراسيتامول 500 ملغ",
+                quantity = 2,
+                unit = "علبة",
+                status = OrderStatus.PENDING,
+                orderType = OrderType.PHARMACY_WAREHOUSE,
+                fulfillmentType = FulfillmentType.DELIVERY,
+                pharmacyId = "pharmacy_1",
+                warehouseId = "w1",
+                customerId = null,
+                requestId = "REQ-1284",
+                totalPriceCents = null,
+                currency = "SAR",
+                deliveryAddress = null,
+                deliveryPhone = null,
+                notes = null,
+                createdAt = now,
+                updatedAt = now,
+                confirmedAt = null,
+                fulfilledAt = null,
+                warehouseName = "مستودع الشفاء",
+                supplierName = "مستودع الشفاء",
+                etaLabel = "خلال ساعتين",
+                isUrgent = true,
+            ),
+            Order(
+                id = "ORD-880",
+                medicineId = "med_002",
+                medicineName = "أموكسيسيلين شراب",
+                quantity = 1,
+                unit = "زجاجة",
+                status = OrderStatus.CONFIRMED,
+                orderType = OrderType.PHARMACY_WAREHOUSE,
+                fulfillmentType = FulfillmentType.DELIVERY,
+                pharmacyId = "pharmacy_1",
+                warehouseId = "w2",
+                customerId = null,
+                requestId = "REQ-1283",
+                totalPriceCents = 4500,
+                currency = "SAR",
+                deliveryAddress = null,
+                deliveryPhone = null,
+                notes = null,
+                createdAt = now,
+                updatedAt = now,
+                confirmedAt = now,
+                fulfilledAt = null,
+                warehouseName = "مستودع النور",
+                supplierName = "مستودع النور",
+                etaLabel = "خلال 3 ساعات",
+                isUrgent = false,
+            ),
+            Order(
+                id = "ORD-879",
+                medicineId = "med_003",
+                medicineName = "فيتامين د3",
+                quantity = 3,
+                unit = "عبوة",
+                status = OrderStatus.DELIVERED,
+                orderType = OrderType.PHARMACY_WAREHOUSE,
+                fulfillmentType = FulfillmentType.DELIVERY,
+                pharmacyId = "pharmacy_1",
+                warehouseId = "w3",
+                customerId = null,
+                requestId = "REQ-1282",
+                totalPriceCents = 2850,
+                currency = "SAR",
+                deliveryAddress = null,
+                deliveryPhone = null,
+                notes = null,
+                createdAt = yesterday,
+                updatedAt = yesterday,
+                confirmedAt = yesterday,
+                fulfilledAt = yesterday,
+                warehouseName = "مستودع الأمل",
+                supplierName = "مستودع الأمل",
+                etaLabel = null,
+                isUrgent = false,
+            ),
+            Order(
+                id = "ORD-878",
+                medicineId = "med_004",
+                medicineName = "مكمل الزنك",
+                quantity = 1,
+                unit = "عبوة",
+                status = OrderStatus.REJECTED,
+                orderType = OrderType.PHARMACY_WAREHOUSE,
+                fulfillmentType = FulfillmentType.DELIVERY,
+                pharmacyId = "pharmacy_1",
+                warehouseId = "w4",
+                customerId = null,
+                requestId = "REQ-1281",
+                totalPriceCents = null,
+                currency = "SAR",
+                deliveryAddress = null,
+                deliveryPhone = null,
+                notes = "غير متوفر في هذه الدورة",
+                createdAt = yesterday,
+                updatedAt = yesterday,
+                confirmedAt = null,
+                fulfilledAt = null,
+                warehouseName = "حياة للإمداد",
+                supplierName = "حياة للإمداد",
+                etaLabel = null,
+                isUrgent = false,
+            ),
+        )
+    }
 
     private fun sampleNotifications(): List<AppNotification> = listOf(
         AppNotification(

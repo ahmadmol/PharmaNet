@@ -3,6 +3,7 @@ package com.pharmalink.data.repository
 import com.pharmalink.domain.model.AppNotification
 import com.pharmalink.domain.model.ComplianceOverview
 import com.pharmalink.domain.model.DeliveryTracking
+import com.pharmalink.domain.model.FulfillmentType
 import com.pharmalink.domain.model.HomeStats
 import com.pharmalink.domain.model.Medicine
 import com.pharmalink.domain.model.Order
@@ -78,4 +79,32 @@ interface PharmaRepository {
     suspend fun createOrder(order: Order): Result<Order>
 
     suspend fun deleteOrder(orderId: String): Result<Unit>
+
+    // ==================== B2C Customer Order Methods (Phase 4.3B) ====================
+
+    suspend fun createCustomerOrder(
+        medicineId: String,
+        medicineName: String,
+        quantity: Int,
+        unit: String,
+        pharmacyId: String,
+        fulfillmentType: FulfillmentType,
+        deliveryAddress: String?,
+        deliveryPhone: String?,
+        notes: String?,
+    ): Result<Order>
+
+    suspend fun cancelCustomerOrder(orderId: String): Result<Unit>
+
+    suspend fun confirmOrder(orderId: String, totalPriceCents: Long): Result<Order>
+
+    suspend fun rejectOrder(orderId: String): Result<Order>
+
+    suspend fun markOrderReadyForPickup(orderId: String): Result<Order>
+
+    suspend fun markOrderOutForDelivery(orderId: String): Result<Order>
+
+    suspend fun markOrderDelivered(orderId: String): Result<Order>
+
+    suspend fun getMyOrders(customerId: String): Result<List<Order>>
 }

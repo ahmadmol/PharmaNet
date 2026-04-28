@@ -14,6 +14,8 @@ import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.RequestTransitions
 import com.pharmalink.domain.model.RequestUpdate
+import com.pharmalink.feature.request.usecase.DeleteRequestUseCase
+import com.pharmalink.feature.request.usecase.SubmitRequestUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -33,6 +35,8 @@ data class RequestDetailsUiState(
 class RequestDetailsViewModel @Inject constructor(
     private val pharmaRepository: PharmaRepository,
     private val authRepository: AuthRepository,
+    private val submitRequestUseCase: SubmitRequestUseCase,
+    private val deleteRequestUseCase: DeleteRequestUseCase,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -124,6 +128,88 @@ class RequestDetailsViewModel @Inject constructor(
                 onSuccess = { updatedRequest ->
                     _uiState.value = _uiState.value.copy(
                         screenState = ScreenState.Success(updatedRequest),
+                        isActionInProgress = false,
+                        actionErrorMessage = null,
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isActionInProgress = false,
+                        actionErrorMessage = mapErrorToUserMessage(error),
+                    )
+                },
+            )
+        }
+    }
+
+    fun submitRequest() {
+        val currentRequest = (_uiState.value.screenState as? ScreenState.Success)?.data ?: return
+        val currentAccountType = _uiState.value.accountType ?: return
+        if (_uiState.value.isActionInProgress) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isActionInProgress = true,
+                actionErrorMessage = null,
+            )
+
+            submitRequestUseCase(
+                request = currentRequest,
+                accountType = currentAccountType,
+            ).fold(
+                onSuccess = {
+                    pharmaRepository.getRequest(currentRequest.id).fold(
+                        onSuccess = { refreshedRequest ->
+                            _uiState.value = if (refreshedRequest != null) {
+                                _uiState.value.copy(
+                                    screenState = ScreenState.Success(refreshedRequest),
+                                    isActionInProgress = false,
+                                    actionErrorMessage = null,
+                                )
+                            } else {
+                                _uiState.value.copy(
+                                    screenState = ScreenState.Error(context.getString(R.string.request_error_not_found)),
+                                    isActionInProgress = false,
+                                    actionErrorMessage = null,
+                                )
+                            }
+                        },
+                        onFailure = { error ->
+                            _uiState.value = _uiState.value.copy(
+                                isActionInProgress = false,
+                                actionErrorMessage = mapErrorToUserMessage(error),
+                            )
+                        },
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isActionInProgress = false,
+                        actionErrorMessage = mapErrorToUserMessage(error),
+                    )
+                },
+            )
+        }
+    }
+
+    fun deleteRequest() {
+        val currentRequest = (_uiState.value.screenState as? ScreenState.Success)?.data ?: return
+        val currentAccountType = _uiState.value.accountType ?: return
+        if (_uiState.value.isActionInProgress) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isActionInProgress = true,
+                actionErrorMessage = null,
+            )
+
+            deleteRequestUseCase(
+                request = currentRequest,
+                accountType = currentAccountType,
+            ).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        screenState = ScreenState.Error(context.getString(R.string.request_error_deleted)),
                         isActionInProgress = false,
                         actionErrorMessage = null,
                     )

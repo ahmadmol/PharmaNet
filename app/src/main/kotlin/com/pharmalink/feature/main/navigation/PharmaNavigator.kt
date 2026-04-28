@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,6 +40,7 @@ import com.pharmalink.R
 import com.pharmalink.core.navigation.AppDestination
 import com.pharmalink.core.navigation.matchesDestination
 import com.pharmalink.core.navigation.navigateToInnerTopLevel
+import com.pharmalink.core.navigation.topLevelDestinationFor
 import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.NotificationDestination
@@ -46,6 +48,8 @@ import com.pharmalink.feature.auth.AuthViewModel
 import com.pharmalink.feature.compliance.presentation.ComplianceScreen
 import com.pharmalink.feature.help.presentation.AboutAppScreen
 import com.pharmalink.feature.help.presentation.ContactUsScreen
+import com.pharmalink.feature.home.HomeScreen
+import com.pharmalink.feature.home.MedicineSearchScreen
 import com.pharmalink.feature.help.presentation.HelpScreen
 import com.pharmalink.feature.home.homeScreen
 import com.pharmalink.feature.notifications.NotificationsScreen
@@ -67,6 +71,8 @@ private val bottomBarRoutes = setOf(
     AppDestination.Resources.route,
     AppDestination.CreateRequest.route,
     AppDestination.RequestList.route,
+    AppDestination.Orders.route,
+    AppDestination.Notifications.route,
     AppDestination.Profile.route,
 )
 
@@ -89,6 +95,8 @@ fun PharmaNavigator(
         currentRoute.matchesDestination(AppDestination.Resources) -> AppDestination.Resources
         currentRoute.matchesDestination(AppDestination.CreateRequest) -> AppDestination.CreateRequest
         currentRoute.matchesDestination(AppDestination.RequestList) -> AppDestination.RequestList
+        currentRoute.matchesDestination(AppDestination.Orders) -> AppDestination.Orders
+        currentRoute.matchesDestination(AppDestination.Notifications) -> AppDestination.Notifications
         currentRoute.matchesDestination(AppDestination.Profile) -> AppDestination.Profile
         else -> AppDestination.Home
     }
@@ -98,7 +106,12 @@ fun PharmaNavigator(
             listOf(AppDestination.Home, AppDestination.Resources, AppDestination.RequestList, AppDestination.Profile)
         AccountType.ADMIN ->
             listOf(AppDestination.Home, AppDestination.Profile)
-        else ->
+        AccountType.PUBLIC_USER ->
+            listOf(
+                AppDestination.Home,
+                AppDestination.Profile,
+            )
+        AccountType.PHARMACY ->
             listOf(
                 AppDestination.Home,
                 AppDestination.Resources,
@@ -106,11 +119,19 @@ fun PharmaNavigator(
                 AppDestination.RequestList,
                 AppDestination.Profile,
             )
+        null -> listOf(AppDestination.Home, AppDestination.Profile)
     }
 
-    val safeSelectedTab = if (currentTab !in visibleTabs) AppDestination.Home else currentTab
+    val bottomBarTabs = visibleTabs
+        .filterNot { tab -> accountType == AccountType.PHARMACY && tab == AppDestination.CreateRequest }
+        .mapNotNull { destination -> topLevelDestinationFor(destination.route) }
 
-    val tabSelectedIndex = visibleTabs.indexOf(safeSelectedTab)
+    val bottomBarTabRoutes = bottomBarTabs.map { it.route }.toSet()
+    val safeSelectedTab = if (currentTab.route !in bottomBarTabRoutes) AppDestination.Home else currentTab
+
+    val tabSelectedIndex = bottomBarTabs
+        .indexOfFirst { destination -> destination.route == safeSelectedTab.route }
+        .coerceAtLeast(0)
 
     val visibleTabRoutes = visibleTabs.map { it.route }.toSet()
     val isBottomBarVisible = currentRoute in visibleTabRoutes
@@ -177,23 +198,26 @@ fun PharmaNavigator(
             if (isBottomBarVisible) {
                 Box {
                     PharmaBottomNavigation(
+                        items = bottomBarTabs,
                         selectedItem = tabSelectedIndex,
                         onTabSelected = { route, _ ->
                             when (route) {
                                 AppDestination.Home.route -> navController.navigateToInnerTopLevel(AppDestination.Home)
                                 AppDestination.Resources.route -> navController.navigateToInnerTopLevel(AppDestination.Resources)
                                 AppDestination.RequestList.route -> navController.navigateToInnerTopLevel(AppDestination.RequestList)
+                                AppDestination.Orders.route -> navController.navigateToInnerTopLevel(AppDestination.Orders)
+                                AppDestination.Notifications.route -> navController.navigateToInnerTopLevel(AppDestination.Notifications)
                                 AppDestination.Profile.route -> navController.navigateToInnerTopLevel(AppDestination.Profile)
                             }
                         },
                     )
 
-                    if (accountType != AccountType.WAREHOUSE && accountType != AccountType.ADMIN) {
+                    if (accountType == AccountType.PHARMACY) {
                         FloatingActionButton(
                             onClick = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .offset(y = (0).dp)
+                                .offset(y = (+5).dp)
                                 .size(56.dp)
                                 .scale(fabScale)
                                 .zIndex(1f),
@@ -239,8 +263,26 @@ fun PharmaNavigator(
                     onNavigateToProfile = { navController.navigateToInnerTopLevel(AppDestination.Profile) },
                     onNavigateToWarehouses = { navController.navigateToInnerTopLevel(AppDestination.Resources) },
                     onNavigateToFeaturedWarehouses = { navController.navigate(AppDestination.FeaturedWarehouses.route) },
-                    onNavigateToCreateRequest = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
+                    onNavigateToCreateRequest = {
+                        if (accountType == AccountType.PHARMACY) {
+                            navController.navigateToInnerTopLevel(AppDestination.CreateRequest)
+                        }
+                    },
+                    onNavigateToMedicineSearch = {
+                        navController.navigate(AppDestination.MedicineSearch.route) { launchSingleTop = true }
+                    },
                 )
+                composable(AppDestination.MedicineSearch.route) {
+                    MedicineSearchScreen(
+                        viewModel = hiltViewModel(),
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToWarehouseDetail = { medicineId ->
+                            // Navigate to warehouse detail for now (showing where medicine is available)
+                            // In future, this could navigate to a list of warehouses with this medicine
+                            navController.navigate(AppDestination.Resources.route)
+                        },
+                    )
+                }
                 composable(AppDestination.Resources.route) {
                     WarehousesScreen(
                         viewModel = hiltViewModel(),
@@ -260,13 +302,19 @@ fun PharmaNavigator(
                     )
                 }
                 composable(AppDestination.CreateRequest.route) {
-                    CreateRequestScreen(
-                        viewModel = hiltViewModel(),
-                        onNavigateToRequestList = { navController.navigate(AppDestination.RequestList.route) },
-                        onNavigateToRequestDetails = { requestId ->
-                            navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
-                        },
-                    )
+                    if (accountType == AccountType.PHARMACY) {
+                        CreateRequestScreen(
+                            viewModel = hiltViewModel(),
+                            onNavigateToRequestList = { navController.navigate(AppDestination.RequestList.route) },
+                            onNavigateToRequestDetails = { requestId ->
+                                navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
+                            },
+                        )
+                    } else {
+                        LaunchedEffect(Unit) {
+                            navController.popBackStack()
+                        }
+                    }
                 }
                 composable(AppDestination.Orders.route) {
                     OrdersScreen(
@@ -277,7 +325,11 @@ fun PharmaNavigator(
                 }
                 composable(AppDestination.RequestList.route) {
                     RequestListScreen(
-                        onNavigateToCreateRequest = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
+                        onNavigateToCreateRequest = {
+                            if (accountType == AccountType.PHARMACY) {
+                                navController.navigateToInnerTopLevel(AppDestination.CreateRequest)
+                            }
+                        },
                         onNavigateToRequestDetails = { requestId ->
                             navController.navigate(AppDestination.RequestDetail.createRoute(requestId))
                         },
@@ -399,8 +451,10 @@ fun PharmaNavigator(
                     WarehouseDetailScreen(
                         warehouseId = warehouseId,
                         onBack = { navController.popBackStack() },
-                        onCreateRequest = {
-                            navController.navigateToInnerTopLevel(AppDestination.CreateRequest)
+                        onCreateRequest = if (accountType == AccountType.PHARMACY) {
+                            { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) }
+                        } else {
+                            null
                         },
                         viewModel = hiltViewModel(),
                     )

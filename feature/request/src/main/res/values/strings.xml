@@ -93,8 +93,11 @@
     <string name="request_list_incoming_title">Incoming Requests</string>
     <string name="request_empty_incoming_subtitle">No incoming requests assigned to your warehouse.</string>
     <string name="request_details_warehouse_actions_title">Warehouse Actions</string>
+    <string name="request_details_pharmacy_actions_title">إجراءات الطلب</string>
     <string name="request_action_accept">Accept</string>
     <string name="request_action_reject">Reject</string>
     <string name="request_action_start_processing">Start Processing</string>
     <string name="request_action_mark_fulfilled">Mark Fulfilled</string>
+    <string name="request_action_submit">إرسال الطلب</string>
+    <string name="request_action_delete_draft">حذف المسودة</string>
     <string name="request_action_updating">Updating request...</string></resources>

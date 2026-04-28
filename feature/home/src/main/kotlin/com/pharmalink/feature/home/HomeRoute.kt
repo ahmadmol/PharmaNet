@@ -18,6 +18,7 @@ fun NavGraphBuilder.homeScreen(
     onNavigateToWarehouses: () -> Unit,
     onNavigateToFeaturedWarehouses: () -> Unit,
     onNavigateToCreateRequest: () -> Unit,
+    onNavigateToMedicineSearch: () -> Unit,
 ) {
     composable(route = HOME_ROUTE) {
         val viewModel: HomeViewModel = hiltViewModel()
@@ -30,6 +31,7 @@ fun NavGraphBuilder.homeScreen(
             onNavigateToWarehouses = onNavigateToWarehouses,
             onNavigateToFeaturedWarehouses = onNavigateToFeaturedWarehouses,
             onNavigateToCreateRequest = onNavigateToCreateRequest,
+            onNavigateToMedicineSearch = onNavigateToMedicineSearch,
         )
     }
 }

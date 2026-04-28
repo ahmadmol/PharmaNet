@@ -133,6 +133,16 @@ fun PharmaNavHost(
             val signUpViewModel: SignUpViewModel = hiltViewModel()
             val signUpState by signUpViewModel.uiState.collectAsStateWithLifecycle()
 
+            LaunchedEffect(signUpState.navigateToLogin) {
+                if (signUpState.navigateToLogin) {
+                    navController.navigate(AppDestination.Login.route) {
+                        popUpTo(AppDestination.SignUp.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                    signUpViewModel.onLoginNavigationConsumed()
+                }
+            }
+
             SignUpScreen(
                 uiState = signUpState,
                 onAccountTypeChange = signUpViewModel::updateAccountType,

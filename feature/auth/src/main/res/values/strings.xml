@@ -34,6 +34,9 @@
     <string name="auth_error_name_required">Name is required</string>
     <string name="auth_error_phone_exists">Phone number already registered</string>
     <string name="auth_error_weak_password">Password is too weak</string>
+    <string name="auth_account_type_admin">مسؤول</string>
+    <string name="signup_success_created">تم إنشاء الحساب بنجاح</string>
+    <string name="signup_success_login_required">يرجى تسجيل الدخول</string>
     <string name="error_network">Network error</string>
     <string name="error_unknown">Unknown error</string>
 </resources>

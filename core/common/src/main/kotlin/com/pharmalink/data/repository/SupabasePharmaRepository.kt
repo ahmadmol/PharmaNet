@@ -13,8 +13,10 @@ import com.pharmalink.domain.model.Medicine
 import com.pharmalink.domain.model.NotificationCategory
 import com.pharmalink.domain.model.NotificationDestination
 import com.pharmalink.domain.model.NotificationType
+import com.pharmalink.domain.model.FulfillmentType
 import com.pharmalink.domain.model.Order as DomainOrder
 import com.pharmalink.domain.model.OrderStatus
+import com.pharmalink.domain.model.OrderType
 import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestPriority
@@ -328,9 +330,51 @@ class SupabasePharmaRepository @Inject constructor(
         )
 
     private suspend fun fetchOrders(): Result<List<DomainOrder>> = runCatching {
-        supabase.postgrest.from("orders").select(columns = Columns.ALL).decodeList<OrderDto>()
-            .map { it.toDomain().getOrThrow() }
+        val identity = resolveAccessContext()
+        fetchOrdersForIdentity(identity)
     }
+
+    private suspend fun fetchOrdersForIdentity(
+        identity: com.pharmalink.domain.model.UserIdentity,
+    ): List<DomainOrder> =
+        when (identity.role) {
+            AccountType.ADMIN -> {
+                supabase.postgrest.from("orders").select(columns = Columns.ALL)
+                    .decodeList<OrderDto>()
+                    .map { it.toOrderDomain().getOrThrow() }
+            }
+            AccountType.WAREHOUSE -> {
+                val orgId = identity.organizationId
+                    ?: throw UnauthorizedException("unauthorized: WAREHOUSE user missing organizationId")
+                supabase.postgrest.from("orders").select(columns = Columns.ALL) {
+                    filter { eq("warehouse_id", orgId) }
+                }.decodeList<OrderDto>()
+                    .map { it.toOrderDomain().getOrThrow() }
+            }
+            AccountType.PHARMACY -> {
+                val orgId = identity.organizationId
+                    ?: throw UnauthorizedException("unauthorized: PHARMACY user missing organizationId")
+                val allowedRequestIds = supabase.postgrest.from("requests").select(columns = Columns.raw("id")) {
+                    filter { eq("pharmacy_id", orgId) }
+                }.decodeList<RequestIdRow>()
+                    .map { it.id }
+                    .filter { it.isNotBlank() }
+
+                if (allowedRequestIds.isEmpty()) {
+                    emptyList()
+                } else {
+                    supabase.postgrest.from("orders").select(columns = Columns.ALL) {
+                        filter { isIn("request_id", allowedRequestIds) }
+                    }.decodeList<OrderDto>()
+                        .map { it.toOrderDomain().getOrThrow() }
+                }
+            }
+            AccountType.PUBLIC_USER -> {
+                throw UnauthorizedException(
+                    "unauthorized: PUBLIC_USER order access is blocked because the current schema does not expose a provable order ownership field.",
+                )
+            }
+        }
 
     private suspend fun fetchRequests(): Result<List<Request>> = runCatching {
         val identity = resolveAccessContext()
@@ -411,9 +455,53 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun getOrder(orderId: String): Result<DomainOrder?> =
         runCatching {
-            supabase.postgrest.from("orders").select {
-                filter { eq("id", orderId) }
-            }.decodeList<OrderDto>().firstOrNull()?.toDomain()?.getOrThrow()
+            val identity = resolveAccessContext()
+
+            when (identity.role) {
+                AccountType.ADMIN -> {
+                    supabase.postgrest.from("orders").select {
+                        filter { eq("id", orderId) }
+                    }.decodeList<OrderDto>().firstOrNull()?.toOrderDomain()?.getOrThrow()
+                }
+                AccountType.WAREHOUSE -> {
+                    val orgId = identity.organizationId
+                        ?: throw UnauthorizedException("unauthorized: WAREHOUSE user missing organizationId")
+                    supabase.postgrest.from("orders").select {
+                        filter {
+                            eq("id", orderId)
+                            eq("warehouse_id", orgId)
+                        }
+                    }.decodeList<OrderDto>().firstOrNull()?.toOrderDomain()?.getOrThrow()
+                }
+                AccountType.PHARMACY -> {
+                    val orgId = identity.organizationId
+                        ?: throw UnauthorizedException("unauthorized: PHARMACY user missing organizationId")
+                    val order = supabase.postgrest.from("orders").select {
+                        filter { eq("id", orderId) }
+                    }.decodeList<OrderDto>().firstOrNull() ?: return@runCatching null
+
+                    val requestId = order.requestId
+                        ?: throw IllegalStateException("B2B order is missing requestId")
+                    
+                    val matchingRequestRows = supabase.postgrest.from("requests").select(columns = Columns.raw("id")) {
+                        filter {
+                            eq("id", requestId)
+                            eq("pharmacy_id", orgId)
+                        }
+                    }.decodeList<RequestIdRow>()
+
+                    if (matchingRequestRows.isEmpty()) {
+                        null
+                    } else {
+                        order.toOrderDomain().getOrThrow()
+                    }
+                }
+                AccountType.PUBLIC_USER -> {
+                    throw UnauthorizedException(
+                        "unauthorized: PUBLIC_USER order access is blocked because the current schema does not expose a provable order ownership field.",
+                    )
+                }
+            }
         }
 
     override suspend fun getRequest(requestId: String): Result<Request?> =
@@ -671,16 +759,51 @@ class SupabasePharmaRepository @Inject constructor(
         }
 
     override suspend fun deleteRequest(requestId: String): Result<Unit> =
-        unsupportedFeatureFailure(
-            featureName = "Deleting requests",
-            reason = "Delete semantics and tenant/RLS guarantees for requests are not provable from the current codebase.",
-        )
+        runCatching {
+            val ownedRequest = getOwnedRequestForPharmacy(
+                requestId = requestId,
+                actionName = "Deleting request",
+            )
+
+            require(ownedRequest.status == RequestStatus.DRAFT) {
+                "Deleting requests is allowed only for DRAFT requests."
+            }
+
+            supabase.postgrest.from("requests").delete {
+                filter {
+                    eq("id", requestId)
+                    eq("pharmacy_id", ownedRequest.pharmacyId)
+                }
+            }
+        }.map { Unit }
 
     override suspend fun submitRequest(requestId: String): Result<Unit> =
-        unsupportedFeatureFailure(
-            featureName = "Submitting requests",
-            reason = "No visible backend contract defines how a request is submitted or which state transition must occur.",
-        )
+        runCatching {
+            val ownedRequest = getOwnedRequestForPharmacy(
+                requestId = requestId,
+                actionName = "Submitting request",
+            )
+
+            require(
+                com.pharmalink.domain.model.RequestTransitions.canTransition(
+                    ownedRequest.status,
+                    RequestStatus.PENDING,
+                    AccountType.PHARMACY,
+                )
+            ) {
+                "Invalid status transition: ${ownedRequest.status} -> ${RequestStatus.PENDING} for role ${AccountType.PHARMACY}"
+            }
+
+            supabase.postgrest.from("requests").update(
+                RequestUpdateDto(status = RequestStatus.PENDING.name),
+            ) {
+                select(Columns.ALL)
+                filter {
+                    eq("id", requestId)
+                    eq("pharmacy_id", ownedRequest.pharmacyId)
+                }
+            }.decodeSingle<RequestDto>()
+        }.map { Unit }
 
     override suspend fun markNotificationRead(notificationId: String): Result<Unit> =
         updateNotificationsReadState(
@@ -758,6 +881,348 @@ class SupabasePharmaRepository @Inject constructor(
             featureName = "Deleting orders",
             reason = "Delete semantics and tenant/RLS guarantees for orders are not provable from the current codebase.",
         )
+
+    // ==================== B2C Customer Order Methods (Phase 4.3B) ====================
+
+    override suspend fun createCustomerOrder(
+        medicineId: String,
+        medicineName: String,
+        quantity: Int,
+        unit: String,
+        pharmacyId: String,
+        fulfillmentType: FulfillmentType,
+        deliveryAddress: String?,
+        deliveryPhone: String?,
+        notes: String?,
+    ): Result<DomainOrder> = runCatching {
+        // 1. Role validation: PUBLIC_USER only
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PUBLIC_USER) {
+            "Only PUBLIC_USER can create customer orders"
+        }
+        
+        // 2. Get customer ID from identity
+        val customerId = identity.userId
+            ?: throw IllegalStateException("PUBLIC_USER missing userId")
+        
+        // 3. Validate fulfillment requirements
+        if (fulfillmentType == FulfillmentType.DELIVERY) {
+            require(!deliveryAddress.isNullOrBlank()) {
+                "Delivery address required for DELIVERY fulfillment"
+            }
+            require(!deliveryPhone.isNullOrBlank()) {
+                "Delivery phone required for DELIVERY fulfillment"
+            }
+        }
+        
+        // 4. Create order DTO
+        val createOrderDto = CreateOrderDto(
+            medicineId = medicineId,
+            medicineName = medicineName,
+            quantity = quantity,
+            unit = unit,
+            pharmacyId = pharmacyId,
+            customerId = customerId,
+            orderType = OrderType.CUSTOMER_PHARMACY.name,
+            fulfillmentType = fulfillmentType.name,
+            deliveryAddress = deliveryAddress,
+            deliveryPhone = deliveryPhone,
+            notes = notes,
+        )
+        
+        // 5. Insert order (starts PENDING, totalPriceCents = null)
+        val result = supabase.postgrest.from("orders").insert(createOrderDto) {
+            select(Columns.ALL)
+        }.decodeSingle<OrderDto>()
+        
+        result.toOrderDomain().getOrThrow()
+    }
+
+    override suspend fun cancelCustomerOrder(orderId: String): Result<Unit> = runCatching {
+        // 1. Get current user
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PUBLIC_USER) {
+            "Only PUBLIC_USER can cancel their orders"
+        }
+        
+        val customerId = identity.userId
+            ?: throw IllegalStateException("PUBLIC_USER missing userId")
+        
+        // 2. Get order and validate ownership
+        val order = getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found: $orderId")
+        
+        require(order.customerId == customerId) {
+            "Cannot cancel order that doesn't belong to you"
+        }
+        
+        require(order.status == OrderStatus.PENDING) {
+            "Can only cancel PENDING orders. Current status: ${order.status}"
+        }
+        
+        // 3. Update status to CANCELLED
+        supabase.postgrest.from("orders").update(
+            { "status" to OrderStatus.CANCELLED.name }
+        ) {
+            filter {
+                eq("id", orderId)
+                eq("customer_id", customerId)
+            }
+        }
+    }.map { }
+
+    override suspend fun confirmOrder(orderId: String, totalPriceCents: Long): Result<DomainOrder> = runCatching {
+        // 1. Validate ownership: pharmacy only
+        val order = getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found: $orderId")
+        
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can confirm orders"
+        }
+        
+        val pharmacyId = identity.organizationId
+            ?: throw IllegalStateException("PHARMACY missing organizationId")
+        
+        require(order.pharmacyId == pharmacyId) {
+            "Cannot confirm order that doesn't belong to your pharmacy"
+        }
+        
+        // 2. Validate status transition
+        require(order.status == OrderStatus.PENDING) {
+            "Can only confirm PENDING orders. Current status: ${order.status}"
+        }
+        
+        // 3. Validate price
+        require(totalPriceCents >= 0) {
+            "Total price must be >= 0"
+        }
+        
+        // 4. Update order
+        val updates = mapOf(
+            "status" to OrderStatus.CONFIRMED.name,
+            "total_price_cents" to totalPriceCents,
+            "confirmed_at" to Instant.now().toString(),
+            "updated_at" to Instant.now().toString(),
+        )
+        
+        supabase.postgrest.from("orders").update(updates) {
+            filter { eq("id", orderId) }
+        }
+        
+        // 5. Return updated order
+        getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found after update")
+    }
+
+    override suspend fun rejectOrder(orderId: String): Result<DomainOrder> = runCatching {
+        // 1. Validate ownership: pharmacy only
+        val order = getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found: $orderId")
+        
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can reject orders"
+        }
+        
+        val pharmacyId = identity.organizationId
+            ?: throw IllegalStateException("PHARMACY missing organizationId")
+        
+        require(order.pharmacyId == pharmacyId) {
+            "Cannot reject order that doesn't belong to your pharmacy"
+        }
+        
+        // 2. Validate status transition
+        require(order.status == OrderStatus.PENDING) {
+            "Can only reject PENDING orders. Current status: ${order.status}"
+        }
+        
+        // 3. Update order
+        val updates = mapOf(
+            "status" to OrderStatus.REJECTED.name,
+            "updated_at" to Instant.now().toString(),
+        )
+        
+        supabase.postgrest.from("orders").update(updates) {
+            filter { eq("id", orderId) }
+        }
+        
+        // 4. Return updated order
+        getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found after update")
+    }
+
+    override suspend fun markOrderReadyForPickup(orderId: String): Result<DomainOrder> = runCatching {
+        // 1. Validate ownership: pharmacy only
+        val order = getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found: $orderId")
+        
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can mark orders ready"
+        }
+        
+        val pharmacyId = identity.organizationId
+            ?: throw IllegalStateException("PHARMACY missing organizationId")
+        
+        require(order.pharmacyId == pharmacyId) {
+            "Cannot modify order that doesn't belong to your pharmacy"
+        }
+        
+        // 2. Validate fulfillment type
+        require(order.fulfillmentType == FulfillmentType.PICKUP) {
+            "Can only mark PICKUP orders as ready. Current type: ${order.fulfillmentType}"
+        }
+        
+        // 3. Validate status transition (CONFIRMED or IN_PROGRESS -> READY_FOR_PICKUP)
+        require(order.status == OrderStatus.CONFIRMED || order.status == OrderStatus.IN_PROGRESS) {
+            "Can only mark CONFIRMED or IN_PROGRESS orders as ready. Current status: ${order.status}"
+        }
+        
+        // 4. Update order
+        val updates = mapOf(
+            "status" to OrderStatus.READY_FOR_PICKUP.name,
+            "updated_at" to Instant.now().toString(),
+        )
+        
+        supabase.postgrest.from("orders").update(updates) {
+            filter { eq("id", orderId) }
+        }
+        
+        // 5. Return updated order
+        getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found after update")
+    }
+
+    override suspend fun markOrderOutForDelivery(orderId: String): Result<DomainOrder> = runCatching {
+        // 1. Validate ownership: pharmacy only
+        val order = getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found: $orderId")
+        
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can mark orders out for delivery"
+        }
+        
+        val pharmacyId = identity.organizationId
+            ?: throw IllegalStateException("PHARMACY missing organizationId")
+        
+        require(order.pharmacyId == pharmacyId) {
+            "Cannot modify order that doesn't belong to your pharmacy"
+        }
+        
+        // 2. Validate fulfillment type
+        require(order.fulfillmentType == FulfillmentType.DELIVERY) {
+            "Can only mark DELIVERY orders as out for delivery. Current type: ${order.fulfillmentType}"
+        }
+        
+        // 3. Validate status transition
+        require(order.status == OrderStatus.CONFIRMED || order.status == OrderStatus.IN_PROGRESS) {
+            "Can only mark CONFIRMED or IN_PROGRESS orders as out for delivery. Current status: ${order.status}"
+        }
+        
+        // 4. Update order
+        val updates = mapOf(
+            "status" to OrderStatus.OUT_FOR_DELIVERY.name,
+            "updated_at" to Instant.now().toString(),
+        )
+        
+        supabase.postgrest.from("orders").update(updates) {
+            filter { eq("id", orderId) }
+        }
+        
+        // 5. Return updated order
+        getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found after update")
+    }
+
+    override suspend fun markOrderDelivered(orderId: String): Result<DomainOrder> = runCatching {
+        // 1. Validate ownership: pharmacy only
+        val order = getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found: $orderId")
+        
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can mark orders as delivered"
+        }
+        
+        val pharmacyId = identity.organizationId
+            ?: throw IllegalStateException("PHARMACY missing organizationId")
+        
+        require(order.pharmacyId == pharmacyId) {
+            "Cannot modify order that doesn't belong to your pharmacy"
+        }
+        
+        // 2. Validate status transition (must be READY_FOR_PICKUP or OUT_FOR_DELIVERY)
+        require(order.status == OrderStatus.READY_FOR_PICKUP || order.status == OrderStatus.OUT_FOR_DELIVERY) {
+            "Can only mark READY_FOR_PICKUP or OUT_FOR_DELIVERY orders as delivered. Current status: ${order.status}"
+        }
+        
+        // 3. Update order
+        val updates = mapOf(
+            "status" to OrderStatus.DELIVERED.name,
+            "fulfilled_at" to Instant.now().toString(),
+            "updated_at" to Instant.now().toString(),
+        )
+        
+        supabase.postgrest.from("orders").update(updates) {
+            filter { eq("id", orderId) }
+        }
+        
+        // 4. Return updated order
+        getOrder(orderId).getOrThrow()
+            ?: throw IllegalStateException("Order not found after update")
+    }
+
+    override suspend fun getMyOrders(customerId: String): Result<List<DomainOrder>> = runCatching {
+        // 1. Validate ownership
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PUBLIC_USER) {
+            "Only PUBLIC_USER can view their orders"
+        }
+        
+        val currentCustomerId = identity.userId
+            ?: throw IllegalStateException("PUBLIC_USER missing userId")
+        
+        require(currentCustomerId == customerId) {
+            "Can only view your own orders"
+        }
+        
+        // 2. Fetch orders by customer_id
+        supabase.postgrest.from("orders").select(columns = Columns.ALL) {
+            filter { eq("customer_id", customerId) }
+        }.decodeList<OrderDto>().map { it.toOrderDomain().getOrThrow() }
+    }
+
+    private suspend fun getOwnedRequestForPharmacy(
+        requestId: String,
+        actionName: String,
+    ): Request {
+        val identity = resolveAccessContext()
+        if (identity.role != AccountType.PHARMACY) {
+            throw UnauthorizedException("unauthorized: $actionName is allowed only for PHARMACY users")
+        }
+
+        val pharmacyId = identity.organizationId
+            ?: throw UnauthorizedException("unauthorized: PHARMACY user missing organizationId")
+
+        val rows = supabase.postgrest.from("requests").select(columns = Columns.ALL) {
+            filter {
+                eq("id", requestId)
+                eq("pharmacy_id", pharmacyId)
+            }
+        }.decodeList<RequestDto>()
+
+        return when {
+            rows.isEmpty() -> throw IllegalArgumentException(
+                "$actionName failed because request $requestId was not found for pharmacy $pharmacyId.",
+            )
+            rows.size > 1 -> throw IllegalStateException(
+                "$actionName failed because request $requestId matched duplicate rows for pharmacy $pharmacyId.",
+            )
+            else -> rows.single().toDomain().getOrThrow()
+        }
+    }
 
     private fun defaultHomeStats(): HomeStats = HomeStats(
         requestsTodayCount = 0,
@@ -877,66 +1342,82 @@ private data class MedicineDto(
 @Serializable
 private data class OrderDto(
     val id: String,
-    @SerialName("request_id") val requestId: String,
+    @SerialName("medicine_id") val medicineId: String,
     @SerialName("medicine_name") val medicineName: String,
+    val quantity: Int,
+    val unit: String,
     val status: String,
-    @SerialName("warehouse_id") val warehouseId: String,
-    @SerialName("warehouse_name") val warehouseName: String = "",
-    @SerialName("supplier_name") val supplierName: String = "",
-    val quantity: Int = 0,
-    val unit: String = "",
-    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("order_type") val orderType: String,
+    @SerialName("fulfillment_type") val fulfillmentType: String,
+    @SerialName("pharmacy_id") val pharmacyId: String,
+    @SerialName("warehouse_id") val warehouseId: String? = null,
+    @SerialName("customer_id") val customerId: String? = null,
+    @SerialName("request_id") val requestId: String? = null,
+    @SerialName("total_price_cents") val totalPriceCents: Long? = null,
+    val currency: String = "SAR",
+    @SerialName("delivery_address") val deliveryAddress: String? = null,
+    @SerialName("delivery_phone") val deliveryPhone: String? = null,
+    val notes: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("updated_at") val updatedAt: String,
+    @SerialName("confirmed_at") val confirmedAt: String? = null,
+    @SerialName("fulfilled_at") val fulfilledAt: String? = null,
+    @SerialName("warehouse_name") val warehouseName: String? = null,
+    @SerialName("supplier_name") val supplierName: String? = null,
     @SerialName("eta_label") val etaLabel: String? = null,
-    @SerialName("last_update_label") val lastUpdateLabel: String? = null,
-    @SerialName("updated_at") val updatedAt: String? = null,
     @SerialName("is_urgent") val isUrgent: Boolean = false,
 ) {
-    fun toDomain(): Result<DomainOrder> = runCatching {
-        Log.d(TAG, "=== ORDER DTO TO DOMAIN MAPPING ===")
-        Log.d(TAG, "Order DTO ID: $id")
-        Log.d(TAG, "Order DTO RequestID: $requestId")
-        Log.d(TAG, "Order DTO Medicine: $medicineName")
-        Log.d(TAG, "Order DTO Status: $status")
-        Log.d(TAG, "Order DTO Warehouse: $warehouseName")
-        Log.d(TAG, "Order DTO Quantity: $quantity $unit")
-        
-        // Validate critical fields
-        if (id.isBlank()) {
-            Log.e(TAG, "❌ ORDER MAPPING: Blank ID detected!")
-        }
-        if (requestId.isBlank()) {
-            Log.e(TAG, "❌ ORDER MAPPING: Blank requestId detected!")
-        }
-        if (medicineName.isBlank()) {
-            Log.e(TAG, "❌ ORDER MAPPING: Blank medicineName detected!")
-        }
-        if (quantity <= 0) {
-            Log.e(TAG, "❌ ORDER MAPPING: Invalid quantity: $quantity")
-        }
-        
+    fun toOrderDomain(): Result<DomainOrder> = runCatching {
         val statusEnum = status.toOrderStatus()
-
-        val createdAtLabel = isoStringToDisplayLabel(createdAt)
-        val lastLabel = lastUpdateLabel?.takeIf { it.isNotBlank() }
-            ?: isoStringToDisplayLabel(updatedAt)
+        val orderTypeEnum = orderType.toOrderType()
+        val fulfillmentTypeEnum = fulfillmentType.toFulfillmentType()
 
         DomainOrder(
             id = id,
-            requestId = requestId,
+            medicineId = medicineId,
             medicineName = medicineName,
-            status = statusEnum,
-            warehouseId = warehouseId,
-            warehouseName = warehouseName,
-            supplierName = supplierName,
             quantity = quantity,
             unit = unit,
-            createdAtLabel = createdAtLabel,
+            status = statusEnum,
+            orderType = orderTypeEnum,
+            fulfillmentType = fulfillmentTypeEnum,
+            pharmacyId = pharmacyId,
+            warehouseId = warehouseId,
+            customerId = customerId,
+            requestId = requestId,
+            totalPriceCents = totalPriceCents,
+            currency = currency,
+            deliveryAddress = deliveryAddress,
+            deliveryPhone = deliveryPhone,
+            notes = notes,
+            createdAt = isoStringToInstant(createdAt),
+            updatedAt = isoStringToInstant(updatedAt),
+            confirmedAt = confirmedAt?.let { isoStringToInstant(it) },
+            fulfilledAt = fulfilledAt?.let { isoStringToInstant(it) },
+            warehouseName = warehouseName,
+            supplierName = supplierName,
             etaLabel = etaLabel,
-            lastUpdateLabel = lastLabel.ifBlank { createdAtLabel },
             isUrgent = isUrgent,
         )
     }
 }
+
+@Serializable
+private data class CreateOrderDto(
+    @SerialName("medicine_id") val medicineId: String,
+    @SerialName("medicine_name") val medicineName: String,
+    val quantity: Int,
+    val unit: String,
+    @SerialName("pharmacy_id") val pharmacyId: String,
+    @SerialName("customer_id") val customerId: String,
+    @SerialName("order_type") val orderType: String,
+    @SerialName("fulfillment_type") val fulfillmentType: String,
+    @SerialName("delivery_address") val deliveryAddress: String? = null,
+    @SerialName("delivery_phone") val deliveryPhone: String? = null,
+    val notes: String? = null,
+    val status: String = "PENDING",
+    val currency: String = "SAR",
+)
 
 @Serializable
 private data class RequestDto(
@@ -961,25 +1442,6 @@ private data class RequestDto(
     @SerialName("medicine_image_url") val medicineImageUrl: String? = null,
 ) {
     fun toDomain(): Result<Request> = runCatching {
-        Log.d(TAG, "=== REQUEST DTO TO DOMAIN MAPPING ===")
-        Log.d(TAG, "Request DTO ID: $id")
-        Log.d(TAG, "Request DTO Medicine: $medicineName")
-        Log.d(TAG, "Request DTO Status: $status")
-        Log.d(TAG, "Request DTO Priority: $priority")
-        Log.d(TAG, "Request DTO Warehouse: $warehouseName")
-        Log.d(TAG, "Request DTO RelatedOrderID: $relatedOrderId")
-        
-        // Validate critical fields
-        if (id.isBlank()) {
-            Log.e(TAG, "❌ REQUEST MAPPING: Blank ID detected!")
-        }
-        if (medicineName.isBlank()) {
-            Log.e(TAG, "❌ REQUEST MAPPING: Blank medicineName detected!")
-        }
-        if (quantity <= 0) {
-            Log.e(TAG, "❌ REQUEST MAPPING: Invalid quantity: $quantity")
-        }
-        
         val priorityEnum = priority.toRequestPriority()
         val statusEnum = status.toRequestStatus()
 
@@ -1122,6 +1584,10 @@ private data class RequestUpdateDto(
 private val isoDisplayFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault())
 
+private class UnauthorizedException(
+    message: String,
+) : IllegalStateException(message)
+
 private fun isoStringToDisplayLabel(iso: String?): String {
     if (iso.isNullOrBlank()) return ""
     return runCatching {
@@ -1131,6 +1597,10 @@ private fun isoStringToDisplayLabel(iso: String?): String {
 }
 
 private fun String.toOrderStatus(): OrderStatus = OrderStatus.valueOf(this)
+
+private fun String.toOrderType(): OrderType = OrderType.valueOf(this)
+
+private fun String.toFulfillmentType(): FulfillmentType = FulfillmentType.valueOf(this)
 
 private fun String.toRequestPriority(): RequestPriority = RequestPriority.valueOf(this)
 
@@ -1142,4 +1612,10 @@ private fun String.toNotificationCategory(): NotificationCategory = Notification
 
 private fun String.toNotificationDestination(): NotificationDestination? =
     runCatching { NotificationDestination.valueOf(this) }.getOrNull()
+
+private fun isoStringToInstant(iso: String?): java.time.Instant {
+    return iso?.let {
+        runCatching { java.time.Instant.parse(it) }.getOrNull()
+    } ?: java.time.Instant.now()
+}
 

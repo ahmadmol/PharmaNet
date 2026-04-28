@@ -94,6 +94,7 @@ fun WarehousesScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedCategory by remember { mutableStateOf(warehouseCategories.first()) }
     val isWarehouse = accountType == AccountType.WAREHOUSE
+    val canCreateRequest = accountType == AccountType.PHARMACY
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         when {
@@ -117,6 +118,7 @@ fun WarehousesScreen(
                     onCategorySelected = { selectedCategory = it },
                     onWarehouseClick = onWarehouseClick,
                     isWarehouse = isWarehouse,
+                    canCreateRequest = canCreateRequest,
                     onViewIncomingRequests = onViewIncomingRequests,
                 )
             }
@@ -132,6 +134,7 @@ private fun WarehousesContent(
     onCategorySelected: (String) -> Unit,
     onWarehouseClick: (String) -> Unit,
     isWarehouse: Boolean = false,
+    canCreateRequest: Boolean = false,
     onViewIncomingRequests: () -> Unit = {},
 ) {
     val d = MaterialTheme.dimens
@@ -197,6 +200,7 @@ private fun WarehousesContent(
                 modifier = Modifier.padding(horizontal = d.spaceL),
                 onWarehouseClick = onWarehouseClick,
                 isWarehouse = isWarehouse,
+                canCreateRequest = canCreateRequest,
                 onViewIncomingRequests = onViewIncomingRequests,
             )
         }
@@ -297,12 +301,15 @@ private fun WarehouseCard(
     modifier: Modifier = Modifier,
     onWarehouseClick: (String) -> Unit,
     isWarehouse: Boolean = false,
+    canCreateRequest: Boolean = false,
     onViewIncomingRequests: () -> Unit = {},
 ) {
     val actionText = if (isWarehouse) {
         "عرض الطلبات الواردة"
-    } else {
+    } else if (canCreateRequest) {
         "اطلب الآن"
+    } else {
+        null
     }
     val d = MaterialTheme.dimens
     val statusLabel = statusLabel(item.statusType)
@@ -442,22 +449,24 @@ private fun WarehouseCard(
                 }
             }
 
-            Button(
-                onClick = {
-                    if (isWarehouse) {
-                        onViewIncomingRequests()
-                    } else {
-                        onWarehouseClick(item.id)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isWarehouse) PharmaBlue500 else PharmaBlue500,
-                    contentColor = Color.White,
-                ),
-                enabled = true,
-            ) {
-                Text(actionText)
+            if (actionText != null) {
+                Button(
+                    onClick = {
+                        if (isWarehouse) {
+                            onViewIncomingRequests()
+                        } else {
+                            onWarehouseClick(item.id)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PharmaBlue500,
+                        contentColor = Color.White,
+                    ),
+                    enabled = true,
+                ) {
+                    Text(actionText)
+                }
             }
         }
     }

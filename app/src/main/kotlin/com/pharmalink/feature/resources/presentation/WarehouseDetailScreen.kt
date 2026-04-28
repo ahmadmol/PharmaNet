@@ -115,13 +115,15 @@ fun WarehouseDetailScreen(
                     item { WarehouseInfoCard(content.warehouse) }
                     item { WarehouseSupplierCard(content.warehouse) }
                     item { WarehouseShipments(content.shipments) }
-                    item {
-                        PharmaButton(
-                            text = stringResource(R.string.warehouse_action_request),
-                            onClick = { onCreateRequest?.invoke() },
-                            enabled = onCreateRequest != null,
-                            style = PharmaButtonStyle.GradientAccent,
-                        )
+                    if (onCreateRequest != null) {
+                        item {
+                            PharmaButton(
+                                text = stringResource(R.string.warehouse_action_request),
+                                onClick = onCreateRequest,
+                                enabled = true,
+                                style = PharmaButtonStyle.GradientAccent,
+                            )
+                        }
                     }
                 }
             }

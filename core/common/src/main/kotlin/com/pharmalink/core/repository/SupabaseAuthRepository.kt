@@ -8,6 +8,7 @@ import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.AuthSessionState
 import com.pharmalink.domain.model.LoginRequest
 import com.pharmalink.domain.model.SignUpRequest
+import com.pharmalink.domain.model.SignUpResult
 import com.pharmalink.domain.model.User
 import com.pharmalink.domain.model.UserSnapshot
 import io.github.jan.supabase.SupabaseClient
@@ -53,9 +54,16 @@ class SupabaseAuthRepository @Inject constructor(
         Log.e("AUTH_DEBUG", "Login failed: ${exception.message}", exception)
     }
 
-    override suspend fun signUp(request: SignUpRequest): Result<User> = runCatching {
+    override suspend fun signUp(request: SignUpRequest): Result<SignUpResult> = runCatching {
         Log.d("AUTH_DEBUG", "Attempting sign up for phone: ${request.phoneNumber}")
         val internalEmail = phoneToInternalEmail(request.phoneNumber)
+        val sensitiveFlow = request.accountType.requiresManualLoginAfterSignUp()
+
+        // Hardening: prevent any stale snapshot from satisfying auth gate during transient auth emissions.
+        if (sensitiveFlow) {
+            userSnapshotStore.clearUserSnapshot()
+        }
+
         val metadata = buildJsonObject {
             put("phone_number", JsonPrimitive(request.phoneNumber))
             put("phone_e164", JsonPrimitive(request.phoneNumber))
@@ -73,15 +81,37 @@ class SupabaseAuthRepository @Inject constructor(
             data = metadata
         }
 
-        val userInfo = auth.currentUserOrNull() ?: run {
-            auth.signInWith(Email) {
-                email = internalEmail
-                password = request.password
+        val userInfo = if (sensitiveFlow) {
+            runCatching {
+                auth.currentUserOrNull() ?: auth.retrieveUserForCurrentSession(updateSession = true)
+            }.getOrNull()
+        } else {
+            auth.currentUserOrNull() ?: run {
+                auth.signInWith(Email) {
+                    email = internalEmail
+                    password = request.password
+                }
+                auth.currentUserOrNull()
             }
-            auth.currentUserOrNull()
-        } ?: error("Account created but no active session was established.")
+        }
 
-        mapUser(userInfo)
+        val user = when {
+            userInfo != null -> mapUser(userInfo)
+            sensitiveFlow -> buildSensitivePendingUser(request, internalEmail)
+            else -> error("Account created but no active session was established.")
+        }
+
+        if (sensitiveFlow) {
+            runCatching { auth.signOut() }
+                .onFailure { error ->
+                    Log.w("AUTH_DEBUG", "No active session to sign out after sensitive signup: ${error.message}")
+                }
+        }
+
+        SignUpResult(
+            user = user,
+            requiresManualLogin = sensitiveFlow,
+        )
     }.onFailure { exception ->
         Log.e("AUTH_DEBUG", "Sign up failed: ${exception.message}", exception)
     }
@@ -346,6 +376,32 @@ class SupabaseAuthRepository @Inject constructor(
         }
 
         throw IllegalArgumentException("Enter a valid email address or Syrian phone number.")
+    }
+
+    private fun AccountType.requiresManualLoginAfterSignUp(): Boolean =
+        this == AccountType.PHARMACY ||
+            this == AccountType.WAREHOUSE ||
+            this == AccountType.ADMIN
+
+    private fun buildSensitivePendingUser(
+        request: SignUpRequest,
+        internalEmail: String,
+    ): User {
+        val normalizedDigits = internalEmail.substringBefore("@")
+        val phoneDisplay = if (normalizedDigits.isNotBlank()) "+$normalizedDigits" else request.phoneNumber
+
+        return User(
+            id = "pending:$normalizedDigits",
+            fullName = request.fullName,
+            pharmacyName = request.pharmacyName,
+            phoneNumber = phoneDisplay,
+            email = internalEmail,
+            isActive = true,
+            accountType = request.accountType,
+            pharmacyLocation = request.pharmacyLocation,
+            warehouseName = request.warehouseName,
+            warehouseLocation = request.warehouseLocation,
+        )
     }
 }
 

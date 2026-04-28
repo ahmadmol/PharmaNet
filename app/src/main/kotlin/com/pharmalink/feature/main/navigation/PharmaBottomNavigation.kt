@@ -17,11 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.pharmalink.core.navigation.topLevelDestinations
+import com.pharmalink.core.navigation.TopLevelDestination
 import com.pharmalink.designsystem.theme.dimens
 
 @Composable
 fun PharmaBottomNavigation(
+    items: List<TopLevelDestination>,
     selectedItem: Int,
     onTabSelected: (route: String, index: Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -42,7 +43,7 @@ fun PharmaBottomNavigation(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            topLevelDestinations.forEachIndexed { index, item ->
+            items.forEachIndexed { index, item ->
                 NavigationBarItem(
                     selected = selectedItem == index,
                     onClick = { onTabSelected(item.route, index) },

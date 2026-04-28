@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.LocalPharmacy
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Smartphone
+import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,8 +55,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.pharmalink.feature.auth.R
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AccountType
 
@@ -421,6 +424,12 @@ fun StitchAccountTypeSelector(
             icon = Icons.Outlined.Person,
             selected = selected == AccountType.PUBLIC_USER,
             onClick = { onSelect(AccountType.PUBLIC_USER) },
+        )
+        StitchAccountTypeCard(
+            title = stringResource(R.string.auth_account_type_admin),
+            icon = Icons.Outlined.VerifiedUser,
+            selected = selected == AccountType.ADMIN,
+            onClick = { onSelect(AccountType.ADMIN) },
         )
     }
 }

@@ -21,6 +21,11 @@ data class SignUpRequest(
     val warehouseLocation: String = "",
 )
 
+data class SignUpResult(
+    val user: User,
+    val requiresManualLogin: Boolean,
+)
+
 data class User(
     val id: String,
     val fullName: String,

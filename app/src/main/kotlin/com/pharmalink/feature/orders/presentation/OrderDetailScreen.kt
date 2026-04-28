@@ -116,7 +116,7 @@ fun OrderDetailScreen(
                     item { OrderSummary(order = order) }
                     item {
                         OrderActions(
-                            onOpenRequest = { onOpenRequest(order.requestId) },
+                            onOpenRequest = { onOpenRequest(order.requestId.orEmpty()) },
                         )
                     }
                 }
@@ -152,7 +152,7 @@ private fun OrderHeader(order: Order) {
                 PharmaStatusChip(label = orderStatusText(order.status), tone = orderStatusTone(order.status))
             }
             Text(order.medicineName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Last update: ${order.lastUpdateLabel}", color = Color.White.copy(alpha = 0.9f), style = MaterialTheme.typography.bodyMedium)
+            Text("Last update: ${formatInstantToDisplay(order.updatedAt)}", color = Color.White.copy(alpha = 0.9f), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -162,7 +162,11 @@ private fun OrderTimeline(order: Order) {
     val d = MaterialTheme.dimens
     val steps = listOf(
         "Placed" to true,
-        "Approved" to (order.status == OrderStatus.APPROVED || order.status == OrderStatus.DELIVERED),
+        "Approved" to (order.status == OrderStatus.CONFIRMED || 
+                       order.status == OrderStatus.IN_PROGRESS ||
+                       order.status == OrderStatus.READY_FOR_PICKUP ||
+                       order.status == OrderStatus.OUT_FOR_DELIVERY || 
+                       order.status == OrderStatus.DELIVERED),
         "Delivered" to (order.status == OrderStatus.DELIVERED),
     )
 
@@ -219,14 +223,14 @@ private fun OrderParties(
         Row(horizontalArrangement = Arrangement.spacedBy(d.spaceM), modifier = Modifier.fillMaxWidth()) {
             DetailCard(
                 title = "Warehouse",
-                value = order.warehouseName,
+                value = order.warehouseName.orEmpty(),
                 detail = order.etaLabel?.let { "ETA: $it" } ?: "ETA not available",
                 icon = Icons.Outlined.Store,
                 modifier = Modifier.weight(1f),
             )
             DetailCard(
                 title = "Supplier",
-                value = order.supplierName,
+                value = order.supplierName.orEmpty(),
                 detail = if (order.isUrgent) "Urgent request" else "Standard request",
                 icon = Icons.Outlined.LocalShipping,
                 modifier = Modifier.weight(1f),
@@ -280,7 +284,7 @@ private fun OrderSummary(order: Order) {
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         ) {
             Column(Modifier.padding(d.spaceL), verticalArrangement = Arrangement.spacedBy(d.spaceM)) {
-                SummaryRow("Request", order.requestId)
+                SummaryRow("Request", order.requestId.orEmpty())
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
                 SummaryRow("Quantity", "${order.quantity} ${order.unit}")
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
@@ -337,14 +341,31 @@ private fun SummaryRow(label: String, value: String) {
 @Composable
 private fun orderStatusText(status: OrderStatus): String = when (status) {
     OrderStatus.PENDING -> stringResource(R.string.order_detail_status_pending)
-    OrderStatus.APPROVED -> stringResource(R.string.order_detail_status_approved)
+    OrderStatus.CONFIRMED -> stringResource(R.string.order_detail_status_approved)
+    OrderStatus.IN_PROGRESS -> "قيد التجهيز"
+    OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"
+    OrderStatus.OUT_FOR_DELIVERY -> "قيد التوصيل"
     OrderStatus.REJECTED -> stringResource(R.string.order_detail_status_rejected)
+    OrderStatus.CANCELLED -> "ملغي"
     OrderStatus.DELIVERED -> stringResource(R.string.order_detail_status_delivered)
 }
 
 private fun orderStatusTone(status: OrderStatus): StatusTone = when (status) {
     OrderStatus.PENDING -> StatusTone.Pending
-    OrderStatus.APPROVED -> StatusTone.Success
-    OrderStatus.REJECTED -> StatusTone.Urgent
+    OrderStatus.CONFIRMED,
+    OrderStatus.IN_PROGRESS,
+    OrderStatus.READY_FOR_PICKUP,
+    OrderStatus.OUT_FOR_DELIVERY -> StatusTone.Success
+    OrderStatus.REJECTED,
+    OrderStatus.CANCELLED -> StatusTone.Urgent
     OrderStatus.DELIVERED -> StatusTone.Success
+}
+
+private fun formatInstantToDisplay(instant: java.time.Instant?): String {
+    return instant?.let {
+        val formatter = java.time.format.DateTimeFormatter
+            .ofPattern("yyyy/MM/dd")
+            .withZone(java.time.ZoneId.systemDefault())
+        formatter.format(it)
+    } ?: "-"
 }

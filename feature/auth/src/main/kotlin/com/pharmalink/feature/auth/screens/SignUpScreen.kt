@@ -27,8 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.pharmalink.designsystem.theme.dimens
-import com.pharmalink.feature.auth.R
 import com.pharmalink.domain.model.AccountType
+import com.pharmalink.feature.auth.R
 import com.pharmalink.feature.auth.SignUpUiState
 import com.pharmalink.feature.auth.components.AuthLinkRow
 import com.pharmalink.feature.auth.components.LocationTextField
@@ -43,7 +43,7 @@ import com.pharmalink.feature.auth.components.StitchStepChip
 import com.pharmalink.feature.auth.components.WarehouseNameTextField
 
 /**
- * Sign-up — Stitch layout: account type cards, conditional fields, Syrian phone row.
+ * Sign-up screen with account-type branching and role-specific fields.
  */
 @Composable
 fun SignUpScreen(
@@ -64,17 +64,13 @@ fun SignUpScreen(
     val d = MaterialTheme.dimens
     val scroll = rememberScrollState()
 
-    // Real-time validation errors (independent of errorMessage)
     val isFullNameError = uiState.fullName.isBlank()
-    val isPharmacyNameError = uiState.pharmacyName.isBlank() &&
-        uiState.accountType == AccountType.PHARMACY
+    val isPharmacyNameError = uiState.pharmacyName.isBlank() && uiState.accountType == AccountType.PHARMACY
     val isPhoneError = uiState.phoneNumber.isBlank()
     val isPasswordError = uiState.password.isBlank()
     val isConfirmPasswordError = uiState.confirmPassword.isBlank() || uiState.password != uiState.confirmPassword
-    val isWarehouseNameError = uiState.warehouseName.isBlank() &&
-        uiState.accountType == AccountType.WAREHOUSE
-    val isWarehouseLocationError = uiState.warehouseLocation.isBlank() &&
-        uiState.accountType == AccountType.WAREHOUSE
+    val isWarehouseNameError = uiState.warehouseName.isBlank() && uiState.accountType == AccountType.WAREHOUSE
+    val isWarehouseLocationError = uiState.warehouseLocation.isBlank() && uiState.accountType == AccountType.WAREHOUSE
 
     Box(
         modifier = modifier
@@ -88,7 +84,6 @@ fun SignUpScreen(
                 .verticalScroll(scroll)
                 .padding(top = d.spaceXL, bottom = d.spaceXXL),
         ) {
-            // Top bar (Stitch)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -135,7 +130,7 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(d.spaceXL))
 
-            StitchStepChip(text = "الخطوة ١: نوع الحساب")
+            StitchStepChip(text = "الخطوة 1: نوع الحساب")
             Spacer(Modifier.height(d.spaceM))
             StitchAccountTypeSelector(
                 selected = uiState.accountType,
@@ -144,7 +139,7 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(d.spaceXL))
 
-            StitchStepChip(text = "الخطوة ٢: المعلومات الشخصية")
+            StitchStepChip(text = "الخطوة 2: المعلومات الشخصية")
             Spacer(Modifier.height(d.spaceM))
 
             Surface(
@@ -195,7 +190,7 @@ fun SignUpScreen(
 
             if (uiState.accountType == AccountType.PHARMACY) {
                 Spacer(Modifier.height(d.spaceL))
-                StitchStepChip(text = "الخطوة ٣: تفاصيل الصيدلية")
+                StitchStepChip(text = "الخطوة 3: تفاصيل الصيدلية")
                 Spacer(Modifier.height(d.spaceM))
                 Surface(
                     shape = RoundedCornerShape(d.radiusL),
@@ -228,7 +223,7 @@ fun SignUpScreen(
 
             if (uiState.accountType == AccountType.WAREHOUSE) {
                 Spacer(Modifier.height(d.spaceL))
-                StitchStepChip(text = "الخطوة ٣: تفاصيل المستودع")
+                StitchStepChip(text = "الخطوة 3: تفاصيل المستودع")
                 Spacer(Modifier.height(d.spaceM))
                 Surface(
                     shape = RoundedCornerShape(d.radiusL),
@@ -269,6 +264,25 @@ fun SignUpScreen(
                 showTrailingIcon = true,
             )
 
+            uiState.successMessage?.let { success ->
+                Spacer(Modifier.height(d.spaceM))
+                Surface(
+                    shape = RoundedCornerShape(d.radiusM),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = success,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(d.spaceM),
+                    )
+                }
+            }
+
             uiState.errorMessage?.let { error ->
                 Spacer(Modifier.height(d.spaceM))
                 Text(
@@ -290,7 +304,7 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(d.spaceL))
             Text(
-                text = "© ٢٠٢٤ Smart Pharmacy Platform - جميع الحقوق محفوظة",
+                text = "© 2024 Smart Pharmacy Platform - جميع الحقوق محفوظة",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center,
@@ -306,6 +320,7 @@ private fun isFormValid(uiState: SignUpUiState): Boolean {
         uiState.password.isNotEmpty() &&
         uiState.confirmPassword.isNotEmpty() &&
         uiState.password == uiState.confirmPassword
+
     return when (uiState.accountType) {
         AccountType.PUBLIC_USER -> base
         AccountType.PHARMACY -> base && uiState.pharmacyName.isNotEmpty()

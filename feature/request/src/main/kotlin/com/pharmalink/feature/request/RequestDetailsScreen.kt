@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +67,14 @@ fun RequestDetailsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val d = MaterialTheme.dimens
+    val deletedMessage = stringResource(R.string.request_error_deleted)
+
+    LaunchedEffect(state.screenState) {
+        val errorState = state.screenState as? com.pharmalink.core.common.ui.ScreenState.Error
+        if (errorState?.message == deletedMessage) {
+            onBack()
+        }
+    }
 
     PharmaScreenScaffold(
         title = stringResource(R.string.request_details_title),
@@ -104,6 +113,8 @@ fun RequestDetailsScreen(
                 accountType = state.accountType,
                 isActionInProgress = state.isActionInProgress,
                 actionErrorMessage = state.actionErrorMessage,
+                onPharmacySubmit = viewModel::submitRequest,
+                onPharmacyDelete = viewModel::deleteRequest,
                 onWarehouseAction = viewModel::updateRequestStatus,
                 onDismissActionError = viewModel::clearActionError,
             )
@@ -118,6 +129,8 @@ private fun RequestDetailsContent(
     accountType: AccountType?,
     isActionInProgress: Boolean,
     actionErrorMessage: String?,
+    onPharmacySubmit: () -> Unit,
+    onPharmacyDelete: () -> Unit,
     onWarehouseAction: (RequestStatus) -> Unit,
     onDismissActionError: () -> Unit,
 ) {
@@ -137,6 +150,18 @@ private fun RequestDetailsContent(
             RequestStatusTimeline(
                 currentStatus = request.status,
                 modifier = Modifier.padding(vertical = d.spaceM),
+            )
+        }
+
+        item {
+            PharmacyDraftActionsCard(
+                accountType = accountType,
+                requestStatus = request.status,
+                isActionInProgress = isActionInProgress,
+                actionErrorMessage = actionErrorMessage,
+                onSubmit = onPharmacySubmit,
+                onDelete = onPharmacyDelete,
+                onDismissActionError = onDismissActionError,
             )
         }
 
@@ -169,6 +194,85 @@ private fun RequestDetailsContent(
                     text = stringResource(R.string.request_details_open_related_order),
                     onClick = { onOpenOrder(orderId) },
                     style = PharmaButtonStyle.GradientAccent,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PharmacyDraftActionsCard(
+    accountType: AccountType?,
+    requestStatus: RequestStatus,
+    isActionInProgress: Boolean,
+    actionErrorMessage: String?,
+    onSubmit: () -> Unit,
+    onDelete: () -> Unit,
+    onDismissActionError: () -> Unit,
+) {
+    if (accountType != AccountType.PHARMACY || requestStatus != RequestStatus.DRAFT) return
+    val d = MaterialTheme.dimens
+
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Text(
+                text = stringResource(R.string.request_details_pharmacy_actions_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            if (isActionInProgress) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text(
+                        text = stringResource(R.string.request_action_updating),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            PharmaButton(
+                text = stringResource(R.string.request_action_submit),
+                onClick = onSubmit,
+                enabled = !isActionInProgress,
+                style = PharmaButtonStyle.GradientAccent,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            PharmaButton(
+                text = stringResource(R.string.request_action_delete_draft),
+                onClick = onDelete,
+                enabled = !isActionInProgress,
+                style = PharmaButtonStyle.Outlined,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (!actionErrorMessage.isNullOrBlank()) {
+                Text(
+                    text = actionErrorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                PharmaButton(
+                    text = stringResource(R.string.request_dismiss_error),
+                    onClick = onDismissActionError,
+                    enabled = !isActionInProgress,
+                    style = PharmaButtonStyle.Outlined,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

@@ -84,16 +84,24 @@ class OrdersViewModel @Inject constructor(
     private fun Order.toOrderItem(): OrderItem {
         val statusText = when (status) {
             OrderStatus.PENDING -> context.getString(R.string.order_status_pending)
-            OrderStatus.APPROVED -> context.getString(R.string.order_status_approved)
+            OrderStatus.CONFIRMED -> context.getString(R.string.order_status_approved)
+            OrderStatus.IN_PROGRESS -> "قيد التجهيز"
+            OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"
+            OrderStatus.OUT_FOR_DELIVERY -> "قيد التوصيل"
             OrderStatus.REJECTED -> context.getString(R.string.order_status_rejected)
+            OrderStatus.CANCELLED -> "ملغي"
             OrderStatus.DELIVERED -> context.getString(R.string.order_status_delivered)
         }
         
+        // Format date from Instant
+        val dateText = formatInstantToDisplay(createdAt)
+        val lastUpdateText = formatInstantToDisplay(updatedAt)
+        
         return OrderItem(
             id = id,
-            requestId = requestId,
+            requestId = requestId.orEmpty(),
             orderNumber = "#$id",
-            date = createdAtLabel,
+            date = dateText,
             status = statusText,
             statusType = status,
             totalAmount = "${quantity * 50}.00 ر.س", // TODO: Add real pricing
@@ -105,7 +113,7 @@ class OrdersViewModel @Inject constructor(
             quantity = quantity,
             unit = unit,
             isUrgent = isUrgent,
-            lastUpdate = lastUpdateLabel,
+            lastUpdate = lastUpdateText,
             items = listOf(
                 OrderItemDetail(
                     medicineName = medicineName,
@@ -114,5 +122,14 @@ class OrdersViewModel @Inject constructor(
                 )
             )
         )
+    }
+    
+    private fun formatInstantToDisplay(instant: java.time.Instant?): String {
+        return instant?.let {
+            val formatter = java.time.format.DateTimeFormatter
+                .ofPattern("yyyy/MM/dd")
+                .withZone(java.time.ZoneId.systemDefault())
+            formatter.format(it)
+        } ?: "-"
     }
 }

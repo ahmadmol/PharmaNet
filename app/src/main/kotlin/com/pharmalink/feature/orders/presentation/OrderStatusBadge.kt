@@ -26,9 +26,13 @@ fun OrderStatusBadge(
 ) {
     val (backgroundColor, textColor) = when (status) {
         OrderStatus.PENDING -> Color(0xFF6B7280) to Color(0xFF5C6BC0) // Muted blue to calm blue
-        OrderStatus.APPROVED -> Color(0xFF4CAF50) to Color(0xFF2E7D32) // Green tones
+        OrderStatus.CONFIRMED,
+        OrderStatus.IN_PROGRESS,
+        OrderStatus.READY_FOR_PICKUP,
+        OrderStatus.OUT_FOR_DELIVERY -> Color(0xFF4CAF50) to Color(0xFF2E7D32) // Green tones
         OrderStatus.DELIVERED -> Color(0xFF4CAF50) to Color(0xFF2E7D32) // Green tones
-        OrderStatus.REJECTED -> Color(0xFFE57373) to Color(0xFFEF9A9A) // Soft clinical red
+        OrderStatus.REJECTED,
+        OrderStatus.CANCELLED -> Color(0xFFE57373) to Color(0xFFEF9A9A) // Soft clinical red
     }
     
     Box(
@@ -43,9 +47,13 @@ fun OrderStatusBadge(
         Text(
             text = when (status) {
                 OrderStatus.PENDING -> "قيد الانتظار"
-                OrderStatus.APPROVED -> "موافق عليه"
+                OrderStatus.CONFIRMED -> "موافق عليه"
+                OrderStatus.IN_PROGRESS -> "قيد التجهيز"
+                OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"
+                OrderStatus.OUT_FOR_DELIVERY -> "قيد التوصيل"
                 OrderStatus.DELIVERED -> "تم التسليم"
                 OrderStatus.REJECTED -> "مرفوض"
+                OrderStatus.CANCELLED -> "ملغي"
             },
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,

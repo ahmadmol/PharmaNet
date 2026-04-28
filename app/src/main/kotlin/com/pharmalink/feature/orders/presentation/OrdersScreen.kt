@@ -181,14 +181,22 @@ private fun OrderCard(
     val d = MaterialTheme.dimens
     val tone = when (order.status) {
         OrderStatus.PENDING -> StatusTone.Pending
-        OrderStatus.APPROVED -> StatusTone.Success
-        OrderStatus.REJECTED -> StatusTone.Warning
+        OrderStatus.CONFIRMED,
+        OrderStatus.IN_PROGRESS,
+        OrderStatus.READY_FOR_PICKUP,
+        OrderStatus.OUT_FOR_DELIVERY -> StatusTone.Success
+        OrderStatus.REJECTED,
+        OrderStatus.CANCELLED -> StatusTone.Warning
         OrderStatus.DELIVERED -> StatusTone.Neutral
     }
     val statusLabel = when (order.status) {
         OrderStatus.PENDING -> stringResource(R.string.order_status_pending)
-        OrderStatus.APPROVED -> stringResource(R.string.order_status_approved)
+        OrderStatus.CONFIRMED -> stringResource(R.string.order_status_approved)
+        OrderStatus.IN_PROGRESS -> "قيد التجهيز"
+        OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"
+        OrderStatus.OUT_FOR_DELIVERY -> "قيد التوصيل"
         OrderStatus.REJECTED -> stringResource(R.string.order_status_rejected)
+        OrderStatus.CANCELLED -> "ملغي"
         OrderStatus.DELIVERED -> stringResource(R.string.order_status_delivered)
     }
     val trackBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
@@ -209,11 +217,11 @@ private fun OrderCard(
                 PharmaStatusChip(label = statusLabel, tone = tone)
             }
             Spacer(Modifier.height(d.spaceS))
-            Text(order.createdAtLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(formatInstantToDisplay(order.createdAt), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(d.spaceXS))
             Text("${order.quantity} ${order.unit} • ${order.warehouseName}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(d.spaceXS))
-            Text(order.requestId, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            Text(order.requestId.orEmpty(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(d.spaceS))
             if (order.isUrgent) {
                 Text(stringResource(R.string.orders_filter_urgent), color = PremiumUrgent, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
@@ -228,7 +236,16 @@ private fun OrderCard(
                 Text(text = stringResource(R.string.order_track), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.height(d.spaceS))
-            Text(order.lastUpdateLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(formatInstantToDisplay(order.updatedAt), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+private fun formatInstantToDisplay(instant: java.time.Instant?): String {
+    return instant?.let {
+        val formatter = java.time.format.DateTimeFormatter
+            .ofPattern("yyyy/MM/dd")
+            .withZone(java.time.ZoneId.systemDefault())
+        formatter.format(it)
+    } ?: "-"
 }
