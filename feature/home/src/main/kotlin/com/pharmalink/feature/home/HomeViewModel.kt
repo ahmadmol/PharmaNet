@@ -45,6 +45,18 @@ class HomeViewModel @Inject constructor(
             }
             
             _uiState.value = HomeUiState.Loading
+
+            if (accountType == AccountType.PUBLIC_USER) {
+                _uiState.value = HomeUiState.Success(
+                    userName = currentUserName,
+                    stats = null,
+                    featuredWarehouses = emptyList(),
+                    accountType = accountType,
+                    canAddMedicine = false,
+                    alertMessage = null,
+                )
+                return@launch
+            }
             
             val statsDeferred = async { pharmaRepository.fetchHomeStats() }
             val warehousesDeferred = async { pharmaRepository.fetchFeaturedWarehouses() }

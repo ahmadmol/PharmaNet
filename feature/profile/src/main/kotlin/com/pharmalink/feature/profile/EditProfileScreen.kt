@@ -84,6 +84,7 @@ fun EditProfileScreen(
     var address by remember { mutableStateOf(uiState.pharmacyAddress) }
     var message by remember { mutableStateOf<String?>(null) }
     var isSuccess by remember { mutableStateOf(false) }
+    val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
 
     LaunchedEffect(uiState) {
         name = uiState.userName
@@ -122,27 +123,17 @@ fun EditProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceL),
             ) {
-                AvatarEditor(name = name)
-                AccountSection(title = "الهوية المهنية") {
+                AvatarEditor(name = name, isPublicUser = isPublicUser)
+                AccountSection(title = if (isPublicUser) "بيانات العميل" else "الهوية المهنية") {
                     AccountTextField(value = name, onValueChange = { name = it }, label = "الاسم الكامل", icon = Icons.Outlined.Person)
-                    AccountTextField(value = pharmacy, onValueChange = { pharmacy = it }, label = "اسم الصيدلية", icon = Icons.Outlined.Store)
+                    if (!isPublicUser) {
+                        AccountTextField(value = pharmacy, onValueChange = { pharmacy = it }, label = "اسم الصيدلية", icon = Icons.Outlined.Store)
+                    }
                 }
                 AccountSection(title = "بيانات التواصل والموقع") {
                     AccountTextField(value = phone, onValueChange = { phone = it }, label = "رقم الهاتف", icon = Icons.Outlined.Phone, keyboardType = KeyboardType.Phone)
                     AccountTextField(value = email, onValueChange = { email = it }, label = "البريد الإلكتروني", icon = Icons.Outlined.Email, keyboardType = KeyboardType.Email, enabled = false)
-                    AccountTextField(value = address, onValueChange = { address = it }, label = "العنوان بالتفصيل", icon = Icons.Outlined.LocationOn, minLines = 3)
-                }
-                Surface(
-                    shape = CircleShape,
-                    color = PharmaSuccess.copy(alpha = 0.12f),
-                    contentColor = PharmaSuccess,
-                ) {
-                    Text(
-                        text = "حالة الحساب: نشط",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
+                    AccountTextField(value = address, onValueChange = { address = it }, label = if (isPublicUser) "العنوان الافتراضي" else "العنوان بالتفصيل", icon = Icons.Outlined.LocationOn, minLines = 3)
                 }
                 message?.let {
                     InfoCallout(text = it, isSuccess = isSuccess)
@@ -157,7 +148,7 @@ fun EditProfileScreen(
             ) {
                 StitchButton(
                     onClick = { 
-                        viewModel.updateProfile(name, pharmacy, phone, address)
+                        viewModel.updateProfile(name, if (isPublicUser) "" else pharmacy, phone, address)
                     },
                     modifier = Modifier.weight(1f),
                     isLoading = updateStatus is ProfileUpdateStatus.Loading,
@@ -218,7 +209,7 @@ fun AccountTopBar(title: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun AvatarEditor(name: String) {
+private fun AvatarEditor(name: String, isPublicUser: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box {
             Surface(
@@ -248,7 +239,7 @@ private fun AvatarEditor(name: String) {
         }
         Spacer(Modifier.height(12.dp))
         Text(name.ifBlank { "الملف الشخصي" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = PharmaBlue500)
-        Text("صيدلي معتمد", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(if (isPublicUser) "حساب عميل" else "صيدلي معتمد", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

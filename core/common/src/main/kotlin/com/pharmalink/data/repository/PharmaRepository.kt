@@ -1,6 +1,10 @@
 package com.pharmalink.data.repository
 
+import com.pharmalink.domain.model.AccountType
+import com.pharmalink.domain.model.AdminUser
 import com.pharmalink.domain.model.AppNotification
+import com.pharmalink.domain.model.AuditLog
+import com.pharmalink.domain.model.CreateFacilityRequest
 import com.pharmalink.domain.model.ComplianceOverview
 import com.pharmalink.domain.model.DeliveryTracking
 import com.pharmalink.domain.model.FulfillmentType
@@ -8,8 +12,12 @@ import com.pharmalink.domain.model.HomeStats
 import com.pharmalink.domain.model.Medicine
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
+import com.pharmalink.domain.model.Pharmacy
 import com.pharmalink.domain.model.PharmacyProfile
+import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Request
+import com.pharmalink.domain.model.CustomerRequestScope
+import com.pharmalink.domain.model.CustomerRequestUrgency
 import com.pharmalink.domain.model.RequestUpdate
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.domain.model.WarehouseShipment
@@ -43,6 +51,8 @@ interface PharmaRepository {
     suspend fun fetchFeaturedWarehouses(): Result<List<Warehouse>>
 
     suspend fun fetchMedicines(): Result<List<Medicine>>
+
+    suspend fun getPublicPharmaciesForMedicine(medicineId: String): Result<List<PublicPharmacyForMedicine>>
 
     suspend fun getOrder(orderId: String): Result<Order?>
 
@@ -87,7 +97,9 @@ interface PharmaRepository {
         medicineName: String,
         quantity: Int,
         unit: String,
-        pharmacyId: String,
+        pharmacyId: String?,
+        urgency: CustomerRequestUrgency,
+        requestScope: CustomerRequestScope,
         fulfillmentType: FulfillmentType,
         deliveryAddress: String?,
         deliveryPhone: String?,
@@ -107,4 +119,49 @@ interface PharmaRepository {
     suspend fun markOrderDelivered(orderId: String): Result<Order>
 
     suspend fun getMyOrders(customerId: String): Result<List<Order>>
+
+    // ==================== Admin Management Methods (Phase 4.5.6) ====================
+
+    // Admin: User Management
+    suspend fun adminGetAllUsers(): Result<List<AdminUser>>
+
+    suspend fun adminUpdateUserProfile(
+        targetUserId: String,
+        accountType: AccountType,
+        pharmacyId: String?,
+        warehouseId: String?,
+        isActive: Boolean
+    ): Result<AdminUser>
+
+    // Admin: Pharmacy Management
+    suspend fun adminGetAllPharmacies(): Result<List<Pharmacy>>
+
+    suspend fun adminCreatePharmacy(
+        name: String,
+        location: String,
+        contactNumber: String,
+        licenseNumber: String
+    ): Result<Pharmacy>
+
+    // Admin: Warehouse Management
+    suspend fun adminGetAllWarehouses(): Result<List<Warehouse>>
+
+    suspend fun adminCreateWarehouse(
+        name: String,
+        location: String,
+        contactNumber: String
+    ): Result<Warehouse>
+
+    suspend fun createFacility(request: CreateFacilityRequest): Result<Unit>
+
+    // Admin: Audit Logs
+    suspend fun adminGetAuditLogs(limit: Int = 100): Result<List<AuditLog>>
+
+    suspend fun getAuditLogById(logId: String): Result<AuditLog>
+
+    // Admin: Warehouse Inventory
+    suspend fun getWarehouseInventory(warehouseId: String): Result<List<com.pharmalink.domain.model.InventoryItem>>
+
+    // Admin: Dashboard Statistics
+    suspend fun adminGetDashboardStats(): Result<com.pharmalink.domain.model.AdminDashboardStats>
 }

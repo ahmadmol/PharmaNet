@@ -3,11 +3,13 @@
     <string name="app_name">PharmaLink</string>
 
     <!-- Bottom navigation & shell -->
+    <string name="admin_dashboard_tab">لوحة التحكم</string>
     <string name="placeholder_under_development">قيد التطوير</string>
     <string name="home_screen">الرئيسية</string>
     <string name="resources">الموارد</string>
     <string name="my_orders">طلباتي</string>
     <string name="account">حسابي</string>
+    <string name="admin_audit_log_tab">السجل</string>
     <string name="add_medicine">إضافة دواء</string>
     <string name="resources_screen_title">الموارد</string>
     <string name="resources_search_placeholder">ابحث عن مستودع أو مدينة</string>

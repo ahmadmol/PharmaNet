@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.LocalPharmacy
@@ -46,7 +47,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.FastOutSlowInEasing
 
@@ -75,6 +75,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.designsystem.stitch.StitchTheme
 import com.pharmalink.designsystem.stitch.components.StitchButton
 import com.pharmalink.designsystem.theme.ClinicalCanvas
@@ -102,7 +103,7 @@ fun HomeScreen(
     onNavigateToCreateRequest: () -> Unit,
     onNavigateToMedicineSearch: () -> Unit = {},
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
         is HomeUiState.Loading -> HomeLoadingState()
@@ -165,6 +166,16 @@ private fun HomeContent(
                 )
             }
             item { HomeSearchCard(onSearchClick = onNavigateToMedicineSearch) }
+            if (isPublicUser) {
+                item {
+                    PublicUserCustomerActions(
+                        onSearchClick = onNavigateToMedicineSearch,
+                        onOrdersClick = onNavigateToOrders,
+                        onProfileClick = onNavigateToProfile,
+                    )
+                }
+                return@LazyColumn
+            }
             item { SectionHeader(title = "لمحة اليوم") }
             item {
                 HomeStatsSection(
@@ -306,6 +317,116 @@ private fun HomeSearchCard(onSearchClick: () -> Unit) {
                         .size(d.iconS),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun PublicUserCustomerActions(
+    onSearchClick: () -> Unit,
+    onOrdersClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(d.spaceL),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        SectionHeader(title = "ماذا تحتاج اليوم؟")
+        PublicUserActionCard(
+            icon = Icons.Outlined.Search,
+            title = "ابحث عن دواء",
+            subtitle = "اختر الدواء ثم ابحث في الصيدليات القريبة أو المناوبة",
+            onClick = onSearchClick,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            PublicUserActionCard(
+                icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                title = "طلباتي",
+                subtitle = "تابع طلبك",
+                onClick = onOrdersClick,
+                modifier = Modifier.weight(1f),
+            )
+            PublicUserActionCard(
+                icon = Icons.Filled.Person,
+                title = "الملف الشخصي",
+                subtitle = "بياناتك ومساعدة التطبيق",
+                onClick = onProfileClick,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        InfoBannerLikeCard(
+            title = "الصيدليات القريبة والمناوبة",
+            body = "تظهر داخل شاشة اختيار الصيدلية بعد تحديد الدواء، بدون بيانات وهمية.",
+        )
+    }
+}
+
+@Composable
+private fun PublicUserActionCard(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(),
+                onClick = onClick,
+            ),
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = d.cardElevation,
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceS),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            Surface(shape = CircleShape, color = PharmaBlue50, contentColor = PharmaBlue500) {
+                Icon(icon, contentDescription = null, modifier = Modifier.padding(d.spaceS).size(d.iconM))
+            }
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Start,
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoBannerLikeCard(
+    title: String,
+    body: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(MaterialTheme.dimens.radiusXXL),
+        color = MaterialTheme.colorScheme.primaryContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(MaterialTheme.dimens.spaceL),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceXS),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(body, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Start)
         }
     }
 }

@@ -54,8 +54,17 @@ class ProfileViewModel @Inject constructor(
                     userName = profile.managerName.ifBlank { displayName.ifBlank { "مستخدم" } },
                     userEmail = profile.contactEmail.ifBlank { snapshot?.email.orEmpty() },
                     userPhone = profile.contactPhone.ifBlank { snapshot?.phoneNumber.orEmpty() },
-                    accountType = snapshot?.accountType?.name?.replace('_', ' ').orEmpty(),
-                    pharmacyName = profile.pharmacyName.ifBlank { organizationName },
+                    accountType = if (snapshot?.accountType == AccountType.PUBLIC_USER) {
+                        "عميل"
+                    } else {
+                        snapshot?.accountType?.name?.replace('_', ' ').orEmpty()
+                    },
+                    accountTypeEnum = snapshot?.accountType,
+                    pharmacyName = if (snapshot?.accountType == AccountType.PUBLIC_USER) {
+                        ""
+                    } else {
+                        profile.pharmacyName.ifBlank { organizationName }
+                    },
                     pharmacyAddress = profile.addressLine,
                 )
             }.collect { state ->

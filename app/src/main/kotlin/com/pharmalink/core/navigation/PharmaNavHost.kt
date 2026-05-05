@@ -166,10 +166,10 @@ fun PharmaNavHost(
         }
 
         composable(AppDestination.MainTabs.route) {
-            val mainTabsStartDestination = if (accountType == AccountType.WAREHOUSE) {
-                AppDestination.Resources.route
-            } else {
-                AppDestination.Home.route
+            val mainTabsStartDestination = when (accountType) {
+                AccountType.WAREHOUSE -> AppDestination.Resources.route
+                AccountType.ADMIN -> AppDestination.AdminDashboard.route
+                else -> AppDestination.Home.route
             }
             PharmaNavigator(
                 onProfileLogout = {

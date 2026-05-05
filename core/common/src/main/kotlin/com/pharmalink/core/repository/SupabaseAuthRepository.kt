@@ -18,6 +18,7 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -205,18 +206,17 @@ class SupabaseAuthRepository @Inject constructor(
 
     override suspend fun ensureProfileForCurrentUser(user: User): Result<UserSnapshot> = runCatching {
         val authUser = auth.currentUserOrNull() ?: error("No active session. Please sign in again.")
-        val profilePayload = buildProfilePayload(user, authUser)
-        supabase.postgrest["profiles"].upsert(profilePayload) { ignoreDuplicates = false }
-
-        val profileRow = fetchProfileRow(authUser.id).getOrThrow()
-        if (user.accountType == AccountType.PHARMACY && profileRow.pharmacyId == null) {
-            throw MissingPharmacyLinkageException(authUser.id)
-        }
+        val profileRow = fetchProfileRowOrNull(authUser.id).getOrThrow()
+            ?: createMissingProfileForAllowedPublicUser(user).getOrThrow()
 
         val accountType = parsePersistedAccountType(
             value = profileRow.accountType,
             userId = authUser.id,
         )
+
+        if (accountType == AccountType.PHARMACY && profileRow.pharmacyId == null) {
+            throw MissingPharmacyLinkageException(authUser.id)
+        }
 
         // Phase 3 role-native session adoption:
         // Prefer explicit warehouse fields first; keep pharmacy_* as temporary compatibility carrier.
@@ -267,29 +267,42 @@ class SupabaseAuthRepository @Inject constructor(
 
     private suspend fun fetchProfileRow(userId: String): Result<ProfileRowDto> =
         runCatching {
+            fetchProfileRowOrNull(userId).getOrThrow()
+                ?: error("Profile row is missing for authenticated user $userId.")
+        }
+
+    private suspend fun fetchProfileRowOrNull(userId: String): Result<ProfileRowDto?> =
+        runCatching {
             val rows = supabase.postgrest.from("profiles").select {
                 filter { eq("id", userId) }
             }.decodeList<ProfileRowDto>()
 
             when {
-                rows.isEmpty() -> error("Profile row is missing for authenticated user $userId.")
+                rows.isEmpty() -> null
                 rows.size > 1 -> error("Duplicate profile rows found for authenticated user $userId.")
                 else -> rows.single()
             }
         }
 
-    private fun buildProfilePayload(user: User, authUser: UserInfo): ProfileUpsertDto =
-        ProfileUpsertDto(
-            id = authUser.id,
-            phoneNumber = user.phoneNumber,
-            fullName = user.fullName,
-            accountType = user.accountType.name,
-            pharmacyName = user.pharmacyName.takeIf { it.isNotBlank() },
-            pharmacyLocation = user.pharmacyLocation.takeIf { it.isNotBlank() },
-            warehouseName = user.warehouseName.takeIf { it.isNotBlank() },
-            warehouseLocation = user.warehouseLocation.takeIf { it.isNotBlank() },
-            isActive = user.isActive,
-        )
+    private suspend fun createMissingProfileForAllowedPublicUser(user: User): Result<ProfileRowDto> =
+        runCatching {
+            require(user.accountType == AccountType.PUBLIC_USER) {
+                "Profile row is missing for ${user.accountType} user ${user.id}. Trusted admin/server provisioning is required before login can continue."
+            }
+
+            val params = CreatePublicUserProfileRpcParams(
+                fullName = user.fullName.takeIf { it.isNotBlank() },
+                phoneNumber = user.phoneNumber.takeIf { it.isNotBlank() },
+                pharmacyName = user.pharmacyName.takeIf { it.isNotBlank() },
+                pharmacyLocation = user.pharmacyLocation.takeIf { it.isNotBlank() },
+                warehouseName = user.warehouseName.takeIf { it.isNotBlank() },
+                warehouseLocation = user.warehouseLocation.takeIf { it.isNotBlank() },
+            )
+
+            supabase.postgrest
+                .rpc("create_public_user_profile", params)
+                .decodeSingle<ProfileRowDto>()
+        }
 
     private fun parsePersistedAccountType(
         value: String?,
@@ -406,16 +419,13 @@ class SupabaseAuthRepository @Inject constructor(
 }
 
 @Serializable
-private data class ProfileUpsertDto(
-    val id: String,
-    @SerialName("phone_number") val phoneNumber: String,
-    @SerialName("full_name") val fullName: String,
-    @SerialName("account_type") val accountType: String,
-    @SerialName("pharmacy_name") val pharmacyName: String? = null,
-    @SerialName("pharmacy_location") val pharmacyLocation: String? = null,
-    @SerialName("warehouse_name") val warehouseName: String? = null,
-    @SerialName("warehouse_location") val warehouseLocation: String? = null,
-    @SerialName("is_active") val isActive: Boolean,
+private data class CreatePublicUserProfileRpcParams(
+    @SerialName("p_full_name") val fullName: String? = null,
+    @SerialName("p_phone_number") val phoneNumber: String? = null,
+    @SerialName("p_pharmacy_name") val pharmacyName: String? = null,
+    @SerialName("p_pharmacy_location") val pharmacyLocation: String? = null,
+    @SerialName("p_warehouse_name") val warehouseName: String? = null,
+    @SerialName("p_warehouse_location") val warehouseLocation: String? = null,
 )
 
 @Serializable

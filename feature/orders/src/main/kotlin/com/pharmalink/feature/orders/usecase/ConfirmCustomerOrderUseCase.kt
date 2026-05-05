@@ -4,6 +4,7 @@ import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
+import com.pharmalink.domain.model.OrderType
 import javax.inject.Inject
 
 /**
@@ -35,6 +36,12 @@ class ConfirmCustomerOrderUseCase @Inject constructor(
         if (order.pharmacyId != pharmacyId) {
             return Result.failure(
                 SecurityException("Cannot confirm order for another pharmacy")
+            )
+        }
+
+        if (order.orderType != OrderType.CUSTOMER_PHARMACY) {
+            return Result.failure(
+                IllegalStateException("Can only confirm CUSTOMER_PHARMACY orders")
             )
         }
 

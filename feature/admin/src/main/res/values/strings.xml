@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Audit Log Detail -->
+    <string name="audit_log_detail_title">تفاصيل السجل</string>
+    <string name="audit_log_activity_type_label">نوع النشاط</string>
+    <string name="audit_log_status_success">تعديل ناجح</string>
+    <string name="audit_log_status_failed">فشل التعديل</string>
+    <string name="audit_log_responsible_label">المسؤول</string>
+    <string name="audit_log_datetime_label">الوقت والتاريخ</string>
+    <string name="audit_log_affected_item_label">العنصر المتأثر</string>
+    <string name="audit_log_old_value_title">القيمة القديمة</string>
+    <string name="audit_log_new_value_title">القيمة الجديدة</string>
+    <string name="audit_log_technical_section_title">تفاصيل تقنية إضافية</string>
+    <string name="audit_log_ip_label">عنوان الـ IP</string>
+    <string name="audit_log_user_agent_label">المتصفح / العميل</string>
+    <string name="audit_log_transaction_label">معرف العملية</string>
+    <string name="audit_log_sku_prefix">SKU: %1$s</string>
+    
+    <!-- Audit Log List -->
+    <string name="audit_log_list_title">سجل التدقيق</string>
+    <string name="audit_log_list_empty">لا توجد سجلات</string>
+    <string name="audit_log_list_error_title">تعذر التحميل</string>
+    <string name="audit_log_list_retry">إعادة المحاولة</string>
+    <string name="audit_log_loading_subtitle">جاري جلب التفاصيل…</string>
+    <string name="audit_log_error_title">حدث خطأ</string>
+    <string name="audit_log_error_retry">إعادة المحاولة</string>
+    <string name="audit_log_screen_title">السجل</string>
+    <string name="audit_log_menu_cd">القائمة</string>
+    <string name="audit_log_error_loading">خطأ في تحميل السجل</string>
+    <string name="audit_log_no_logs">لا توجد سجلات تدقيق</string>
+    <string name="audit_log_filter_button">تصفية</string>
+    <string name="audit_log_export_cd">تصدير</string>
+    <string name="audit_log_exporting">جاري تصدير السجل...</string>
+    <string name="audit_log_export_success">تم تصدير السجل بنجاح</string>
+    <string name="audit_log_date_from">من تاريخ</string>
+    <string name="audit_log_date_to">إلى تاريخ</string>
+    <string name="audit_log_today">اليوم</string>
+    <string name="audit_log_yesterday">أمس</string>
+    <string name="audit_log_status_success_chip">نجح</string>
+    <string name="audit_log_status_failed_chip">فشل</string>
+    
+    <!-- Edit User Bottom Sheet -->
+    <string name="edit_user_title">تعديل بيانات المستخدم</string>
+    <string name="edit_user_close_cd">إغلاق</string>
+    <string name="edit_user_full_name_label">الاسم الكامل</string>
+    <string name="edit_user_full_name_placeholder">أدخل الاسم الكامل</string>
+    <string name="edit_user_full_name_error">الاسم يجب أن يكون 3 أحرف على الأقل</string>
+    <string name="edit_user_account_type_label">نوع الحساب</string>
+    <string name="edit_user_account_type_pharmacy">مدير صيدلية</string>
+    <string name="edit_user_account_type_warehouse">مدير مستودع</string>
+    <string name="edit_user_account_type_admin">مسؤول نظام</string>
+    <string name="edit_user_account_type_public">مستخدم عام</string>
+    <string name="edit_user_facility_id_label">معرف الصيدلية (Pharmacy ID)</string>
+    <string name="edit_user_facility_id_placeholder">PH-48202</string>
+    <string name="edit_user_facility_id_error">معرف الصيدلية مطلوب</string>
+    <string name="edit_user_status_label">حالة الحساب</string>
+    <string name="edit_user_status_description">السماح للمستخدم بالوصول إلى النظام</string>
+    <string name="edit_user_save_button">حفظ التغييرات</string>
+    <string name="edit_user_saving">جاري الحفظ...</string>
+    <string name="edit_user_save_success">تم حفظ التغييرات بنجاح</string>
+    <string name="edit_user_save_error">فشل حفظ التغييرات</string>
+    
+    <!-- Common -->
+    <string name="placeholder_em_dash">—</string>
+    <string name="cd_back">رجوع</string>
+    
+    <!-- Admin Users Screen -->
+    <string name="admin_users_title">المستخدمون</string>
+    <string name="admin_users_search_placeholder">بحث عن مستخدم...</string>
+    <string name="admin_users_total_label">إجمالي المستخدمين</string>
+    <string name="admin_users_active_label">المستخدمون النشطون</string>
+    <string name="admin_users_growth_label">النمو الشهري</string>
+    <string name="admin_users_edit_button">تعديل</string>
+    <string name="admin_users_delete_button">حذف</string>
+    <string name="admin_users_empty">لا يوجد مستخدمون</string>
+    <string name="admin_users_error">خطأ في تحميل المستخدمين</string>
+    <string name="admin_users_retry">إعادة المحاولة</string>
+    
+    <!-- Admin Warehouses Screen -->
+    <string name="admin_warehouses_title">المستودعات</string>
+    <string name="admin_warehouses_search_placeholder">البحث عن مستودع أو معين...</string>
+    <string name="admin_warehouses_capacity_label">السعة الإجمالية</string>
+    <string name="admin_warehouses_shipments_label">الشحنات النشطة</string>
+    <string name="admin_warehouses_temperature_label">درجة الحرارة</string>
+    <string name="admin_warehouses_inventory_count">%1$d صنف</string>
+    <string name="admin_warehouses_manage_inventory">إدارة المخزون</string>
+    <string name="admin_warehouses_empty">لا توجد مستودعات</string>
+    <string name="admin_warehouses_error">خطأ في تحميل المستودعات</string>
+    <string name="admin_warehouses_retry">إعادة المحاولة</string>
+    
+    <!-- Admin Pharmacies Screen -->
+    <string name="admin_pharmacies_title">الصيدليات</string>
+    <string name="admin_pharmacies_search_placeholder">البحث عن صيدلية بالاسم أو الموقع</string>
+    <string name="admin_pharmacies_employee_count">عدد الموظفين: %1$d</string>
+    <string name="admin_pharmacies_manage_branch">إدارة الفرع</string>
+    <string name="admin_pharmacies_coverage_map_title">خريطة التغطية الجغرافية</string>
+    <string name="admin_pharmacies_coverage_map_subtitle">اضغط لعرض توزيع الصيدليات على الخريطة</string>
+    <string name="admin_pharmacies_empty">لا توجد صيدليات</string>
+    <string name="admin_pharmacies_error">خطأ في تحميل الصيدليات</string>
+    <string name="admin_pharmacies_retry">إعادة المحاولة</string>
+    
+    <!-- Common Admin Strings -->
+    <string name="admin_menu_cd">القائمة</string>
+    <string name="admin_add_user_cd">إضافة مستخدم</string>
+    <string name="admin_add_warehouse_cd">إضافة مستودع</string>
+    <string name="admin_add_pharmacy_cd">إضافة صيدلية</string>
+    <string name="admin_filter_cd">تصفية</string>
+    <string name="admin_sort_cd">ترتيب</string>
+    <string name="admin_status_active">نشط</string>
+    <string name="admin_status_inactive">غير نشط</string>
+    <string name="admin_coming_soon">قريباً</string>
+    <string name="admin_feature_coming_soon">هذه الميزة قيد التطوير</string>
+    <string name="admin_monthly_growth">نمو شهري %1$.1f%%</string>
+    <string name="admin_total_capacity">%1$d%%</string>
+    <string name="admin_active_shipments">%1$d شحنة</string>
+    <string name="admin_inventory_items">%1$d مادة</string>
+    <string name="admin_account_type_pharmacy">مدير صيدلية</string>
+    <string name="admin_account_type_warehouse">مدير مستودع</string>
+    <string name="admin_account_type_admin">مسؤول نظام</string>
+    <string name="admin_account_type_public">مستخدم عام</string>
+    
+    <!-- User Details Screen -->
+    <string name="user_details_title">تفاصيل المستخدم</string>
+    <string name="user_details_error">خطأ في تحميل بيانات المستخدم</string>
+    <string name="user_details_not_found">المستخدم غير موجود</string>
+    <string name="user_details_not_found_subtitle">لم يتم العثور على المستخدم المطلوب</string>
+    <string name="user_details_total_orders">إجمالي الطلبات</string>
+    <string name="user_details_total_requests">إجمالي الطلبات المرسلة</string>
+    <string name="user_details_account_info">معلومات الحساب</string>
+    <string name="user_details_email">البريد الإلكتروني</string>
+    <string name="user_details_phone">رقم الهاتف</string>
+    <string name="user_details_facility">المنشأة</string>
+    <string name="user_details_created_at">تاريخ الإنشاء</string>
+    <string name="user_details_last_login">آخر تسجيل دخول</string>
+    <string name="user_details_actions">الإجراءات</string>
+    <string name="user_details_edit_profile">تعديل الملف الشخصي</string>
+    <string name="user_details_reset_password">إعادة تعيين كلمة المرور</string>
+    <string name="user_details_deactivate">تعطيل الحساب</string>
+    <string name="user_details_activate">تفعيل الحساب</string>
+    
+    <!-- Warehouse Details Screen -->
+    <string name="warehouse_details_title">تفاصيل المستودع</string>
+    <string name="warehouse_details_error">خطأ في تحميل بيانات المستودع</string>
+    <string name="warehouse_details_not_found">المستودع غير موجود</string>
+    <string name="warehouse_details_not_found_subtitle">لم يتم العثور على المستودع المطلوب</string>
+    <string name="warehouse_details_inventory_items">عدد الأصناف</string>
+    <string name="warehouse_details_active_shipments">الشحنات النشطة</string>
+    <string name="warehouse_details_cold_chain">سلسلة تبريد</string>
+    <string name="warehouse_details_stock_status">حالة المخزون</string>
+    <string name="warehouse_details_in_stock">متوفر</string>
+    <string name="warehouse_details_low_stock">مخزون منخفض</string>
+    <string name="warehouse_details_out_of_stock">نفذ من المخزون</string>
+    <string name="warehouse_details_info">معلومات المستودع</string>
+    <string name="warehouse_details_location">الموقع</string>
+    <string name="warehouse_details_phone">رقم الهاتف</string>
+    <string name="warehouse_details_distance">المسافة</string>
+    <string name="warehouse_details_delivery_time">وقت التوصيل</string>
+    <string name="warehouse_details_last_updated">آخر تحديث</string>
+    <string name="warehouse_details_actions">الإجراءات</string>
+    <string name="warehouse_details_manage_inventory">إدارة المخزون</string>
+    <string name="warehouse_details_view_shipments">عرض الشحنات</string>
+    <string name="warehouse_details_edit">تعديل المستودع</string>
+    
+    <!-- Pharmacy Details Screen -->
+    <string name="pharmacy_details_title">تفاصيل الصيدلية</string>
+    <string name="pharmacy_details_error">خطأ في تحميل بيانات الصيدلية</string>
+    <string name="pharmacy_details_not_found">الصيدلية غير موجودة</string>
+    <string name="pharmacy_details_not_found_subtitle">لم يتم العثور على الصيدلية المطلوبة</string>
+    <string name="pharmacy_details_total_orders">إجمالي الطلبات</string>
+    <string name="pharmacy_details_total_customers">إجمالي العملاء</string>
+    <string name="pharmacy_details_rating">التقييم</string>
+    <string name="pharmacy_details_out_of_5">من 5</string>
+    <string name="pharmacy_details_info">معلومات الصيدلية</string>
+    <string name="pharmacy_details_location">الموقع</string>
+    <string name="pharmacy_details_phone">رقم الهاتف</string>
+    <string name="pharmacy_details_license">رقم الترخيص</string>
+    <string name="pharmacy_details_employees">عدد الموظفين</string>
+    <string name="pharmacy_details_employee_count">%1$d موظف</string>
+    <string name="pharmacy_details_created_at">تاريخ الإنشاء</string>
+    <string name="pharmacy_details_actions">الإجراءات</string>
+    <string name="pharmacy_details_manage_branch">إدارة الفرع</string>
+    <string name="pharmacy_details_view_orders">عرض الطلبات</string>
+    <string name="pharmacy_details_edit">تعديل الصيدلية</string>
+    
+    <!-- Admin Dashboard Screen -->
+    <string name="admin_dashboard_title">لوحة التحكم</string>
+    <string name="admin_dashboard_welcome">مرحباً</string>
+    <string name="admin_dashboard_add_facility">إضافة منشأة</string>
+    <string name="admin_dashboard_generate_report">إنشاء تقرير</string>
+    <string name="admin_dashboard_total_users">إجمالي المستخدمين</string>
+    <string name="admin_dashboard_total_pharmacies">إجمالي الصيدليات</string>
+    <string name="admin_dashboard_total_warehouses">إجمالي المستودعات</string>
+    <string name="admin_dashboard_total_orders">إجمالي الطلبات</string>
+    <string name="admin_dashboard_pending_requests">الطلبات المعلقة</string>
+    <string name="admin_dashboard_view_all">عرض الكل</string>
+    <string name="admin_dashboard_system_health">صحة النظام</string>
+    <string name="admin_dashboard_active_connections">%1$d اتصال نشط</string>
+    <string name="admin_dashboard_recent_activities">الأنشطة الأخيرة</string>
+    <string name="admin_dashboard_error">خطأ في تحميل لوحة التحكم</string>
+    <string name="admin_notifications_cd">الإشعارات</string>
+    
+    <!-- Warehouse Inventory Screen -->
+    <string name="warehouse_inventory_title">مخزون المستودع</string>
+    <string name="warehouse_inventory_search_placeholder">البحث عن دواء...</string>
+    <string name="warehouse_inventory_total_items">عدد الأصناف</string>
+    <string name="warehouse_inventory_capacity">السعة</string>
+    <string name="warehouse_inventory_last_updated">آخر تحديث: %1$s</string>
+    <string name="warehouse_inventory_low_stock">مخزون منخفض</string>
+    <string name="warehouse_inventory_out_of_stock">نفذ من المخزون</string>
+    <string name="warehouse_inventory_quantity_format">%1$d %2$s</string>
+    <string name="warehouse_inventory_capacity_format">السعة: %1$d %2$s</string>
+    <string name="warehouse_inventory_add_medicine_cd">إضافة دواء</string>
+    <string name="warehouse_inventory_error">خطأ في تحميل المخزون</string>
+    <string name="warehouse_inventory_empty">لا توجد أدوية في المخزون</string>
+    <string name="warehouse_inventory_empty_subtitle">ابدأ بإضافة أدوية إلى المخزون</string>
+</resources>

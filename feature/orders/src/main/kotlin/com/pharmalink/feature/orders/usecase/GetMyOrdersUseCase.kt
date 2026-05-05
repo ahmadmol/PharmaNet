@@ -12,6 +12,10 @@ import javax.inject.Inject
  * - Only PUBLIC_USER can get their orders
  * - Must match the requesting customerId
  * - Returns only orders where customerId matches
+ *
+ * Note:
+ * - This use case intentionally uses getMyOrders() instead of observeOrders()
+ *   because the current observeOrders() path is not PUBLIC_USER-safe in the repository layer.
  */
 class GetMyOrdersUseCase @Inject constructor(
     private val pharmaRepository: PharmaRepository,

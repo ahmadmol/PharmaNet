@@ -86,6 +86,7 @@ fun WarehousesScreen(
     accountType: AccountType? = null,
     onWarehouseClick: (String) -> Unit = {},
     onViewIncomingRequests: () -> Unit = {},
+    onAdminCreateFacility: (() -> Unit)? = null,
 ) {
     val screenTitle = when (accountType) {
         AccountType.WAREHOUSE -> "المستودعات في الشبكة"
@@ -120,6 +121,7 @@ fun WarehousesScreen(
                     isWarehouse = isWarehouse,
                     canCreateRequest = canCreateRequest,
                     onViewIncomingRequests = onViewIncomingRequests,
+                    onAdminCreateFacility = onAdminCreateFacility,
                 )
             }
         }
@@ -136,6 +138,7 @@ private fun WarehousesContent(
     isWarehouse: Boolean = false,
     canCreateRequest: Boolean = false,
     onViewIncomingRequests: () -> Unit = {},
+    onAdminCreateFacility: (() -> Unit)? = null,
 ) {
     val d = MaterialTheme.dimens
 
@@ -150,6 +153,36 @@ private fun WarehousesContent(
             WarehousesSearchBar(
                 modifier = Modifier.padding(horizontal = d.spaceL),
             )
+        }
+        if (onAdminCreateFacility != null) {
+            item {
+                Surface(
+                    onClick = onAdminCreateFacility,
+                    modifier = Modifier
+                        .padding(horizontal = d.spaceL)
+                        .fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(d.spaceL),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Store,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            text = "إضافة منشأة",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
         }
         item {
             CategoryChips(

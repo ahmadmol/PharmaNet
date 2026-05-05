@@ -5,6 +5,7 @@ import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.FulfillmentType
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
+import com.pharmalink.domain.model.OrderType
 import javax.inject.Inject
 
 /**
@@ -14,7 +15,7 @@ import javax.inject.Inject
  * - Only PHARMACY can mark orders out for delivery
  * - Must own the pharmacy
  * - Only DELIVERY orders can be marked out for delivery
- * - Only CONFIRMED or IN_PROGRESS orders can transition to OUT_FOR_DELIVERY
+ * - Only CONFIRMED orders can transition to OUT_FOR_DELIVERY
  */
 class MarkOrderOutForDeliveryUseCase @Inject constructor(
     private val pharmaRepository: PharmaRepository,
@@ -38,6 +39,12 @@ class MarkOrderOutForDeliveryUseCase @Inject constructor(
             )
         }
 
+        if (order.orderType != OrderType.CUSTOMER_PHARMACY) {
+            return Result.failure(
+                IllegalStateException("Can only modify CUSTOMER_PHARMACY orders")
+            )
+        }
+
         // Rule 3: Only DELIVERY orders
         if (order.fulfillmentType != FulfillmentType.DELIVERY) {
             return Result.failure(
@@ -45,10 +52,10 @@ class MarkOrderOutForDeliveryUseCase @Inject constructor(
             )
         }
 
-        // Rule 4: Valid status transition (CONFIRMED or IN_PROGRESS -> OUT_FOR_DELIVERY)
-        if (order.status != OrderStatus.CONFIRMED && order.status != OrderStatus.IN_PROGRESS) {
+        // Rule 4: Valid status transition (CONFIRMED -> OUT_FOR_DELIVERY)
+        if (order.status != OrderStatus.CONFIRMED) {
             return Result.failure(
-                IllegalStateException("Can only mark CONFIRMED or IN_PROGRESS orders as out for delivery. Current status: ${order.status}")
+                IllegalStateException("Can only mark CONFIRMED orders as out for delivery. Current status: ${order.status}")
             )
         }
 

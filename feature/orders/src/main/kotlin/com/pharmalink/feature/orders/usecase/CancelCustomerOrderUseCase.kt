@@ -4,6 +4,7 @@ import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
+import com.pharmalink.domain.model.OrderType
 import javax.inject.Inject
 
 /**
@@ -33,6 +34,12 @@ class CancelCustomerOrderUseCase @Inject constructor(
         if (order.customerId != customerId) {
             return Result.failure(
                 SecurityException("Cannot cancel order that doesn't belong to you")
+            )
+        }
+
+        if (order.orderType != OrderType.CUSTOMER_PHARMACY) {
+            return Result.failure(
+                IllegalStateException("Can only cancel CUSTOMER_PHARMACY orders")
             )
         }
 

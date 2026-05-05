@@ -32,15 +32,20 @@ fun PharmaButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     style: PharmaButtonStyle = PharmaButtonStyle.Filled,
+    size: PharmaButtonSize = PharmaButtonSize.Default,
 ) {
     val d = MaterialTheme.dimens
+    val buttonHeight = when (size) {
+        PharmaButtonSize.Large -> d.primaryCtaHeightLarge
+        PharmaButtonSize.Default -> d.space5XL + d.spaceXS
+    }
     when (style) {
         PharmaButtonStyle.Filled -> {
             Button(
                 onClick = onClick,
                 modifier = modifier
                     .fillMaxWidth()
-                    .height(52.dp),
+                    .height(buttonHeight),
                 enabled = enabled,
                 shape = RoundedCornerShape(d.radiusL),
                 colors = ButtonDefaults.buttonColors(
@@ -63,7 +68,7 @@ fun PharmaButton(
             Box(
                 modifier = modifier
                     .fillMaxWidth()
-                    .height(52.dp)
+                    .height(buttonHeight)
                     .clip(shape)
                     .background(PharmaGradients.fabOrange)
                     .clickable(
@@ -85,7 +90,7 @@ fun PharmaButton(
         PharmaButtonStyle.Outlined -> {
             OutlinedButton(
                 onClick = onClick,
-                modifier = modifier.fillMaxWidth().height(52.dp),
+                modifier = modifier.fillMaxWidth().height(buttonHeight),
                 enabled = enabled,
                 shape = RoundedCornerShape(d.radiusL),
             ) {
@@ -96,3 +101,8 @@ fun PharmaButton(
 }
 
 enum class PharmaButtonStyle { Filled, GradientAccent, Outlined }
+
+enum class PharmaButtonSize {
+    Default,
+    Large,
+}

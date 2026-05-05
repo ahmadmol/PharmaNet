@@ -1,12 +1,17 @@
 package com.pharmalink.feature.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.model.Medicine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -14,92 +19,23 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @OptIn(FlowPreview::class)
 @HiltViewModel
-class MedicineSearchViewModel @Inject constructor() : ViewModel() {
+class MedicineSearchViewModel @Inject constructor(
+    private val pharmaRepository: PharmaRepository,
+    @ApplicationContext private val context: Context,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MedicineSearchUiState())
-    val uiState: StateFlow<MedicineSearchUiState> = _uiState
-
-    // Dummy medicines for UI demonstration
-    private val allMedicines = listOf(
-        Medicine(
-            id = "1",
-            name = "باراسيتامول",
-            brand = "Panadol",
-            strength = "500mg",
-            price = 25.0,
-            imageUrl = null
-        ),
-        Medicine(
-            id = "2",
-            name = "أموكسيسيلين",
-            brand = "Amoxil",
-            strength = "250mg",
-            price = 45.0,
-            imageUrl = null
-        ),
-        Medicine(
-            id = "3",
-            name = "إيبوبروفين",
-            brand = "Advil",
-            strength = "400mg",
-            price = 35.0,
-            imageUrl = null
-        ),
-        Medicine(
-            id = "4",
-            name = "سيتريزين",
-            brand = "Zyrtec",
-            strength = "10mg",
-            price = 55.0,
-            imageUrl = null
-        ),
-        Medicine(
-            id = "5",
-            name = "أوميبرازول",
-            brand = "Losec",
-            strength = "20mg",
-            price = 65.0,
-            imageUrl = null
-        ),
-        Medicine(
-            id = "6",
-            name = "ميتفورمين",
-            brand = "Glucophage",
-            strength = "500mg",
-            price = 40.0,
-            imageUrl = null
-        ),
-        Medicine(
-            id = "7",
-            name = "أتورفاستاتين",
-            brand = "Lipitor",
-            strength = "20mg",
-            price = 85.0,
-            imageUrl = null
-        ),
-        Medicine(
-            id = "8",
-            name = "فيتامين د",
-            brand = "D-Viton",
-            strength = "1000 IU",
-            price = 30.0,
-            imageUrl = null
-        ),
-    )
+    val uiState: StateFlow<MedicineSearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Search debounce
         _uiState
             .map { it.searchQuery }
             .debounce(300)
             .distinctUntilChanged()
-            .onEach { query ->
-                performSearch(query)
-            }
+            .onEach(::performSearch)
             .launchIn(viewModelScope)
 
         loadMedicines()
@@ -112,44 +48,55 @@ class MedicineSearchViewModel @Inject constructor() : ViewModel() {
     fun loadMedicines() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            try {
-                // Simulate network delay
-                kotlinx.coroutines.delay(500)
-                _uiState.update {
-                    it.copy(
-                        medicines = allMedicines,
-                        isLoading = false,
-                    )
+            pharmaRepository.fetchMedicines()
+                .onSuccess { medicines ->
+                    val currentQuery = _uiState.value.searchQuery
+                    _uiState.update {
+                        it.copy(
+                            allMedicines = medicines,
+                            medicines = filterMedicines(medicines, currentQuery),
+                            isLoading = false,
+                        )
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = "فشل تحميل الأدوية",
-                    )
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = error.message ?: context.getString(R.string.medicine_search_load_error),
+                        )
+                    }
                 }
-            }
         }
     }
 
     private fun performSearch(query: String) {
-        if (query.isBlank()) {
-            _uiState.update { it.copy(medicines = allMedicines) }
-            return
+        _uiState.update {
+            it.copy(
+                medicines = filterMedicines(
+                    medicines = it.allMedicines,
+                    query = query,
+                ),
+            )
         }
+    }
 
-        val filtered = allMedicines.filter { medicine ->
+    private fun filterMedicines(
+        medicines: List<Medicine>,
+        query: String,
+    ): List<Medicine> {
+        if (query.isBlank()) return medicines
+        return medicines.filter { medicine ->
             medicine.name.contains(query, ignoreCase = true) ||
                 medicine.brand.contains(query, ignoreCase = true) ||
                 medicine.strength.contains(query, ignoreCase = true)
         }
-
-        _uiState.update { it.copy(medicines = filtered) }
     }
 }
 
 data class MedicineSearchUiState(
     val searchQuery: String = "",
+    val allMedicines: List<Medicine> = emptyList(),
     val medicines: List<Medicine> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,

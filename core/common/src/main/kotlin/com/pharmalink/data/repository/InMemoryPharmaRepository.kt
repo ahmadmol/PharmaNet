@@ -1,9 +1,15 @@
 package com.pharmalink.data.repository
 
+import com.pharmalink.domain.model.AccountType
+import com.pharmalink.domain.model.AdminUser
 import com.pharmalink.domain.model.AppNotification
+import com.pharmalink.domain.model.AuditLog
+import com.pharmalink.domain.model.CreateFacilityRequest
 import com.pharmalink.domain.model.ComplianceDocument
 import com.pharmalink.domain.model.ComplianceDocumentStatus
 import com.pharmalink.domain.model.ComplianceOverview
+import com.pharmalink.domain.model.CustomerRequestScope
+import com.pharmalink.domain.model.CustomerRequestUrgency
 import com.pharmalink.domain.model.DeliveryDelegate
 import com.pharmalink.domain.model.DeliveryStatus
 import com.pharmalink.domain.model.DeliveryTracking
@@ -16,13 +22,16 @@ import com.pharmalink.domain.model.FulfillmentType
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
 import com.pharmalink.domain.model.OrderType
+import com.pharmalink.domain.model.Pharmacy
 import com.pharmalink.domain.model.PharmacyProfile
+import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestPriority
 import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.SupplierComplianceItem
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.domain.model.WarehouseShipment
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.delay
@@ -75,6 +84,11 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
 
     override suspend fun fetchMedicines(): Result<List<Medicine>> =
         Result.success(sampleMedicines())
+
+    override suspend fun getPublicPharmaciesForMedicine(medicineId: String): Result<List<PublicPharmacyForMedicine>> =
+        Result.failure(
+            UnsupportedOperationException("getPublicPharmaciesForMedicine is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for PUBLIC_USER discovery.")
+        )
 
     override suspend fun getOrder(orderId: String): Result<Order?> =
         Result.success(orders.value.firstOrNull { it.id == orderId })
@@ -266,7 +280,9 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         medicineName: String,
         quantity: Int,
         unit: String,
-        pharmacyId: String,
+        pharmacyId: String?,
+        urgency: CustomerRequestUrgency,
+        requestScope: CustomerRequestScope,
         fulfillmentType: FulfillmentType,
         deliveryAddress: String?,
         deliveryPhone: String?,
@@ -301,6 +317,90 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
 
     override suspend fun getMyOrders(customerId: String): Result<List<Order>> = Result.failure(
         UnsupportedOperationException("getMyOrders is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
+    )
+
+    override suspend fun adminGetAllUsers(): Result<List<AdminUser>> = Result.success(emptyList())
+
+    override suspend fun adminUpdateUserProfile(
+        targetUserId: String,
+        accountType: AccountType,
+        pharmacyId: String?,
+        warehouseId: String?,
+        isActive: Boolean,
+    ): Result<AdminUser> = Result.failure(
+        UnsupportedOperationException("adminUpdateUserProfile requires SupabasePharmaRepository."),
+    )
+
+    override suspend fun adminGetAllPharmacies(): Result<List<Pharmacy>> = Result.success(emptyList())
+
+    override suspend fun adminCreatePharmacy(
+        name: String,
+        location: String,
+        contactNumber: String,
+        licenseNumber: String,
+    ): Result<Pharmacy> = Result.failure(
+        UnsupportedOperationException("adminCreatePharmacy requires SupabasePharmaRepository."),
+    )
+
+    override suspend fun adminGetAllWarehouses(): Result<List<Warehouse>> = Result.success(warehouses.value)
+
+    override suspend fun adminCreateWarehouse(
+        name: String,
+        location: String,
+        contactNumber: String,
+    ): Result<Warehouse> = Result.failure(
+        UnsupportedOperationException("adminCreateWarehouse requires SupabasePharmaRepository."),
+    )
+
+    override suspend fun createFacility(request: CreateFacilityRequest): Result<Unit> =
+        Result.failure(
+            UnsupportedOperationException("createFacility requires SupabasePharmaRepository."),
+        )
+
+    override suspend fun adminGetAuditLogs(limit: Int): Result<List<AuditLog>> =
+        Result.success(sampleAuditLogs().take(limit))
+
+    override suspend fun getAuditLogById(logId: String): Result<AuditLog> {
+        val log = sampleAuditLogs().firstOrNull { it.id == logId }
+        return if (log != null) Result.success(log)
+        else Result.failure(IllegalArgumentException("Audit log not found"))
+    }
+
+    override suspend fun getWarehouseInventory(warehouseId: String): Result<List<com.pharmalink.domain.model.InventoryItem>> =
+        Result.success(emptyList()) // InMemory implementation returns empty list
+
+    override suspend fun adminGetDashboardStats(): Result<com.pharmalink.domain.model.AdminDashboardStats> =
+        Result.success(
+            com.pharmalink.domain.model.AdminDashboardStats(
+                totalUsers = 0,
+                totalPharmacies = 0,
+                totalWarehouses = 0,
+                totalOrders = 0,
+                pendingOrdersCount = 0,
+                activePharmacies = 0,
+                activeWarehouses = 0,
+            )
+        )
+
+    private fun sampleAuditLogs(): List<AuditLog> = listOf(
+        AuditLog(
+            id = "550e8400-e29b-41d4-a716-446655440000",
+            action = "STOCK_UPDATE",
+            actionLabel = "تعديل بيانات المخزون",
+            adminId = "admin-1",
+            adminName = "د. أحمد خالد",
+            adminEmail = "ahmed@example.com",
+            targetEntityName = "أوجمنتين 1 جم",
+            targetWarehouseName = "مستودع الرياض المركزي",
+            targetSku = "PH-99203",
+            oldValue = """{"quantity": "1000", "price": "80.00"}""",
+            newValue = """{"quantity": "1200", "price": "82.50"}""",
+            ipAddress = "192.168.1.104",
+            userAgent = "Chrome v118 (Windows 11)",
+            transactionId = "TRX-7729-AX",
+            createdAt = Instant.parse("2023-10-12T07:45:00Z"),
+            isSuccess = true,
+        ),
     )
 
     private fun buildDeliveryTrackingForDemo(order: Order): DeliveryTracking {

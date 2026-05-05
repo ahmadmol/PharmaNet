@@ -2,6 +2,8 @@ package com.pharmalink.feature.orders.usecase
 
 import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.model.AccountType
+import com.pharmalink.domain.model.CustomerRequestScope
+import com.pharmalink.domain.model.CustomerRequestUrgency
 import com.pharmalink.domain.model.FulfillmentType
 import com.pharmalink.domain.model.Order
 import javax.inject.Inject
@@ -23,7 +25,9 @@ class CreateCustomerOrderUseCase @Inject constructor(
         medicineName: String,
         quantity: Int,
         unit: String,
-        pharmacyId: String,
+        pharmacyId: String?,
+        urgency: CustomerRequestUrgency,
+        requestScope: CustomerRequestScope,
         fulfillmentType: FulfillmentType,
         deliveryAddress: String?,
         deliveryPhone: String?,
@@ -41,6 +45,18 @@ class CreateCustomerOrderUseCase @Inject constructor(
         if (quantity <= 0) {
             return Result.failure(
                 IllegalArgumentException("Quantity must be greater than 0")
+            )
+        }
+
+        if (medicineId.isBlank()) {
+            return Result.failure(
+                IllegalArgumentException("medicineId must not be blank")
+            )
+        }
+
+        if (requestScope == CustomerRequestScope.SPECIFIC_PHARMACY && pharmacyId.isNullOrBlank()) {
+            return Result.failure(
+                IllegalArgumentException("pharmacyId must not be blank for specific pharmacy orders")
             )
         }
 
@@ -65,8 +81,7 @@ class CreateCustomerOrderUseCase @Inject constructor(
             }
         }
 
-        // TODO: Medicine validation against catalog when MedicineRepository is available
-        // For now, we trust the medicineId/medicineName provided by the UI
+        // TODO: replace with catalog-backed medicine existence validation.
 
         // Create order via repository
         return pharmaRepository.createCustomerOrder(
@@ -75,6 +90,8 @@ class CreateCustomerOrderUseCase @Inject constructor(
             quantity = quantity,
             unit = unit,
             pharmacyId = pharmacyId,
+            urgency = urgency,
+            requestScope = requestScope,
             fulfillmentType = fulfillmentType,
             deliveryAddress = deliveryAddress,
             deliveryPhone = deliveryPhone,

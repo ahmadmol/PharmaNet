@@ -112,8 +112,11 @@ private fun ProfileContent(
     onOpenContactUs: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
-    val settingsGroups = remember(uiState.settingsOptions) {
-        uiState.settingsOptions.groupForProfile()
+    val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
+    val settingsGroups = remember(uiState.settingsOptions, isPublicUser) {
+        uiState.settingsOptions
+            .filterNot { isPublicUser && it.isNotification() }
+            .groupForProfile()
     }
     var languagePreview by remember { mutableStateOf("العربية") }
     var isLanguageSheetVisible by remember { mutableStateOf(false) }
@@ -132,6 +135,7 @@ private fun ProfileContent(
                 accountType = uiState.accountType,
                 pharmacyName = uiState.pharmacyName,
                 pharmacyAddress = uiState.pharmacyAddress,
+                isPublicUser = isPublicUser,
                 onEditProfile = onEditProfile,
                 modifier = Modifier.padding(horizontal = d.spaceL),
             )
@@ -211,6 +215,7 @@ private fun ProfileHeroSection(
     accountType: String,
     pharmacyName: String,
     pharmacyAddress: String,
+    isPublicUser: Boolean,
     onEditProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -265,13 +270,13 @@ private fun ProfileHeroSection(
             textAlign = TextAlign.Center,
         )
         Text(
-            text = pharmacyName.ifBlank { accountType },
+            text = if (isPublicUser) accountType else pharmacyName.ifBlank { accountType },
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             color = PharmaBlue500,
             textAlign = TextAlign.Center,
         )
-        if (pharmacyAddress.isNotBlank()) {
+        if (!isPublicUser && pharmacyAddress.isNotBlank()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(d.spaceXS),
@@ -308,7 +313,9 @@ private fun ProfileSummaryCard(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
     val organizationLabel = when {
+        isPublicUser -> "العنوان"
         uiState.accountType.contains("PHARMACY", ignoreCase = true) -> "الصيدلية"
         uiState.accountType.contains("WAREHOUSE", ignoreCase = true) -> "المستودع"
         else -> "الجهة"
@@ -373,7 +380,7 @@ private fun ProfileSummaryCard(
                 ) {
                     SummaryInfo(
                         label = organizationLabel,
-                        value = uiState.pharmacyName,
+                        value = if (isPublicUser) uiState.pharmacyAddress else uiState.pharmacyName,
                         modifier = Modifier.weight(1f),
                     )
                     SummaryInfo(

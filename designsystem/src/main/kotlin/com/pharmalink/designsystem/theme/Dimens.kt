@@ -44,6 +44,10 @@ data class PharmaDimens(
     val iconL: Dp = 32.dp,
     val iconXL: Dp = 48.dp,
     val iconXXL: Dp = 64.dp,
+    val toolbarAvatarSize: Dp = 44.dp,
+    val mapPickerHeight: Dp = 190.dp,
+    val cardElevationMedium: Dp = 6.dp,
+    val primaryCtaHeightLarge: Dp = 64.dp,
 )
 
 val LocalPharmaDimens = staticCompositionLocalOf { PharmaDimens() }

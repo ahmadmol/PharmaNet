@@ -7,21 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.LocalPharmacy
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,25 +25,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.theme.ClinicalCanvas
-import com.pharmalink.designsystem.theme.PharmaBlue500
-import com.pharmalink.designsystem.theme.PharmaNeutral100
-import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaBlue50
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.Medicine
 
@@ -56,11 +48,10 @@ import com.pharmalink.domain.model.Medicine
 @Composable
 fun MedicineSearchScreen(
     viewModel: MedicineSearchViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit,
-    onNavigateToWarehouseDetail: (String) -> Unit,
+    onBackClick: () -> Unit,
+    onMedicineSelected: (Medicine) -> Unit,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val d = MaterialTheme.dimens
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Scaffold(
@@ -68,104 +59,132 @@ fun MedicineSearchScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "البحث عن دواء",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            text = stringResource(R.string.medicine_search_title),
+                            style = MaterialTheme.typography.titleLarge,
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(onClick = onBackClick) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "رجوع",
+                                contentDescription = stringResource(R.string.medicine_search_back),
                             )
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = ClinicalCanvas,
-                    ),
                 )
             },
             containerColor = ClinicalCanvas,
         ) { paddingValues ->
-            Column(
+            MedicineSearchContent(
+                uiState = uiState,
+                onSearchQueryChange = viewModel::onSearchQueryChange,
+                onRetryClick = viewModel::loadMedicines,
+                onMedicineSelected = onMedicineSelected,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = d.spaceL),
-            ) {
-                // Search Input
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = viewModel::onSearchQueryChange,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = d.spaceM),
-                    placeholder = {
-                        Text(
-                            text = "ابحث عن اسم الدواء أو النوع...",
-                            color = PharmaNeutral600,
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            tint = PharmaBlue500,
-                        )
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(d.radiusXXL),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        focusedBorderColor = PharmaBlue500,
-                        unfocusedBorderColor = PharmaNeutral100,
-                    ),
+                    .padding(paddingValues),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MedicineSearchContent(
+    uiState: MedicineSearchUiState,
+    onSearchQueryChange: (String) -> Unit,
+    onRetryClick: () -> Unit,
+    onMedicineSelected: (Medicine) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Column(
+        modifier = modifier.padding(horizontal = d.spaceL),
+        verticalArrangement = Arrangement.spacedBy(d.spaceL),
+    ) {
+        OutlinedTextField(
+            value = uiState.searchQuery,
+            onValueChange = onSearchQueryChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = d.spaceM),
+            placeholder = {
+                Text(
+                    text = stringResource(R.string.medicine_search_placeholder),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            },
+            singleLine = true,
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            ),
+        )
 
-                Spacer(modifier = Modifier.height(d.spaceM))
+        Text(
+            text = stringResource(R.string.medicine_search_helper_text),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
-                // Results
-                when {
-                    uiState.isLoading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator(color = PharmaBlue500)
-                        }
-                    }
-                    uiState.errorMessage != null -> {
-                        ErrorState(
-                            message = uiState.errorMessage!!,
-                            onRetry = viewModel::loadMedicines,
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            uiState.errorMessage != null -> {
+                SearchMessageState(
+                    title = stringResource(R.string.medicine_search_error_title),
+                    message = uiState.errorMessage,
+                    actionLabel = stringResource(R.string.medicine_search_retry),
+                    onAction = onRetryClick,
+                )
+            }
+
+            uiState.searchQuery.isBlank() && uiState.allMedicines.isEmpty() -> {
+                SearchMessageState(
+                    title = stringResource(R.string.medicine_search_empty_initial_title),
+                    message = stringResource(R.string.medicine_search_empty_initial_body),
+                    actionLabel = stringResource(R.string.medicine_search_retry),
+                    onAction = onRetryClick,
+                )
+            }
+
+            uiState.searchQuery.isNotBlank() && uiState.medicines.isEmpty() -> {
+                SearchMessageState(
+                    title = stringResource(R.string.medicine_search_empty_results_title),
+                    message = stringResource(R.string.medicine_search_empty_results_body),
+                    actionLabel = stringResource(R.string.medicine_search_retry),
+                    onAction = onRetryClick,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = d.spaceXL),
+                    verticalArrangement = Arrangement.spacedBy(d.spaceM),
+                ) {
+                    items(uiState.medicines, key = { it.id }) { medicine ->
+                        MedicineCard(
+                            medicine = medicine,
+                            onAction = { onMedicineSelected(medicine) },
                         )
-                    }
-                    uiState.medicines.isEmpty() && uiState.searchQuery.isBlank() -> {
-                        EmptyState(
-                            message = "ابدأ بالبحث عن اسم الدواء",
-                            subMessage = "ستظهر الأدوية المتوفرة في المستودعات",
-                        )
-                    }
-                    uiState.medicines.isEmpty() -> {
-                        EmptyState(
-                            message = "لا توجد نتائج",
-                            subMessage = "جرب اسم دواء آخر أو تحقق من الإملاء",
-                        )
-                    }
-                    else -> {
-                        LazyColumn(
-                            contentPadding = PaddingValues(vertical = d.spaceM),
-                            verticalArrangement = Arrangement.spacedBy(d.spaceM),
-                        ) {
-                            items(uiState.medicines) { medicine ->
-                                MedicineCard(
-                                    medicine = medicine,
-                                    onClick = { onNavigateToWarehouseDetail(medicine.id) },
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -176,154 +195,139 @@ fun MedicineSearchScreen(
 @Composable
 private fun MedicineCard(
     medicine: Medicine,
-    onClick: () -> Unit,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(d.radiusXXL),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = d.cardElevation,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(d.spaceL),
-            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
-            // Medicine Icon
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        color = PharmaBlue500.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(d.radiusM),
-                    ),
-                contentAlignment = Alignment.Center,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.LocalPharmacy,
-                    contentDescription = null,
-                    tint = PharmaBlue500,
-                    modifier = Modifier.size(24.dp),
-                )
+                Surface(shape = MaterialTheme.shapes.medium, color = PharmaBlue50) {
+                    Box(
+                        modifier = Modifier.padding(d.spaceM),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocalPharmacy,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+                ) {
+                    Text(
+                        text = medicine.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (medicine.brand.isNotBlank()) {
+                        Text(
+                            text = medicine.brand,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (medicine.strength.isNotBlank()) {
+                        Text(
+                            text = medicine.strength,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
 
-            // Medicine Info
-            Column(
-                modifier = Modifier.weight(1f),
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
                 Text(
-                    text = medicine.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    text = stringResource(R.string.medicine_search_safe_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceS),
                 )
-                if (medicine.brand.isNotBlank()) {
-                    Text(
-                        text = medicine.brand,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = PharmaNeutral600,
-                    )
-                }
-                if (medicine.strength.isNotBlank()) {
-                    Text(
-                        text = medicine.strength,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = PharmaNeutral600,
-                    )
-                }
             }
-        }
 
-        // Availability Hint (no order button)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(color = PharmaBlue500.copy(alpha = 0.05f))
-                .padding(horizontal = d.spaceL, vertical = d.spaceM),
-        ) {
-            Text(
-                text = "متوفر في مستودعات →",
-                style = MaterialTheme.typography.bodySmall,
-                color = PharmaBlue500,
-                fontWeight = FontWeight.Medium,
+            PharmaButton(
+                text = stringResource(R.string.medicine_search_select_action),
+                onClick = onAction,
             )
         }
     }
 }
 
 @Composable
-private fun EmptyState(
+private fun SearchMessageState(
+    title: String,
     message: String,
-    subMessage: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = d.cardElevation,
         ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = null,
-                tint = PharmaNeutral600,
-                modifier = Modifier.size(64.dp),
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = subMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = PharmaNeutral600,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ErrorState(
-    message: String,
-    onRetry: () -> Unit,
-) {
-    val d = MaterialTheme.dimens
-
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(d.spaceM),
-        ) {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = "اضغط للمحاولة مرة أخرى",
-                style = MaterialTheme.typography.bodyMedium,
-                color = PharmaBlue500,
-                modifier = Modifier.clickable(onClick = onRetry),
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(d.spaceL),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(d.spaceM),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = actionLabel,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = MaterialTheme.shapes.large,
+                        )
+                        .clickable(onClick = onAction)
+                        .padding(horizontal = d.spaceL, vertical = d.spaceM),
+                )
+            }
         }
     }
 }

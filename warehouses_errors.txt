@@ -1,0 +1,59 @@
+﻿To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.1.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+WARNING: The option setting 'android.disallowKotlinSourceSets=false' is experimental.
+The current default is 'true'.
+WARNING: The option setting 'android.newDsl=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+
+> Task :designsystem:preBuild UP-TO-DATE
+> Task :designsystem:preDebugBuild UP-TO-DATE
+> Task :designsystem:generateDebugResources UP-TO-DATE
+> Task :designsystem:packageDebugResources UP-TO-DATE
+> Task :designsystem:processDebugNavigationResources UP-TO-DATE
+> Task :designsystem:parseDebugLocalResources UP-TO-DATE
+> Task :designsystem:generateDebugRFile UP-TO-DATE
+> Task :core:common:preBuild UP-TO-DATE
+> Task :core:common:preDebugBuild UP-TO-DATE
+> Task :core:common:generateDebugResources UP-TO-DATE
+> Task :core:common:packageDebugResources UP-TO-DATE
+> Task :core:common:processDebugNavigationResources UP-TO-DATE
+> Task :core:common:parseDebugLocalResources UP-TO-DATE
+> Task :core:common:generateDebugRFile UP-TO-DATE
+> Task :core:common:generateDebugBuildConfig UP-TO-DATE
+> Task :core:common:kspDebugKotlin UP-TO-DATE
+> Task :core:common:compileDebugKotlin UP-TO-DATE
+> Task :core:common:javaPreCompileDebug UP-TO-DATE
+> Task :core:common:compileDebugJavaWithJavac UP-TO-DATE
+> Task :core:common:transformDebugClassesWithAsm UP-TO-DATE
+> Task :core:common:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :designsystem:compileDebugKotlin UP-TO-DATE
+> Task :designsystem:javaPreCompileDebug UP-TO-DATE
+> Task :designsystem:compileDebugJavaWithJavac NO-SOURCE
+> Task :designsystem:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:warehouses:preBuild UP-TO-DATE
+> Task :feature:warehouses:preDebugBuild UP-TO-DATE
+> Task :feature:warehouses:generateDebugResources UP-TO-DATE
+> Task :feature:warehouses:packageDebugResources UP-TO-DATE
+> Task :feature:warehouses:processDebugNavigationResources UP-TO-DATE
+> Task :feature:warehouses:parseDebugLocalResources UP-TO-DATE
+> Task :feature:warehouses:generateDebugRFile UP-TO-DATE
+> Task :feature:warehouses:kspDebugKotlin UP-TO-DATE
+
+> Task :feature:warehouses:compileDebugKotlin
+w: file:///C:/Users/WIN%2010/Desktop/New%20folder%20(2)/Sdk/Sdk/PharmaNet/feature/warehouses/src/main/kotlin/com/pharmalink/feature/warehouses/FeaturedWarehousesViewModel.kt:19:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///C:/Users/WIN%2010/Desktop/New%20folder%20(2)/Sdk/Sdk/PharmaNet/feature/warehouses/src/main/kotlin/com/pharmalink/feature/warehouses/WarehousesViewModel.kt:21:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+
+BUILD SUCCESSFUL in 28s
+┘ت┘د actionable tasks: ┘ة executed, ┘ت┘خ up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.1.0/userguide/configuration_cache_enabling.html

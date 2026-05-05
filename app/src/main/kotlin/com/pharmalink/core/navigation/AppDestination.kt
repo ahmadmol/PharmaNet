@@ -19,6 +19,38 @@ sealed class AppDestination(
     data object MainTabs : AppDestination("main_tabs")
     data object Home : AppDestination("home")
     data object MedicineSearch : AppDestination("medicine_search")
+    data object PharmacySelection : AppDestination(
+        route = "pharmacy_selection/{medicineId}",
+        arguments = listOf(navArgument(NavArgs.MEDICINE_ID) { type = NavType.StringType }),
+    ) {
+        fun createRoute(medicineId: String): String = "pharmacy_selection/$medicineId"
+    }
+    data object CreateCustomerOrder : AppDestination(
+        route = "create_customer_order/{medicineId}/{pharmacyId}",
+        arguments = listOf(
+            navArgument(NavArgs.MEDICINE_ID) { type = NavType.StringType },
+            navArgument(NavArgs.PHARMACY_ID) { type = NavType.StringType },
+        ),
+    ) {
+        fun createRoute(medicineId: String, pharmacyId: String): String =
+            "create_customer_order/$medicineId/$pharmacyId"
+
+        fun createAllPharmaciesRoute(medicineId: String): String =
+            "create_customer_order/$medicineId/all_pharmacies"
+    }
+    data object CustomerOrderSuccess : AppDestination(
+        route = "customer_order_success/{orderId}",
+        arguments = listOf(navArgument(NavArgs.ORDER_ID) { type = NavType.StringType }),
+    ) {
+        fun createRoute(orderId: String): String = "customer_order_success/$orderId"
+    }
+    data object MyCustomerOrders : AppDestination("my_customer_orders")
+    data object CustomerOrderDetail : AppDestination(
+        route = "customer_order_detail/{orderId}",
+        arguments = listOf(navArgument(NavArgs.ORDER_ID) { type = NavType.StringType }),
+    ) {
+        fun createRoute(orderId: String): String = "customer_order_detail/$orderId"
+    }
     data object Resources : AppDestination("resources")
     data object FeaturedWarehouses : AppDestination("featured_warehouses")
     data object CreateRequest : AppDestination("create_request")
@@ -40,6 +72,53 @@ sealed class AppDestination(
     data object AboutApp : AppDestination("about_app")
     data object ContactUs : AppDestination("contact_us")
     data object Compliance : AppDestination("compliance")
+
+    data object AdminAuditLog : AppDestination("admin_audit_log")
+
+    data object AdminCreateFacility : AppDestination("admin_create_facility")
+
+    data object AdminUsers : AppDestination("admin_users")
+
+    data object AdminWarehouses : AppDestination("admin_warehouses")
+
+    data object AdminPharmacies : AppDestination("admin_pharmacies")
+
+    data object AdminUserDetail : AppDestination(
+        route = "admin_user_detail/{userId}",
+        arguments = listOf(navArgument(NavArgs.USER_ID) { type = NavType.StringType }),
+    ) {
+        fun createRoute(userId: String): String = "admin_user_detail/$userId"
+    }
+
+    data object AdminWarehouseDetail : AppDestination(
+        route = "admin_warehouse_detail/{warehouseId}",
+        arguments = listOf(navArgument(NavArgs.WAREHOUSE_ID) { type = NavType.StringType }),
+    ) {
+        fun createRoute(warehouseId: String): String = "admin_warehouse_detail/$warehouseId"
+    }
+
+    data object AdminPharmacyDetail : AppDestination(
+        route = "admin_pharmacy_detail/{pharmacyId}",
+        arguments = listOf(navArgument(NavArgs.PHARMACY_ID) { type = NavType.StringType }),
+    ) {
+        fun createRoute(pharmacyId: String): String = "admin_pharmacy_detail/$pharmacyId"
+    }
+
+    data object AdminAuditLogDetail : AppDestination(
+        route = "admin_audit_log_detail/{logId}",
+        arguments = listOf(navArgument(NavArgs.LOG_ID) { type = NavType.StringType }),
+    ) {
+        fun route(logId: String): String = "admin_audit_log_detail/$logId"
+    }
+
+    data object AdminDashboard : AppDestination("admin_dashboard")
+
+    data object WarehouseInventory : AppDestination(
+        route = "warehouse_inventory/{warehouseId}",
+        arguments = listOf(navArgument(NavArgs.WAREHOUSE_ID) { type = NavType.StringType }),
+    ) {
+        fun createRoute(warehouseId: String): String = "warehouse_inventory/$warehouseId"
+    }
 
     data object WarehouseDetail : AppDestination(
         route = "warehouse/{warehouseId}",

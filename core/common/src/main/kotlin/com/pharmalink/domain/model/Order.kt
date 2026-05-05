@@ -31,6 +31,16 @@ enum class OrderStatus {
     CANCELLED,
 }
 
+enum class CustomerRequestUrgency {
+    URGENT,
+    NORMAL,
+}
+
+enum class CustomerRequestScope {
+    SPECIFIC_PHARMACY,
+    ALL_PHARMACIES,
+}
+
 /**
  * Order model supporting both B2B (Pharmacy ↔ Warehouse) and B2C (Customer ↔ Pharmacy) flows.
  * 
@@ -61,7 +71,7 @@ data class Order(
      * - B2B: The buying pharmacy
      * - B2C: The selling pharmacy (fulfillment location)
      */
-    val pharmacyId: String,
+    val pharmacyId: String?,
     
     /** B2B: Supplier warehouse | B2C: null */
     val warehouseId: String?,
@@ -98,6 +108,10 @@ data class Order(
     val supplierName: String? = null,
     val etaLabel: String? = null,
     val isUrgent: Boolean = false,
+    val urgency: CustomerRequestUrgency = if (isUrgent) CustomerRequestUrgency.URGENT else CustomerRequestUrgency.NORMAL,
+    val requestScope: CustomerRequestScope = CustomerRequestScope.SPECIFIC_PHARMACY,
+    val pharmacyName: String? = null,
+    val pharmacyLocation: String? = null,
 ) {
     companion object {
         /**
@@ -113,7 +127,7 @@ data class Order(
         
         private fun validateB2BInvariants(order: Order): Boolean {
             // Required fields
-            if (order.pharmacyId.isBlank()) return false
+            if (order.pharmacyId.isNullOrBlank()) return false
             if (order.warehouseId.isNullOrBlank()) return false
             if (order.requestId.isNullOrBlank()) return false
             
@@ -130,7 +144,7 @@ data class Order(
         private fun validateB2CInvariants(order: Order): Boolean {
             // Required fields
             if (order.customerId.isNullOrBlank()) return false
-            if (order.pharmacyId.isBlank()) return false
+            if (order.requestScope == CustomerRequestScope.SPECIFIC_PHARMACY && order.pharmacyId.isNullOrBlank()) return false
             
             // Forbidden fields
             if (order.warehouseId != null) return false
@@ -203,4 +217,3 @@ data class Order(
         }
     }
 }
-

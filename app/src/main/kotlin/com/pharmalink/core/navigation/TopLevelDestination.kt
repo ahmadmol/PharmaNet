@@ -2,6 +2,7 @@ package com.pharmalink.core.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Person
@@ -27,6 +28,18 @@ val topLevelDestinations = listOf(
         AppDestination.Notifications.route,
         Icons.Outlined.NotificationsNone,
         R.string.profile_settings_notifications,
+    ),
+    TopLevelDestination(
+        AppDestination.AdminAuditLog.route,
+        AppDestination.AdminAuditLog.route,
+        Icons.Outlined.History,
+        R.string.admin_audit_log_tab,
+    ),
+    TopLevelDestination(
+        AppDestination.AdminDashboard.route,
+        AppDestination.AdminDashboard.route,
+        Icons.Outlined.Home,
+        R.string.admin_dashboard_tab,
     ),
 )
 

@@ -1,0 +1,147 @@
+package com.pharmalink.feature.admin.ui.users
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.pharmalink.data.repository.PharmaRepository
+import com.pharmalink.domain.model.AccountType
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+@HiltViewModel
+class EditUserViewModel @Inject constructor(
+    private val repository: PharmaRepository,
+    savedStateHandle: SavedStateHandle,
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(EditUserUiState())
+    val state: StateFlow<EditUserUiState> = _state.asStateFlow()
+
+    private val _effect = MutableSharedFlow<EditUserEffect>(
+        replay = 0,
+        extraBufferCapacity = 1,
+    )
+    val effect: SharedFlow<EditUserEffect> = _effect.asSharedFlow()
+
+    fun loadUser(userId: String, fullName: String, accountType: AccountType, facilityId: String, isActive: Boolean) {
+        _state.update {
+            it.copy(
+                userId = userId,
+                fullName = fullName,
+                accountType = accountType,
+                facilityId = facilityId,
+                isActive = isActive,
+            )
+        }
+    }
+
+    fun onAction(action: EditUserAction) {
+        when (action) {
+            is EditUserAction.OnFullNameChanged -> updateFullName(action.name)
+            is EditUserAction.OnAccountTypeChanged -> updateAccountType(action.type)
+            is EditUserAction.OnFacilityIdChanged -> updateFacilityId(action.id)
+            is EditUserAction.OnActiveToggled -> updateActive(action.isActive)
+            EditUserAction.OnSaveClicked -> saveChanges()
+            EditUserAction.OnDismiss -> dismiss()
+        }
+    }
+
+    private fun updateFullName(name: String) {
+        _state.update {
+            it.copy(
+                fullName = name,
+                fullNameError = "",
+            )
+        }
+    }
+
+    private fun updateAccountType(type: AccountType) {
+        _state.update {
+            it.copy(
+                accountType = type,
+                facilityIdError = "",
+            )
+        }
+    }
+
+    private fun updateFacilityId(id: String) {
+        _state.update {
+            it.copy(
+                facilityId = id,
+                facilityIdError = "",
+            )
+        }
+    }
+
+    private fun updateActive(isActive: Boolean) {
+        _state.update { it.copy(isActive = isActive) }
+    }
+
+    private fun saveChanges() {
+        val state = _state.value
+
+        // Validate
+        val errors = mutableMapOf<String, String>()
+        if (state.fullName.isBlank()) {
+            errors["fullName"] = "ط§ظ„ط§ط³ظ… ط§ظ„ظƒط§ظ…ظ„ ظ…ط·ظ„ظˆط¨"
+        }
+        val needsFacility = state.accountType == AccountType.PHARMACY ||
+            state.accountType == AccountType.WAREHOUSE
+        if (needsFacility && state.facilityId.isBlank()) {
+            errors["facilityId"] = "ظ…ط¹ط±ظپ ط§ظ„ظ…ظ†ط´ط£ط© ظ…ط·ظ„ظˆط¨"
+        }
+
+        if (errors.isNotEmpty()) {
+            _state.update {
+                it.copy(
+                    fullNameError = errors["fullName"] ?: "",
+                    facilityIdError = errors["facilityId"] ?: "",
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isSaving = true, error = "") }
+
+            val pharmacyId = if (state.accountType == AccountType.PHARMACY) state.facilityId else null
+            val warehouseId = if (state.accountType == AccountType.WAREHOUSE) state.facilityId else null
+
+            repository.adminUpdateUserProfile(
+                targetUserId = state.userId,
+                accountType = state.accountType,
+                pharmacyId = pharmacyId,
+                warehouseId = warehouseId,
+                isActive = state.isActive,
+            )
+                .onSuccess {
+                    _state.update { it.copy(isSaving = false) }
+                    _effect.emit(EditUserEffect.ShowMessage("طھظ… ط­ظپط¸ ط§ظ„طھط؛ظٹظٹط±ط§طھ ط¨ظ†ط¬ط§ط­"))
+                    _effect.emit(EditUserEffect.Dismiss)
+                }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            error = e.message ?: "ظپط´ظ„ ط­ظپط¸ ط§ظ„طھط؛ظٹظٹط±ط§طھ",
+                        )
+                    }
+                    _effect.emit(EditUserEffect.ShowMessage(e.message ?: "ظپط´ظ„ ط­ظپط¸ ط§ظ„طھط؛ظٹظٹط±ط§طھ"))
+                }
+        }
+    }
+
+    private fun dismiss() {
+        viewModelScope.launch {
+            _effect.emit(EditUserEffect.Dismiss)
+        }
+    }
+}

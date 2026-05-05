@@ -5,6 +5,7 @@ import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.FulfillmentType
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
+import com.pharmalink.domain.model.OrderType
 import javax.inject.Inject
 
 /**
@@ -14,7 +15,7 @@ import javax.inject.Inject
  * - Only PHARMACY can mark orders ready
  * - Must own the pharmacy
  * - Only PICKUP orders can be marked ready
- * - Only CONFIRMED or IN_PROGRESS orders can transition to READY_FOR_PICKUP
+ * - Only CONFIRMED orders can transition to READY_FOR_PICKUP
  */
 class MarkOrderReadyUseCase @Inject constructor(
     private val pharmaRepository: PharmaRepository,
@@ -38,6 +39,12 @@ class MarkOrderReadyUseCase @Inject constructor(
             )
         }
 
+        if (order.orderType != OrderType.CUSTOMER_PHARMACY) {
+            return Result.failure(
+                IllegalStateException("Can only modify CUSTOMER_PHARMACY orders")
+            )
+        }
+
         // Rule 3: Only PICKUP orders
         if (order.fulfillmentType != FulfillmentType.PICKUP) {
             return Result.failure(
@@ -45,10 +52,10 @@ class MarkOrderReadyUseCase @Inject constructor(
             )
         }
 
-        // Rule 4: Valid status transition (CONFIRMED or IN_PROGRESS -> READY_FOR_PICKUP)
-        if (order.status != OrderStatus.CONFIRMED && order.status != OrderStatus.IN_PROGRESS) {
+        // Rule 4: Valid status transition (CONFIRMED -> READY_FOR_PICKUP)
+        if (order.status != OrderStatus.CONFIRMED) {
             return Result.failure(
-                IllegalStateException("Can only mark CONFIRMED or IN_PROGRESS orders as ready. Current status: ${order.status}")
+                IllegalStateException("Can only mark CONFIRMED orders as ready. Current status: ${order.status}")
             )
         }
 

@@ -53,6 +53,7 @@ dependencies {
     implementation(project(":feature:request"))
     implementation(project(":feature:notifications"))
     implementation(project(":feature:tracking"))
+    implementation(project(":feature:admin"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

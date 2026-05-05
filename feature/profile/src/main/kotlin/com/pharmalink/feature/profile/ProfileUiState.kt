@@ -8,6 +8,7 @@ data class ProfileUiState(
     val userEmail: String = "",
     val userPhone: String = "",
     val accountType: String = "",
+    val accountTypeEnum: AccountType? = null,
     val pharmacyName: String = "",
     val pharmacyAddress: String = "",
     val profileImageUrl: String? = null,
@@ -27,6 +28,7 @@ data class ProfileUiState(
                 userEmail = snapshot?.email.orEmpty(),
                 userPhone = snapshot?.phoneNumber.orEmpty(),
                 accountType = snapshot?.accountType?.name?.replace('_', ' ') ?: "",
+                accountTypeEnum = snapshot?.accountType,
                 pharmacyName = when (snapshot?.accountType) {
                     AccountType.WAREHOUSE -> snapshot.warehouseName.ifBlank { snapshot.pharmacyName }
                     else -> snapshot?.pharmacyName.orEmpty()
