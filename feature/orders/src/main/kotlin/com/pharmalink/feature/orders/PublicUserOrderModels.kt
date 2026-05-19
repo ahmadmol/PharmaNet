@@ -180,6 +180,7 @@ internal fun Order.toCustomerOrderDetailUi(context: Context): CustomerOrderDetai
 private val publicUserSupportedStatuses = setOf(
     OrderStatus.PENDING,
     OrderStatus.CONFIRMED,
+    OrderStatus.IN_PROGRESS,
     OrderStatus.REJECTED,
     OrderStatus.READY_FOR_PICKUP,
     OrderStatus.OUT_FOR_DELIVERY,
@@ -206,23 +207,23 @@ private fun CustomerRequestScope.toPublicUserRequestScopeLabel(context: Context)
 private fun OrderStatus.toPublicUserStatusLabel(context: Context): String = when (this) {
     OrderStatus.PENDING -> context.getString(R.string.customer_order_status_pending)
     OrderStatus.CONFIRMED -> context.getString(R.string.customer_order_status_confirmed)
+    OrderStatus.IN_PROGRESS -> context.getString(R.string.customer_order_status_in_progress)
     OrderStatus.REJECTED -> context.getString(R.string.customer_order_status_rejected)
     OrderStatus.READY_FOR_PICKUP -> context.getString(R.string.customer_order_status_ready_for_pickup)
     OrderStatus.OUT_FOR_DELIVERY -> context.getString(R.string.customer_order_status_out_for_delivery)
     OrderStatus.DELIVERED -> context.getString(R.string.customer_order_status_delivered)
     OrderStatus.CANCELLED -> context.getString(R.string.customer_order_status_cancelled)
-    else -> context.getString(R.string.customer_order_status_confirmed)
 }
 
 private fun OrderStatus.toPublicUserSupportingText(context: Context): String = when (this) {
     OrderStatus.PENDING -> context.getString(R.string.customer_order_status_pending_supporting)
     OrderStatus.CONFIRMED -> context.getString(R.string.customer_order_status_confirmed_supporting)
+    OrderStatus.IN_PROGRESS -> context.getString(R.string.customer_order_status_in_progress_supporting)
     OrderStatus.REJECTED -> context.getString(R.string.customer_order_status_rejected_supporting)
     OrderStatus.READY_FOR_PICKUP -> context.getString(R.string.customer_order_status_ready_for_pickup_supporting)
     OrderStatus.OUT_FOR_DELIVERY -> context.getString(R.string.customer_order_status_out_for_delivery_supporting)
     OrderStatus.DELIVERED -> context.getString(R.string.customer_order_status_delivered_supporting)
     OrderStatus.CANCELLED -> context.getString(R.string.customer_order_status_cancelled_supporting)
-    else -> context.getString(R.string.customer_order_status_confirmed_supporting)
 }
 
 private fun FulfillmentType.toPublicUserFulfillmentLabel(context: Context): String = when (this) {

@@ -57,36 +57,11 @@ class WarehouseInventoryViewModel @Inject constructor(
             }
             is WarehouseInventoryAction.OnSearchQueryChanged -> updateSearchQuery(action.query)
             WarehouseInventoryAction.OnFilterClicked -> {
-                viewModelScope.launch {
-                    _effect.emit(WarehouseInventoryEffect.ShowMessage("التصفية: قيد التطوير"))
-                }
+                // No filter UI implemented yet — button is disabled in UI
             }
             WarehouseInventoryAction.OnAddMedicineClicked -> {
                 viewModelScope.launch {
                     _effect.emit(WarehouseInventoryEffect.NavigateToAddMedicine)
-                }
-            }
-            is WarehouseInventoryAction.OnMedicineClicked -> {
-                viewModelScope.launch {
-                    _effect.emit(WarehouseInventoryEffect.NavigateToMedicineDetail(action.medicineId))
-                }
-            }
-            is WarehouseInventoryAction.OnEditInventoryClicked -> {
-                viewModelScope.launch {
-                    _effect.emit(WarehouseInventoryEffect.NavigateToEditInventory(action.medicineId))
-                }
-            }
-            is WarehouseInventoryAction.OnDeleteInventoryClicked -> {
-                val medicine = _state.value.medicines.find { it.id == action.medicineId }
-                if (medicine != null) {
-                    viewModelScope.launch {
-                        _effect.emit(
-                            WarehouseInventoryEffect.ShowDeleteConfirmation(
-                                medicineId = action.medicineId,
-                                medicineName = medicine.name,
-                            )
-                        )
-                    }
                 }
             }
         }
@@ -184,7 +159,7 @@ class WarehouseInventoryViewModel @Inject constructor(
         return MedicineInventoryModel(
             id = id,
             name = medicineName,
-            description = "", // TODO: Add description field to InventoryItem when available
+            description = "", // Note: Description field not available in current schema
             currentQuantity = quantity,
             capacity = calculateCapacity(quantity, stockStatus),
             unit = unit,

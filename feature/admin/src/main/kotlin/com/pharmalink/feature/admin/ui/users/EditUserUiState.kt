@@ -10,9 +10,7 @@ data class EditUserUiState(
     val accountType: AccountType = AccountType.PHARMACY,
     val facilityId: String = "",
     val isActive: Boolean = true,
-    val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val error: String = "",
     val fullNameError: String = "",
     val facilityIdError: String = "",
 )

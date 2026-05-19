@@ -1,10 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="create_request_screen_title">إنشاء طلب جديد</string>
     <string name="select_medicine_placeholder">اختر الدواء</string>
     <string name="notes_label">ملاحظات إضافية</string>
-    <string name="notes_placeholder">أدخل أي ملاحظات هنا...</string>
+    <string name="notes_placeholder">أضف أي ملاحظات هنا...</string>
     <string name="send_request_button">إرسال الطلب</string>
-    <string name="sending_request_message">جارٍ إرسال الطلب...</string>
+    <string name="sending_request_message">جاري إرسال الطلب...</string>
     <string name="request_sent_success_message">تم إرسال الطلب بنجاح!</string>
     <string name="request_sent_title">تم الإرسال</string>
     <string name="request_sent_message">تم إرسال الطلب بنجاح</string>
@@ -12,24 +13,24 @@
     
     <!-- Request Details Screen -->
     <string name="request_details_contact_warehouse">تواصل مع المستودع</string>
-    <string name="request_details_reorder_same">إعادة طلب نفس الأصناف</string>
+    <string name="request_details_reorder_same">إعادة طلب نفس المنتجات</string>
     
     <!-- Request Error Messages -->
-    <string name="request_error_invalid_id">معرف الطلب غير صالح</string>
+    <string name="request_error_invalid_id">رقم الطلب غير صالح</string>
     <string name="request_error_not_found">الطلب غير موجود</string>
     <string name="request_error_deleted">تم حذف هذا الطلب</string>
     
     <!-- Request Timeline -->
-    <string name="request_timeline_submitted_title">تم تقديم الطلب</string>
-    <string name="request_timeline_submitted_subtitle">تم استلام طلبك وجاري مراجعته</string>
+    <string name="request_timeline_submitted_title">تم إرسال الطلب</string>
+    <string name="request_timeline_submitted_subtitle">تم استلام الطلب وهو قيد المعالجة</string>
     <string name="request_timeline_review_title">قيد المراجعة</string>
     <string name="request_timeline_review_subtitle">جاري مراجعة تفاصيل الطلب</string>
     <string name="request_timeline_approved_title">تمت الموافقة</string>
-    <string name="request_timeline_approved_subtitle">تمت الموافقة على طلبك</string>
+    <string name="request_timeline_approved_subtitle">تمت الموافقة على الطلب</string>
     <string name="request_timeline_completed_title">تم الإنجاز</string>
-    <string name="request_timeline_completed_subtitle">تم إنجاز طلبك بنجاح</string>
+    <string name="request_timeline_completed_subtitle">تم إنجاز الطلب بنجاح</string>
     <string name="request_timeline_rejected_title">تم الرفض</string>
-    <string name="request_timeline_rejected_subtitle">تم رفض طلبك</string>
+    <string name="request_timeline_rejected_subtitle">تم رفض الطلب</string>
     
     <!-- Request Details Labels -->
     <string name="request_details_label_priority">الأولوية</string>
@@ -44,7 +45,7 @@
     <string name="request_details_empty_subtitle">لم يتم العثور على تفاصيل الطلب</string>
     <string name="request_details_error_subtitle">حدث خطأ أثناء تحميل تفاصيل الطلب</string>
     <string name="request_details_offline_subtitle">لا يوجد اتصال بالإنترنت</string>
-    <string name="request_details_open_related_order">فتح الطلب المرتبط</string>
+    <string name="request_details_open_related_order">عرض الطلب المرتبط</string>
     <string name="request_details_request_id_format">رقم الطلب: %s</string>
     <string name="request_details_urgent_badge">عاجل</string>
     
@@ -65,17 +66,17 @@
     <string name="request_error_invalid_quantity">الكمية غير صحيحة</string>
     <string name="request_error_quantity_too_large">الكمية كبيرة جداً (الحد الأقصى 1000)</string>
     <string name="request_error_notes_too_long">الملاحظات طويلة جداً (الحد الأقصى 500 حرف)</string>
-    <string name="request_error_duplicate">طلب مشابه موجود بالفعل</string>
+    <string name="request_error_duplicate">هذا الطلب مكرر</string>
     <string name="request_error_warehouse_invalid">المستودع المحدد غير صالح</string>
     <string name="request_error_creation_failed">فشل إنشاء الطلب. حاول مرة أخرى.</string>
     <string name="request_error_loading_failed">فشل تحميل الطلبات. حاول مرة أخرى.</string>
     <string name="request_error_filter_failed">فشل تصفية الطلبات. حاول مرة أخرى.</string>
-    <string name="error_network">خطأ في الشبكة. تحقق من اتصالك بالإنترنت.</string>
+    <string name="error_network">خطأ في الاتصال. يرجى التحقق من الشبكة.</string>
     <string name="error_permission">ليس لديك صلاحية للقيام بهذا الإجراء.</string>
     <string name="request_list_title">الطلبات</string>
     <string name="request_create_new">طلب جديد</string>
-    <string name="request_list_empty">لا توجد طلبات حالياً</string>
-    <string name="request_empty_subtitle">ابدأ بإنشاء طلب جديد</string>
+    <string name="request_list_empty">لا توجد طلبات لعرضها</string>
+    <string name="request_empty_subtitle">قائمة الطلبات فارغة</string>
     <string name="request_filter_all">الكل</string>
     <string name="request_status_submitted">تم الإرسال</string>
     <string name="request_status_under_review">قيد المراجعة</string>
@@ -89,15 +90,27 @@
     <string name="request_dismiss_error">تجاهل الخطأ</string>
     <string name="request_retry_loading">إعادة المحاولة</string>
     <string name="request_loading_message">جاري تحميل الطلبات...</string>
-    <string name="request_create_first">إنشاء أول طلب</string>
+    <string name="request_create_first">إنشاء طلب جديد</string>
     <string name="request_list_incoming_title">Incoming Requests</string>
     <string name="request_empty_incoming_subtitle">No incoming requests assigned to your warehouse.</string>
     <string name="request_details_warehouse_actions_title">Warehouse Actions</string>
-    <string name="request_details_pharmacy_actions_title">إجراءات الطلب</string>
+    <string name="request_details_pharmacy_actions_title">إجراءات الصيدلية</string>
     <string name="request_action_accept">Accept</string>
     <string name="request_action_reject">Reject</string>
     <string name="request_action_start_processing">Start Processing</string>
     <string name="request_action_mark_fulfilled">Mark Fulfilled</string>
     <string name="request_action_submit">إرسال الطلب</string>
     <string name="request_action_delete_draft">حذف المسودة</string>
-    <string name="request_action_updating">Updating request...</string></resources>
+    <string name="request_action_updating">Updating request...</string>
+    <string name="request_accept_price_dialog_title">Set request price</string>
+    <string name="request_accept_price_label">Total price</string>
+    <string name="request_accept_price_supporting">Enter a non-negative amount with up to 2 decimals.</string>
+    <string name="request_accept_price_error">Enter a valid non-negative amount with up to 2 decimals.</string>
+    <string name="request_accept_price_confirm">Accept</string>
+    <string name="request_accept_price_cancel">Cancel</string>
+    <string name="request_priority_urgent">مستعجل</string>
+    <string name="request_details_invoice_summary">تفاصيل الفاتورة</string>
+    <string name="request_details_items_total">إجمالي العناصر</string>
+    <string name="request_details_urgent_service_fee">رسوم الخدمة العاجلة</string>
+    <string name="request_details_grand_total">المجموع الكلي</string>
+</resources>

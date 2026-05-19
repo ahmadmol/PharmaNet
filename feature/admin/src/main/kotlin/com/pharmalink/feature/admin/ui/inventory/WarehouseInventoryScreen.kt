@@ -1,8 +1,6 @@
 package com.pharmalink.feature.admin.ui.inventory
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +40,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,6 +47,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.PharmaWarning
+import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -83,15 +82,6 @@ fun WarehouseInventoryScreen(
             }
             WarehouseInventoryEffect.NavigateBack -> onBackClick()
             WarehouseInventoryEffect.NavigateToAddMedicine -> onAddMedicine()
-            is WarehouseInventoryEffect.NavigateToMedicineDetail -> {
-                snackbarHostState.showSnackbar("تفاصيل الدواء: قيد التطوير")
-            }
-            is WarehouseInventoryEffect.NavigateToEditInventory -> {
-                snackbarHostState.showSnackbar("تعديل المخزون: قيد التطوير")
-            }
-            is WarehouseInventoryEffect.ShowDeleteConfirmation -> {
-                snackbarHostState.showSnackbar("حذف ${effect.medicineName}: قيد التطوير")
-            }
         }
     }
 
@@ -138,7 +128,7 @@ private fun WarehouseInventoryContent(
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -269,15 +259,16 @@ private fun SuccessContent(
                 
                 IconButton(
                     onClick = { onAction(WarehouseInventoryAction.OnFilterClicked) },
+                    enabled = false,
                     modifier = Modifier
                         .size(56.dp)
                         .clip(MaterialTheme.shapes.medium)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                 ) {
                     Icon(
                         imageVector = Icons.Default.FilterList,
                         contentDescription = stringResource(R.string.admin_filter_cd),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                     )
                 }
             }
@@ -290,7 +281,6 @@ private fun SuccessContent(
         ) { medicine ->
             MedicineInventoryCard(
                 medicine = medicine,
-                onCardClick = { onAction(WarehouseInventoryAction.OnMedicineClicked(medicine.id)) },
             )
         }
     }
@@ -425,19 +415,13 @@ private fun SearchField(
 @Composable
 private fun MedicineInventoryCard(
     medicine: MedicineInventoryModel,
-    onCardClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
 
     Card(
         modifier = modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(),
-                onClick = onCardClick,
-            ),
+            .fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -477,7 +461,7 @@ private fun MedicineInventoryCard(
                     Surface(
                         shape = MaterialTheme.shapes.small,
                         color = when (medicine.stockStatus) {
-                            StockStatus.LOW_STOCK -> Color(0xFFFBBF24).copy(alpha = 0.15f)
+                            StockStatus.LOW_STOCK -> PharmaWarning.copy(alpha = 0.15f)
                             StockStatus.OUT_OF_STOCK -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
                             else -> Color.Transparent
                         },
@@ -491,7 +475,7 @@ private fun MedicineInventoryCard(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = when (medicine.stockStatus) {
-                                StockStatus.LOW_STOCK -> Color(0xFFFBBF24)
+                                StockStatus.LOW_STOCK -> PharmaWarning
                                 StockStatus.OUT_OF_STOCK -> MaterialTheme.colorScheme.error
                                 else -> Color.Transparent
                             },
@@ -543,8 +527,8 @@ private fun MedicineInventoryCard(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     color = when (medicine.stockStatus) {
-                        StockStatus.IN_STOCK -> Color(0xFF10B981)
-                        StockStatus.LOW_STOCK -> Color(0xFFFBBF24)
+                        StockStatus.IN_STOCK -> StatusActive
+                        StockStatus.LOW_STOCK -> PharmaWarning
                         StockStatus.OUT_OF_STOCK -> MaterialTheme.colorScheme.error
                     },
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -560,36 +544,36 @@ private fun PreviewWarehouseInventoryScreen() {
     PharmaTheme {
         WarehouseInventoryContent(
             state = WarehouseInventoryUiState(
-                warehouseName = "مستودع الرياض المركزي",
+                warehouseName = "ظ…ط³طھظˆط¯ط¹ ط§ظ„ط±ظٹط§ط¶ ط§ظ„ظ…ط±ظƒط²ظٹ",
                 totalItems = 1284,
                 capacityPercent = 94,
-                lastUpdated = "منذ دقيقتين",
+                lastUpdated = "ظ…ظ†ط° ط¯ظ‚ظٹظ‚طھظٹظ†",
                 medicines = listOf(
                     MedicineInventoryModel(
                         id = "1",
-                        name = "باراسيتامول 500 ملغ",
-                        description = "مسكن للألم وخافض للحرارة",
+                        name = "ط¨ط§ط±ط§ط³ظٹطھط§ظ…ظˆظ„ 500 ظ…ظ„ط؛",
+                        description = "ظ…ط³ظƒظ† ظ„ظ„ط£ظ„ظ… ظˆط®ط§ظپط¶ ظ„ظ„ط­ط±ط§ط±ط©",
                         currentQuantity = 850,
                         capacity = 1000,
-                        unit = "علبة",
+                        unit = "ط¹ظ„ط¨ط©",
                         stockStatus = StockStatus.IN_STOCK,
                     ),
                     MedicineInventoryModel(
                         id = "2",
-                        name = "أموكسيسيلين 250 ملغ",
-                        description = "مضاد حيوي واسع الطيف",
+                        name = "ط£ظ…ظˆظƒط³ظٹط³ظٹظ„ظٹظ† 250 ظ…ظ„ط؛",
+                        description = "ظ…ط¶ط§ط¯ ط­ظٹظˆظٹ ظˆط§ط³ط¹ ط§ظ„ط·ظٹظپ",
                         currentQuantity = 120,
                         capacity = 500,
-                        unit = "علبة",
+                        unit = "ط¹ظ„ط¨ط©",
                         stockStatus = StockStatus.LOW_STOCK,
                     ),
                     MedicineInventoryModel(
                         id = "3",
-                        name = "أوميبرازول 20 ملغ",
-                        description = "لعلاج حموضة المعدة",
+                        name = "ط£ظˆظ…ظٹط¨ط±ط§ط²ظˆظ„ 20 ظ…ظ„ط؛",
+                        description = "ظ„ط¹ظ„ط§ط¬ ط­ظ…ظˆط¶ط© ط§ظ„ظ…ط¹ط¯ط©",
                         currentQuantity = 0,
                         capacity = 300,
-                        unit = "علبة",
+                        unit = "ط¹ظ„ط¨ط©",
                         stockStatus = StockStatus.OUT_OF_STOCK,
                     ),
                 ),

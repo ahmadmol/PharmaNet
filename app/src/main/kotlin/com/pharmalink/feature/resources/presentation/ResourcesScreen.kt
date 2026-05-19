@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.core.common.ui.ScreenState
 import com.pharmalink.designsystem.components.PharmaStateTone
 import com.pharmalink.designsystem.components.PharmaStateView
+import com.pharmalink.designsystem.components.DashboardWelcomeCard
 import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.Warehouse
@@ -61,6 +62,22 @@ fun ResourcesScreen(
             onFilterClick = { },
             onSortClick = { },
             modifier = Modifier.padding(horizontal = d.spaceL, vertical = d.spaceM),
+        )
+
+        Spacer(Modifier.height(d.spaceS))
+
+        DashboardWelcomeCard(
+            title = stringResource(R.string.resources_welcome_title),
+            subtitle = stringResource(R.string.resources_welcome_subtitle),
+            stats = listOf(
+                stringResource(R.string.resources_welcome_stat_results) to when (val screenState = state.screenState) {
+                    is ScreenState.Success -> screenState.data.size.toString()
+                    else -> "0"
+                },
+                stringResource(R.string.resources_welcome_stat_filter) to state.selectedFilter.name,
+                stringResource(R.string.resources_welcome_stat_sort) to state.selectedSort.name,
+            ),
+            modifier = Modifier.padding(horizontal = d.spaceL),
         )
 
         Spacer(Modifier.height(d.spaceS))

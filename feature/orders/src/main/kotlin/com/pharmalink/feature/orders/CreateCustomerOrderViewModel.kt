@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pharmalink.core.common.validation.SyrianPhone
+import com.pharmalink.core.location.FacilityLocationService
 import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.CustomerRequestScope
@@ -22,7 +23,9 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class CreateCustomerOrderViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val pharmaRepository: com.pharmalink.data.repository.PharmaRepository,
     private val createCustomerOrderUseCase: CreateCustomerOrderUseCase,
+    private val locationService: FacilityLocationService,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -41,6 +44,7 @@ class CreateCustomerOrderViewModel @Inject constructor(
             it.copy(
                 medicine = medicine,
                 pharmacy = pharmacy,
+                quantityInput = "1",
                 fulfillmentType = if (pharmacy.supportsDelivery) {
                     FulfillmentType.DELIVERY
                 } else {
@@ -101,17 +105,72 @@ class CreateCustomerOrderViewModel @Inject constructor(
             it.copy(
                 fulfillmentType = value,
                 deliveryAddressErrorMessage = null,
+                deliveryLocationErrorMessage = null,
                 deliveryPhoneErrorMessage = null,
                 submitErrorMessage = null,
             )
         }
     }
 
-    fun onDeliveryAddressChange(value: String) {
+    fun detectDeliveryLocation() {
+        if (_uiState.value.isDetectingLocation) return
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isDetectingLocation = true,
+                    deliveryAddressErrorMessage = null,
+                    deliveryLocationErrorMessage = null,
+                    submitErrorMessage = null,
+                )
+            }
+            locationService.getFreshFacilityLocation().fold(
+                onSuccess = { location ->
+                    _uiState.update {
+                        it.copy(
+                            deliveryAddress = location.areaName,
+                            deliveryLatitude = location.latitude,
+                            deliveryLongitude = location.longitude,
+                            isDetectingLocation = false,
+                            deliveryAddressErrorMessage = null,
+                            deliveryLocationErrorMessage = null,
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isDetectingLocation = false,
+                            deliveryLocationErrorMessage = mapLocationErrorToMessage(error),
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    fun onDeliveryLocationPermissionDenied(permanentlyDenied: Boolean) {
+        _uiState.update {
+            it.copy(
+                deliveryLocationErrorMessage = context.getString(
+                    if (permanentlyDenied) {
+                        R.string.customer_order_location_permission_permanently_denied
+                    } else {
+                        R.string.customer_order_location_permission_denied
+                    },
+                ),
+                submitErrorMessage = null,
+            )
+        }
+    }
+
+    fun onDeliveryAddressDetected(value: String, latitude: Double, longitude: Double) {
         _uiState.update {
             it.copy(
                 deliveryAddress = value,
+                deliveryLatitude = latitude,
+                deliveryLongitude = longitude,
                 deliveryAddressErrorMessage = null,
+                deliveryLocationErrorMessage = null,
                 submitErrorMessage = null,
             )
         }
@@ -136,6 +195,15 @@ class CreateCustomerOrderViewModel @Inject constructor(
         }
     }
 
+    fun onImageSelected(uri: android.net.Uri?) {
+        _uiState.update {
+            it.copy(
+                prescriptionUri = uri,
+                submitErrorMessage = null,
+            )
+        }
+    }
+
     fun onSubmitClick() {
         val state = _uiState.value
         val validation = validate(state)
@@ -144,6 +212,7 @@ class CreateCustomerOrderViewModel @Inject constructor(
                 it.copy(
                     quantityErrorMessage = validation.quantityErrorMessage,
                     deliveryAddressErrorMessage = validation.deliveryAddressErrorMessage,
+                    deliveryLocationErrorMessage = validation.deliveryLocationErrorMessage,
                     deliveryPhoneErrorMessage = validation.deliveryPhoneErrorMessage,
                     submitErrorMessage = validation.generalErrorMessage,
                 )
@@ -165,16 +234,43 @@ class CreateCustomerOrderViewModel @Inject constructor(
                 return@launch
             }
 
+            // 1. Upload prescription if present
+            var finalPrescriptionUrl: String? = null
+            if (state.prescriptionUri != null) {
+                _uiState.update { it.copy(isUploadingImage = true) }
+                pharmaRepository.uploadPrescription(state.prescriptionUri).fold(
+                    onSuccess = { url ->
+                        finalPrescriptionUrl = url
+                        _uiState.update { it.copy(isUploadingImage = false) }
+                    },
+                    onFailure = { error ->
+                        _uiState.update {
+                            it.copy(
+                                isSubmitting = false,
+                                isUploadingImage = false,
+                                submitErrorMessage = context.getString(R.string.customer_order_prescription_upload_failed),
+                            )
+                        }
+                        return@launch
+                    }
+                )
+            }
+
+            val requiresLocation = state.requiresDeliveryLocation()
             val normalizedPhone = if (state.fulfillmentType == FulfillmentType.DELIVERY) {
                 SyrianPhone.normalizeToE164Digits(state.deliveryPhone.trim())
             } else {
                 null
             }
 
+            // Ensure quantity is valid before calling UseCase
+            val quantity = state.quantityInput.toIntOrNull() ?: 1
+            val safeQuantity = if (quantity > 0) quantity else 1
+
             createCustomerOrderUseCase(
                 medicineId = state.medicine.id,
                 medicineName = state.medicine.name,
-                quantity = state.quantityInput.toInt(),
+                quantity = safeQuantity,
                 unit = state.medicine.strength.ifBlank {
                     state.medicine.brand.ifBlank { state.medicine.name }
                 },
@@ -182,10 +278,13 @@ class CreateCustomerOrderViewModel @Inject constructor(
                 urgency = state.urgency,
                 requestScope = state.requestScope,
                 fulfillmentType = state.fulfillmentType,
-                deliveryAddress = state.deliveryAddress.trim().takeIf { state.fulfillmentType == FulfillmentType.DELIVERY },
+                deliveryAddress = state.deliveryAddress.trim().takeIf { requiresLocation },
+                deliveryLatitude = state.deliveryLatitude.takeIf { requiresLocation },
+                deliveryLongitude = state.deliveryLongitude.takeIf { requiresLocation },
                 deliveryPhone = normalizedPhone,
                 notes = state.notes.trim().takeIf { it.isNotBlank() },
                 accountType = snapshot.accountType,
+                prescriptionUrl = finalPrescriptionUrl,
             ).fold(
                 onSuccess = { order ->
                     _uiState.update {
@@ -225,12 +324,19 @@ class CreateCustomerOrderViewModel @Inject constructor(
                 quantityErrorMessage = context.getString(R.string.customer_order_quantity_error),
             )
         }
-        if (state.fulfillmentType == FulfillmentType.DELIVERY) {
+        if (state.requiresDeliveryLocation()) {
             if (state.deliveryAddress.isBlank()) {
                 return CreateCustomerOrderValidation(
                     deliveryAddressErrorMessage = context.getString(R.string.customer_order_address_required),
                 )
             }
+            if (state.deliveryLatitude == null || state.deliveryLongitude == null) {
+                return CreateCustomerOrderValidation(
+                    deliveryLocationErrorMessage = context.getString(R.string.customer_order_location_required),
+                )
+            }
+        }
+        if (state.fulfillmentType == FulfillmentType.DELIVERY) {
             if (state.deliveryPhone.isBlank()) {
                 return CreateCustomerOrderValidation(
                     deliveryPhoneErrorMessage = context.getString(R.string.customer_order_phone_required),
@@ -252,6 +358,10 @@ class CreateCustomerOrderViewModel @Inject constructor(
                 context.getString(R.string.customer_order_quantity_error)
             message.contains("address", ignoreCase = true) ->
                 context.getString(R.string.customer_order_address_required)
+            message.contains("latitude", ignoreCase = true) ||
+                message.contains("longitude", ignoreCase = true) ||
+                message.contains("location", ignoreCase = true) ->
+                context.getString(R.string.customer_order_location_required)
             message.contains("phone", ignoreCase = true) ->
                 context.getString(R.string.customer_order_phone_required)
             message.contains("permission", ignoreCase = true) ||
@@ -264,7 +374,23 @@ class CreateCustomerOrderViewModel @Inject constructor(
             else -> context.getString(R.string.customer_order_submit_failed)
         }
     }
+
+    private fun mapLocationErrorToMessage(error: Throwable): String {
+        val message = error.message.orEmpty()
+        return when {
+            message.contains("LOCATION_PERMISSION_DENIED", ignoreCase = true) ->
+                context.getString(R.string.customer_order_location_permission_denied)
+            message.contains("LOCATION_DISABLED", ignoreCase = true) ->
+                context.getString(R.string.customer_order_location_disabled)
+            message.contains("LOCATION_UNAVAILABLE", ignoreCase = true) ->
+                context.getString(R.string.customer_order_location_unavailable)
+            else -> context.getString(R.string.customer_order_location_unavailable)
+        }
+    }
 }
+
+private fun CreateCustomerOrderUiState.requiresDeliveryLocation(): Boolean =
+    fulfillmentType == FulfillmentType.DELIVERY || requestScope == CustomerRequestScope.ALL_PHARMACIES
 
 data class CreateCustomerOrderUiState(
     val medicine: MedicineSummaryUi = MedicineSummaryUi(),
@@ -274,12 +400,18 @@ data class CreateCustomerOrderUiState(
     val urgency: CustomerRequestUrgency = CustomerRequestUrgency.URGENT,
     val requestScope: CustomerRequestScope = CustomerRequestScope.SPECIFIC_PHARMACY,
     val deliveryAddress: String = "",
+    val deliveryLatitude: Double? = null,
+    val deliveryLongitude: Double? = null,
     val deliveryPhone: String = "",
     val notes: String = "",
+    val prescriptionUri: android.net.Uri? = null,
     val isSubmitting: Boolean = false,
+    val isUploadingImage: Boolean = false,
+    val isDetectingLocation: Boolean = false,
     val submitErrorMessage: String? = null,
     val quantityErrorMessage: String? = null,
     val deliveryAddressErrorMessage: String? = null,
+    val deliveryLocationErrorMessage: String? = null,
     val deliveryPhoneErrorMessage: String? = null,
     val createdOrderId: String? = null,
 )
@@ -287,6 +419,7 @@ data class CreateCustomerOrderUiState(
 private data class CreateCustomerOrderValidation(
     val quantityErrorMessage: String? = null,
     val deliveryAddressErrorMessage: String? = null,
+    val deliveryLocationErrorMessage: String? = null,
     val deliveryPhoneErrorMessage: String? = null,
     val generalErrorMessage: String? = null,
 )

@@ -12,6 +12,7 @@ data class CreateRequestUiState(
     val selectedWarehouseName: String = "",
     val isSuccess: Boolean = false,
     val createdRequestId: String = "",
+    val isUrgent: Boolean = false,
     val isLoading: Boolean = false,
     val isLoadingMedicines: Boolean = false,
     val medicineLoadError: String? = null,

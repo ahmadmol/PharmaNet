@@ -56,6 +56,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.PharmaWarning
+import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +78,8 @@ import java.time.LocalDate
 @Composable
 fun AdminAuditLogScreen(
     onOpenLogDetail: (String) -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onShowAdminMenu: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: AdminAuditLogViewModel = hiltViewModel(),
 ) {
@@ -95,6 +99,8 @@ fun AdminAuditLogScreen(
     AdminAuditLogContent(
         state = state,
         onAction = viewModel::onAction,
+        onNavigateToProfile = onNavigateToProfile,
+        onShowAdminMenu = onShowAdminMenu,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -105,6 +111,8 @@ fun AdminAuditLogScreen(
 private fun AdminAuditLogContent(
     state: AdminAuditLogUiState,
     onAction: (AdminAuditLogAction) -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onShowAdminMenu: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -126,7 +134,7 @@ private fun AdminAuditLogContent(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { /* Menu action */ }) {
+                        IconButton(onClick = onShowAdminMenu) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
                                 contentDescription = "القائمة",
@@ -144,12 +152,17 @@ private fun AdminAuditLogContent(
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     shape = CircleShape,
                                 )
-                                .background(MaterialTheme.colorScheme.primary),
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(),
+                                    onClick = onNavigateToProfile,
+                                ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Person,
-                                contentDescription = null,
+                                contentDescription = "الملف الشخصي",
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(24.dp),
                             )
@@ -157,7 +170,7 @@ private fun AdminAuditLogContent(
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -253,7 +266,6 @@ private fun SuccessContent(
             DateFilterCard(
                 startDate = state.startDate,
                 endDate = state.endDate,
-                isExporting = state.isExporting,
                 onStartDateSelected = { date ->
                     onAction(AdminAuditLogAction.OnStartDateSelected(date))
                 },
@@ -261,7 +273,6 @@ private fun SuccessContent(
                     onAction(AdminAuditLogAction.OnEndDateSelected(date))
                 },
                 onFilterClick = { onAction(AdminAuditLogAction.OnFilterClicked) },
-                onExportClick = { onAction(AdminAuditLogAction.OnExportClicked) },
             )
         }
 
@@ -294,11 +305,9 @@ private fun SuccessContent(
 private fun DateFilterCard(
     startDate: LocalDate?,
     endDate: LocalDate?,
-    isExporting: Boolean,
     onStartDateSelected: (LocalDate) -> Unit,
     onEndDateSelected: (LocalDate) -> Unit,
     onFilterClick: () -> Unit,
-    onExportClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
@@ -344,35 +353,23 @@ private fun DateFilterCard(
                     modifier = Modifier.weight(1f),
                 )
 
-                // Export Button
+                // Export Button — disabled until backend export RPC is available
                 Surface(
                     modifier = Modifier
                         .size(56.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(),
-                            onClick = onExportClick,
-                        ),
+                        .clip(MaterialTheme.shapes.medium),
                     shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 ) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (isExporting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.FileDownload,
-                                contentDescription = "تصدير",
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.FileDownload,
+                            contentDescription = "تصدير (غير متاح)",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                        )
                     }
                 }
             }
@@ -480,10 +477,10 @@ private fun AuditLogCard(
     val d = MaterialTheme.dimens
 
     val borderColor = when (log.borderColor) {
-        AuditLogBorderColor.GREEN -> Color(0xFF10B981)
+        AuditLogBorderColor.GREEN -> StatusActive
         AuditLogBorderColor.BLUE -> MaterialTheme.colorScheme.primary
         AuditLogBorderColor.RED -> MaterialTheme.colorScheme.error
-        AuditLogBorderColor.ORANGE -> Color(0xFFF59E0B)
+        AuditLogBorderColor.ORANGE -> PharmaWarning
     }
 
     Card(
@@ -650,6 +647,8 @@ private fun PreviewAdminAuditLogScreen() {
                 ),
             ),
             onAction = {},
+            onNavigateToProfile = {},
+            onShowAdminMenu = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

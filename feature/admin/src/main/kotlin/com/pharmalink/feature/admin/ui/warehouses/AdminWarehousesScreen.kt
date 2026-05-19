@@ -57,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,6 +79,8 @@ fun AdminWarehousesScreen(
     onNavigateToCreateWarehouse: () -> Unit,
     onNavigateToWarehouseDetail: (String) -> Unit,
     onNavigateToInventory: (String) -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onShowAdminMenu: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AdminWarehousesViewModel = hiltViewModel(),
 ) {
@@ -89,6 +92,7 @@ fun AdminWarehousesScreen(
             is AdminWarehousesEffect.ShowMessage -> {
                 snackbarHostState.showSnackbar(effect.message)
             }
+            AdminWarehousesEffect.ShowAdminMenu -> onShowAdminMenu()
             is AdminWarehousesEffect.NavigateToWarehouseDetail -> {
                 onNavigateToWarehouseDetail(effect.warehouseId)
             }
@@ -102,6 +106,7 @@ fun AdminWarehousesScreen(
         state = state,
         onAction = viewModel::onAction,
         onNavigateToCreateWarehouse = onNavigateToCreateWarehouse,
+        onNavigateToProfile = onNavigateToProfile,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -113,6 +118,7 @@ private fun AdminWarehousesContent(
     state: AdminWarehousesUiState,
     onAction: (AdminWarehousesAction) -> Unit,
     onNavigateToCreateWarehouse: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -152,12 +158,17 @@ private fun AdminWarehousesContent(
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     shape = CircleShape,
                                 )
-                                .background(MaterialTheme.colorScheme.primary),
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(),
+                                    onClick = onNavigateToProfile,
+                                ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Person,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.admin_profile_cd),
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(24.dp),
                             )
@@ -165,7 +176,7 @@ private fun AdminWarehousesContent(
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -253,7 +264,7 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
     ) {
         PharmaStateView(
             title = stringResource(R.string.admin_warehouses_empty),
-            subtitle = stringResource(R.string.audit_log_no_logs),
+            subtitle = stringResource(R.string.admin_warehouses_empty_subtitle),
             tone = PharmaStateTone.Neutral,
         )
     }
@@ -366,11 +377,8 @@ private fun SuccessContent(
                     modifier = Modifier.weight(1f),
                 )
                 
-                StatCard(
-                    title = stringResource(R.string.admin_warehouses_shipments_label),
-                    value = stringResource(R.string.admin_active_shipments, state.activeShipments),
-                    modifier = Modifier.weight(1f),
-                )
+                // Note: activeShipments stat card removed - endpoint not available yet
+                // Showing only totalCapacityPercent which comes from real warehouse data
             }
         }
 
@@ -494,7 +502,7 @@ private fun WarehouseCard(
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = if (warehouse.isActive) {
-                        Color(0xFF10B981).copy(alpha = 0.15f)
+                        StatusActive.copy(alpha = 0.15f)
                     } else {
                         MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
                     },
@@ -504,7 +512,7 @@ private fun WarehouseCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = if (warehouse.isActive) {
-                            Color(0xFF10B981)
+                            StatusActive
                         } else {
                             MaterialTheme.colorScheme.error
                         },
@@ -593,10 +601,11 @@ private fun PreviewAdminWarehousesScreen() {
                     ),
                 ),
                 totalCapacityPercent = 85,
-                activeShipments = 12,
+                // activeShipments removed - not available
             ),
             onAction = {},
             onNavigateToCreateWarehouse = {},
+            onNavigateToProfile = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

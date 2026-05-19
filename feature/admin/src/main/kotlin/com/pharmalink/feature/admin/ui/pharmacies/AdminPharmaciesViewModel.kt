@@ -84,7 +84,7 @@ class AdminPharmaciesViewModel @Inject constructor(
             AdminPharmaciesAction.OnRefreshTriggered -> refreshPharmacies()
             AdminPharmaciesAction.OnMenuClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(AdminPharmaciesEffect.ShowMessage("القائمة: قيد التطوير"))
+                    _effect.emit(AdminPharmaciesEffect.ShowAdminMenu)
                 }
             }
             is AdminPharmaciesAction.OnSearchQueryChanged -> updateSearchQuery(action.query)
@@ -189,8 +189,10 @@ class AdminPharmaciesViewModel @Inject constructor(
             name = name,
             location = location ?: "",
             isActive = isActive,
-            employeeCount = kotlin.random.Random.nextInt(5, 16), // Simulated
             createdAt = createdAt ?: "",
         )
     }
 }
+
+
+

@@ -411,7 +411,7 @@ private fun EmptyFilteredPharmacies(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ServiceTag(
+internal fun ServiceTag(
     label: String,
     isVisible: Boolean,
     modifier: Modifier = Modifier,

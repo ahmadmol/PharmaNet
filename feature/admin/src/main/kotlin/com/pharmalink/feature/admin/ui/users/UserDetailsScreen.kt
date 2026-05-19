@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +69,7 @@ fun UserDetailsScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: UserDetailsViewModel = hiltViewModel(),
+    editUserViewModel: EditUserViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -107,6 +109,7 @@ fun UserDetailsScreen(
                 viewModel.onAction(UserDetailsAction.OnRetryClicked)
             },
             snackbarHostState = snackbarHostState,
+            viewModel = editUserViewModel,
         )
     }
 }
@@ -147,7 +150,7 @@ private fun UserDetailsContent(
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -242,25 +245,8 @@ private fun SuccessContent(
             HeaderCard(user = user)
         }
 
-        // Statistics Cards
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-            ) {
-                StatCard(
-                    title = stringResource(R.string.user_details_total_orders),
-                    value = user.totalOrders.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-                
-                StatCard(
-                    title = stringResource(R.string.user_details_total_requests),
-                    value = user.totalRequests.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
+        // Note: Secondary statistics (orders, requests) hidden
+        // because endpoints are not available yet. Showing only primary user data.
 
         // Account Information
         item {
@@ -328,7 +314,7 @@ private fun HeaderCard(
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = if (user.isActive) {
-                        Color(0xFF10B981).copy(alpha = 0.15f)
+                        StatusActive.copy(alpha = 0.15f)
                     } else {
                         MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
                     },
@@ -338,7 +324,7 @@ private fun HeaderCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = if (user.isActive) {
-                            Color(0xFF10B981)
+                            StatusActive
                         } else {
                             MaterialTheme.colorScheme.error
                         },
@@ -437,11 +423,7 @@ private fun InfoCard(
                 value = user.createdAt,
             )
 
-            InfoRow(
-                icon = Icons.Outlined.Person,
-                label = stringResource(R.string.user_details_last_login),
-                value = user.lastLoginDate,
-            )
+            // Note: lastLoginDate removed - endpoint not available yet
         }
     }
 }
@@ -517,12 +499,14 @@ private fun ActionsCard(
             PharmaButton(
                 text = stringResource(R.string.user_details_reset_password),
                 onClick = { onAction(UserDetailsAction.OnResetPasswordClicked) },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             PharmaButton(
                 text = stringResource(if (isActive) R.string.user_details_deactivate else R.string.user_details_activate),
                 onClick = { onAction(UserDetailsAction.OnDeactivateClicked) },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -554,9 +538,7 @@ private fun PreviewUserDetailsScreen() {
                     facilityName = "صيدلية النهدي - الرياض",
                     isActive = true,
                     createdAt = "2024-01-15",
-                    totalOrders = 42,
-                    totalRequests = 18,
-                    lastLoginDate = "منذ 2 أيام",
+                    // Secondary stats removed
                 ),
             ),
             onAction = {},

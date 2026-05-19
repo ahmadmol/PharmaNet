@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.LocalPharmacy
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.designsystem.R as DsR
 import com.pharmalink.feature.auth.R
 import com.pharmalink.feature.auth.components.AuthScaffold
 
@@ -89,7 +89,7 @@ fun SplashScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.LocalPharmacy,
+                    painter = painterResource(id = DsR.drawable.sydaliti_logo_full),
                     contentDescription = stringResource(R.string.auth_cd_logo),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(60.dp),
@@ -131,3 +131,4 @@ fun SplashScreen(
         }
     }
 }
+

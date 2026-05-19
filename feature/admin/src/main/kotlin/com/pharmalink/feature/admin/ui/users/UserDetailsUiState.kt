@@ -21,9 +21,8 @@ data class UserDetailModel(
     val facilityName: String = "",
     val isActive: Boolean = false,
     val createdAt: String = "",
-    val totalOrders: Int = 0,
-    val totalRequests: Int = 0,
-    val lastLoginDate: String = "",
+    // Note: Secondary stats removed - endpoints not available yet
+    // totalOrders, totalRequests, lastLoginDate
 )
 
 sealed interface UserDetailsAction {

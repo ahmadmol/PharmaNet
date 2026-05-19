@@ -10,8 +10,8 @@ data class AdminWarehousesUiState(
     val warehouses: List<WarehouseItemModel> = emptyList(),
     val searchQuery: String = "",
     val sortBy: WarehouseSortBy = WarehouseSortBy.NAME,
-    val totalCapacityPercent: Int = 85,
-    val activeShipments: Int = 12,
+    val totalCapacityPercent: Int = 0,
+    // Note: activeShipments removed - endpoint not available yet
 )
 
 enum class WarehouseSortBy {
@@ -44,6 +44,7 @@ sealed interface AdminWarehousesAction {
 
 sealed interface AdminWarehousesEffect {
     data class ShowMessage(val message: String) : AdminWarehousesEffect
+    data object ShowAdminMenu : AdminWarehousesEffect
     data class NavigateToWarehouseDetail(val warehouseId: String) : AdminWarehousesEffect
     data class NavigateToInventoryManagement(val warehouseId: String) : AdminWarehousesEffect
 }

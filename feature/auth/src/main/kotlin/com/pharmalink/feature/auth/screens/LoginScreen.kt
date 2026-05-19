@@ -33,7 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.designsystem.R as DsR
 import com.pharmalink.feature.auth.R
 import com.pharmalink.domain.model.LoginUiState
 import com.pharmalink.feature.auth.components.AuthSecondaryTextAction
@@ -84,7 +86,7 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.surface,
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.HealthAndSafety,
+                        painter = painterResource(id = DsR.drawable.sydaliti_logo_full),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -139,14 +141,14 @@ fun LoginScreen(
                         fullPhoneNumber = uiState.phoneNumber,
                         onFullPhoneNumberChange = onPhoneNumberChange,
                         isError = phoneEmpty,
-                        errorMessage = if (phoneEmpty) "رقم الهاتف مطلوب" else null,
+                        errorMessage = if (phoneEmpty) stringResource(R.string.error_phone_required) else null,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     StitchPasswordRow(
                         password = uiState.password,
                         onPasswordChange = onPasswordChange,
                         isError = passEmpty,
-                        errorMessage = if (passEmpty) "كلمة المرور مطلوبة" else null,
+                        errorMessage = if (passEmpty) stringResource(R.string.error_password_required) else null,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Row(
@@ -244,7 +246,7 @@ fun LoginScreen(
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
                         Text(
-                            text = "دمشق • حلب، سوريا",
+                            text = stringResource(R.string.auth_city_line),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
@@ -256,12 +258,12 @@ fun LoginScreen(
                 ) {
                     TrustMiniTile(
                         icon = Icons.Outlined.LocalShipping,
-                        text = "توصيل طبي فائق السرعة",
+                        text = stringResource(R.string.auth_trust_fast_delivery),
                         modifier = Modifier.weight(1f),
                     )
                     TrustMiniTile(
                         icon = Icons.Outlined.VerifiedUser,
-                        text = "منصة طبية معتمدة",
+                        text = stringResource(R.string.auth_trust_certified_platform),
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -312,3 +314,4 @@ private fun TrustMiniTile(
         }
     }
 }
+

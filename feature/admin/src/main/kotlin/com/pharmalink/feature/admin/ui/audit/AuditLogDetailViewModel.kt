@@ -7,6 +7,9 @@ import com.pharmalink.core.navigation.NavArgs
 import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.model.AuditLog
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,35 +22,61 @@ class AuditLogDetailViewModel @Inject constructor(
     private val pharmaRepository: PharmaRepository,
 ) : ViewModel() {
 
-    private val logId: String = checkNotNull(savedStateHandle[NavArgs.LOG_ID])
+    private val logId: String = savedStateHandle[NavArgs.LOG_ID] ?: ""
 
     private val _uiState = MutableStateFlow<AuditLogDetailUiState>(AuditLogDetailUiState.Loading)
     val uiState: StateFlow<AuditLogDetailUiState> = _uiState.asStateFlow()
 
     init {
-        loadLogDetail()
+        if (logId.isBlank()) {
+            _uiState.value = AuditLogDetailUiState.Error("معرف السجل غير صالح")
+        } else {
+            loadLogDetail()
+        }
     }
 
-    fun retry() {
-        loadLogDetail()
+    fun onAction(action: AuditLogDetailAction) {
+        when (action) {
+            AuditLogDetailAction.OnRetryClicked -> loadLogDetail()
+        }
     }
 
     private fun loadLogDetail() {
+        if (logId.isBlank()) {
+            _uiState.value = AuditLogDetailUiState.Error("معرف السجل غير صالح")
+            return
+        }
         viewModelScope.launch {
             _uiState.value = AuditLogDetailUiState.Loading
             pharmaRepository.getAuditLogById(logId)
                 .onSuccess { log ->
-                    _uiState.value = AuditLogDetailUiState.Success(log)
+                    _uiState.value = AuditLogDetailUiState.Success(log.toUiModel())
                 }
                 .onFailure { error ->
                     _uiState.value = AuditLogDetailUiState.Error(error.message ?: "خطأ غير متوقع")
                 }
         }
     }
-}
 
-sealed interface AuditLogDetailUiState {
-    data object Loading : AuditLogDetailUiState
-    data class Success(val log: AuditLog) : AuditLogDetailUiState
-    data class Error(val message: String) : AuditLogDetailUiState
+    private fun AuditLog.toUiModel(): AuditLogDetailModel {
+        val formatter = DateTimeFormatter.ofPattern(
+            "d MMMM yyyy - hh:mm a",
+            Locale.forLanguageTag("ar"),
+        )
+        val formattedDateTime = createdAt.atZone(ZoneId.systemDefault()).format(formatter)
+        return AuditLogDetailModel(
+            actionLabel = actionLabel,
+            isSuccess = isSuccess,
+            adminName = adminName,
+            formattedDateTime = formattedDateTime,
+            targetEntityName = targetEntityName,
+            targetWarehouseName = targetWarehouseName,
+            targetSku = targetSku,
+            oldValue = oldValue,
+            newValue = newValue,
+            ipAddress = ipAddress,
+            userAgent = userAgent,
+            transactionId = transactionId,
+        )
+    }
 }

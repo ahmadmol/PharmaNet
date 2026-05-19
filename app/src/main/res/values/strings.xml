@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PharmaLink</string>
+    <string name="app_name">صيدليتي</string>
 
     <!-- Bottom navigation & shell -->
     <string name="admin_dashboard_tab">لوحة التحكم</string>
+    <string name="pharmacy_dashboard_tab">الرئيسية</string>
+    <string name="pharmacy_radar_tab">الرادار</string>
     <string name="placeholder_under_development">قيد التطوير</string>
     <string name="home_screen">الرئيسية</string>
     <string name="resources">الموارد</string>
@@ -204,12 +206,12 @@
     <string name="about_tile_support">الدعم</string>
     <string name="about_tile_support_value">مباشر</string>
     <string name="about_features_section_title">خدماتنا المميزة</string>
-    <string name="about_features_section_subtitle">ترجمة مرجعية الواجهة إلى بطاقات وخطوات عملية داخل تصميم PharmaLink الحالي.</string>
+    <string name="about_features_section_subtitle">ترجمة مرجعية الواجهة إلى بطاقات وخطوات عملية داخل تصميم صيدليتي الحالي.</string>
     <string name="about_values_section_title">قيمنا الجوهرية</string>
     <string name="about_values_section_subtitle">المهمة ليست مجرد شاشة جميلة، بل رحلة تشغيلية مستقرة وواضحة وقابلة للتوسع.</string>
     <string name="about_hero_version_badge">VERSION %1$s</string>
     <string name="about_hero_title">الرعاية الصحية باللمسة الرقمية</string>
-    <string name="about_hero_subtitle">PharmaLink يقدّم تجربة عربية أنيقة لإدارة الطلبات والمستودعات والامتثال والدعم من داخل تطبيق واحد.</string>
+    <string name="about_hero_subtitle">صيدليتي يقدّم تجربة عربية أنيقة لإدارة الطلبات والمستودعات والامتثال والدعم من داخل تطبيق واحد.</string>
     <string name="about_hero_caption">هوية واضحة • بطاقات راقية • معلومات قابلة للفهم فورًا</string>
     <string name="about_feature_one_title">تشغيل الصيدلية من شاشة واحدة</string>
     <string name="about_feature_one_description">نجمع الطلبات والمستودعات والملف الشخصي والدعم ضمن رحلة عربية واضحة وسريعة للفريق.</string>
@@ -234,5 +236,68 @@
     <string name="about_stat_two_title">رضا العملاء</string>
     <string name="about_stat_two_value">99%%</string>
     <string name="about_footer_note">نواصل بناء تجربة دوائية رقمية احترافية تخدم الصيدليات بكفاءة.</string>
-    <string name="about_footer_meta">PharmaLink • Version %1$s</string>
+    <string name="about_footer_meta">صيدليتي • Version %1$s</string>
+    <string name="search">بحث</string>
+    <string name="pharmacies">الصيدليات</string>
+    <string name="contact_us_title">تواصل معنا</string>
+    <string name="contact_us_subtitle">يسعدنا استقبال اقتراحاتك أو مشكلتك وسنرد بأقرب وقت.</string>
+    <string name="contact_us_subject">الموضوع</string>
+    <string name="contact_us_category_optional">التصنيف (اختياري)</string>
+    <string name="contact_us_message">الرسالة</string>
+    <string name="contact_us_send">إرسال</string>
+    <string name="contact_us_success">تم إرسال رسالتك بنجاح</string>
+    <string name="contact_us_note">لن نشارك معلوماتك مع أي طرف ثالث.</string>
+    <string name="language_title">اللغة</string>
+    <string name="language_arabic_only_message">التطبيق يدعم العربية حاليًا.</string>
+    <string name="language_arabic_only_hint">سيتم إضافة لغات أخرى لاحقًا.</string>
+    <string name="security_privacy_title">الأمان والخصوصية</string>
+    <string name="security_privacy_intro">نلتزم بحماية بياناتك وتوضيح كيفية استخدامها داخل التطبيق.</string>
+    <string name="security_privacy_item_data">البيانات: نجمع الحد الأدنى اللازم لتشغيل الخدمة.</string>
+    <string name="security_privacy_item_roles">الصلاحيات: يتم تحديد الوصول حسب نوع الحساب.</string>
+    <string name="security_privacy_item_location">الموقع: يُستخدم عند الحاجة لتحسين تجربة التسجيل.</string>
+    <string name="security_privacy_item_notifications">الإشعارات: لإبلاغك بتحديثات الطلبات والتنبيهات.</string>
+    <string name="security_privacy_item_photos">الصور: تُستخدم لرفع الوصفات عند إنشاء الطلبات.</string>
+    <string name="security_privacy_item_profile">الملف الشخصي: يمكنك تعديل معلوماتك أو حذفها وفق السياسات.</string>
+    <string name="resources_welcome_title">أهلاً بك في صيدليتي</string>
+    <string name="resources_welcome_subtitle">استعرض المستودعات القريبة وخيارات التوريد</string>
+    <string name="resources_welcome_stat_results">النتائج</string>
+    <string name="resources_welcome_stat_filter">الفلتر</string>
+    <string name="resources_welcome_stat_sort">الفرز</string>
+
+    <!-- Keywords for compliance status detection -->
+    <string name="compliance_keyword_follow_up">متابعة</string>
+    <string name="compliance_keyword_needs">بحاجة</string>
+
+    <!-- Help Center - Category Cards -->
+    <string name="help_category_user_guide_title">دليل المستخدم</string>
+    <string name="help_category_user_guide_subtitle">تعلّم كيفية استخدام جميع ميزات التطبيق بخطوات بسيطة.</string>
+    <string name="help_category_compliance_title">الامتثال</string>
+    <string name="help_category_compliance_subtitle">تعرف على متطلبات الامتثال التنظيمي والتشغيلي.</string>
+    <string name="help_category_account_settings_title">إعدادات الحساب</string>
+    <string name="help_category_account_settings_subtitle">تحديث بياناتك وإعدادات الأمان وخيارات التطبيق.</string>
+    <string name="help_category_quick_contact_title">التواصل السريع</string>
+    <string name="help_category_quick_contact_subtitle">احصل على دعم فني مباشر عند الحاجة بخطوات سريعة.</string>
+
+    <!-- Help Center - Section Headers -->
+    <string name="help_browse_topics_title">استعرض الموضوعات</string>
+    <string name="help_browse_topics_subtitle">تصفح مقالات متنوعة حول كيفية استخدام التطبيق والإجابات عن الأسئلة الشائعة.</string>
+
+    <!-- Help Center - Search -->
+    <string name="help_search_placeholder">ابحث في الأسئلة الشائعة والمقالات...</string>
+    <string name="help_search_helper_text">اكتب الكلمة المفتاحية ثم اضغط على أيقونة البحث أو انتظر قليلاً حتى تظهر النتائج.</string>
+    <string name="help_search_no_results_title">لا توجد نتائج بحث</string>
+    <string name="help_search_no_results_subtitle">جرب البحث بكلمات مختلفة أو تحقق من إملاء الكلمات التي تبحث عنها.</string>
+
+    <!-- Help Center - FAQ -->
+    <string name="help_faq_empty_title">لا توجد أسئلة شائعة</string>
+    <string name="help_faq_empty_subtitle">نأسف، لا توجد إجابات متاحة حول هذا الموضوع حالياً. جرب البحث باستخدام كلمات مختلفة أو تواصل مع فريق الدعم للحصول على مساعدة.</string>
+
+    <!-- Help Center - Support CTA -->
+    <string name="help_support_cta_title">ما زال لديك استفسار؟</string>
+    <string name="help_support_cta_body">فريقنا جاهز لمساعدتك في أي استفسار أو مشكلة تواجهها. يمكنك التواصل مباشرة لفريق الدعم أو زيارة مركز المساعدة للمزيد من المعلومات والإرشادات.</string>
+    <string name="help_support_cta_contact_button">تواصل معنا</string>
+    <string name="help_support_cta_help_center_button">مركز المساعدة</string>
+
+    <!-- Help Center - Badges -->
+    <string name="help_badge_tip">نصيحة</string>
 </resources>

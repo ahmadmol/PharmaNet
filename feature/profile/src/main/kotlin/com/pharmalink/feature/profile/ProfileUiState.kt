@@ -12,14 +12,16 @@ data class ProfileUiState(
     val pharmacyName: String = "",
     val pharmacyAddress: String = "",
     val profileImageUrl: String? = null,
-    val settingsOptions: List<SettingItem> = listOf(
-        SettingItem("الإشعارات", "تعديل إعدادات الإشعارات"),
-        SettingItem("اللغة", "العربية"),
-        SettingItem("حول التطبيق", "الإصدار، سياسة الخصوصية"),
-        SettingItem("الأمان والخصوصية", "تغيير كلمة المرور، المصادقة الثنائية"),
-        SettingItem("المساعدة والدعم", "الأسئلة الشائعة ومسارات الدعم المباشر"),
-        SettingItem("التواصل معنا", "الهاتف، البريد الإلكتروني، وواتساب"),
-    ),
+    val notificationsEnabled: Boolean = true,
+    val isUpdatingNotifications: Boolean = false,
+    val notificationsError: String? = null,
+    val warehouseLatitude: Double? = null,
+    val warehouseLongitude: Double? = null,
+    val isUpdatingWarehouseLocation: Boolean = false,
+    val warehouseLocationMessage: String? = null,
+    val warehouseLocationMessageIsError: Boolean = false,
+    val warehouseLocationSettingsAction: WarehouseLocationSettingsAction? = null,
+    val settingsOptions: List<SettingItem> = emptyList(),
 ) {
     companion object {
         fun fromSnapshot(snapshot: UserSnapshot?): ProfileUiState =
@@ -39,6 +41,11 @@ data class ProfileUiState(
                 },
             )
     }
+}
+
+enum class WarehouseLocationSettingsAction {
+    APP_SETTINGS,
+    LOCATION_SETTINGS,
 }
 
 data class SettingItem(

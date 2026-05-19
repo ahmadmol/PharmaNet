@@ -67,9 +67,9 @@ fun LanguageSettingsSheet(
                 Icon(Icons.Outlined.Public, contentDescription = null, tint = PharmaBlue500, modifier = Modifier.size(34.dp))
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("إعدادات اللغة", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, color = PharmaBlue500)
+                Text("اللغة المفضلة", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, color = PharmaBlue500)
                 Text(
-                    "اختر اللغة المفضلة لواجهة الصيدلية. الاختيار هنا معاينة آمنة إلى أن يتم ربط آلية تغيير اللغة العامة.",
+                    "اختر لغة الواجهة المناسبة لك. يمكنك تغيير اللغة في أي وقت من إعدادات الحساب.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -77,7 +77,7 @@ fun LanguageSettingsSheet(
             }
             LanguageOption(
                 title = "العربية",
-                subtitle = "اللغة الحالية لتجربة RTL",
+                subtitle = "واجهة عربية بالكامل واتجاه RTL",
                 icon = Icons.Outlined.Translate,
                 selected = selectedLanguage == "العربية",
                 onClick = { onLanguageSelected("العربية") },
@@ -93,10 +93,10 @@ fun LanguageSettingsSheet(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("تطبيق الإعدادات", fontWeight = FontWeight.Bold)
+                Text("حفظ التغييرات", fontWeight = FontWeight.Bold)
             }
             Text(
-                text = "إلغاء الأمر",
+                text = "ليس الآن",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier

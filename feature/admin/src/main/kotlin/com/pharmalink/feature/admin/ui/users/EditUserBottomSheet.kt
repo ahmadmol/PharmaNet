@@ -1,4 +1,4 @@
-package com.pharmalink.feature.admin.ui.users
+﻿package com.pharmalink.feature.admin.ui.users
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +28,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,10 +36,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.components.PharmaSwitch
@@ -47,6 +50,7 @@ import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
 import com.pharmalink.domain.model.AccountType
+import com.pharmalink.feature.admin.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,8 +62,8 @@ fun EditUserBottomSheet(
     isActive: Boolean,
     onDismiss: () -> Unit,
     snackbarHostState: SnackbarHostState,
+    viewModel: EditUserViewModel,
     modifier: Modifier = Modifier,
-    viewModel: EditUserViewModel = hiltViewModel(),
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -71,23 +75,23 @@ fun EditUserBottomSheet(
     CollectEffect(effect = viewModel.effect) { effect ->
         when (effect) {
             EditUserEffect.Dismiss -> onDismiss()
-            is EditUserEffect.ShowMessage -> {
-                snackbarHostState.showSnackbar(effect.message)
-            }
+            is EditUserEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp,
-    ) {
-        EditUserBottomSheetContent(
-            state = state,
-            onAction = viewModel::onAction,
-        )
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            modifier = modifier,
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp,
+        ) {
+            EditUserBottomSheetContent(
+                state = state,
+                onAction = viewModel::onAction,
+            )
+        }
     }
 }
 
@@ -101,13 +105,8 @@ private fun EditUserBottomSheetContent(
     val showFacilityField = state.accountType == AccountType.PHARMACY ||
         state.accountType == AccountType.WAREHOUSE
     val facilityLabel = when (state.accountType) {
-        AccountType.PHARMACY -> "معرف الصيدلية"
-        AccountType.WAREHOUSE -> "معرف المستودع"
-        else -> ""
-    }
-    val facilityPlaceholder = when (state.accountType) {
-        AccountType.PHARMACY,
-        AccountType.WAREHOUSE -> "550e8400-e29b-41d4-a716-446655440000"
+        AccountType.PHARMACY -> stringResource(R.string.edit_user_facility_id_label)
+        AccountType.WAREHOUSE -> stringResource(R.string.edit_user_facility_id_label_warehouse)
         else -> ""
     }
 
@@ -124,7 +123,7 @@ private fun EditUserBottomSheetContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "طھط¹ط¯ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…",
+                text = stringResource(R.string.edit_user_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -133,7 +132,7 @@ private fun EditUserBottomSheetContent(
             IconButton(onClick = { onAction(EditUserAction.OnDismiss) }) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "ط¥ط؛ظ„ط§ظ‚",
+                    contentDescription = stringResource(R.string.edit_user_close_cd),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -144,8 +143,8 @@ private fun EditUserBottomSheetContent(
         PharmaTextField(
             value = state.fullName,
             onValueChange = { onAction(EditUserAction.OnFullNameChanged(it)) },
-            label = "ط§ظ„ط§ط³ظ… ط§ظ„ظƒط§ظ…ظ„",
-            placeholder = "ط£ط¯ط®ظ„ ط§ظ„ط§ط³ظ… ط§ظ„ظƒط§ظ…ظ„",
+            label = stringResource(R.string.edit_user_full_name_label),
+            placeholder = stringResource(R.string.edit_user_full_name_placeholder),
             errorMessage = state.fullNameError,
             enabled = !state.isSaving,
         )
@@ -165,7 +164,7 @@ private fun EditUserBottomSheetContent(
                 value = state.facilityId,
                 onValueChange = { onAction(EditUserAction.OnFacilityIdChanged(it)) },
                 label = facilityLabel,
-                placeholder = facilityPlaceholder,
+                placeholder = "550e8400-e29b-41d4-a716-446655440000",
                 errorMessage = state.facilityIdError,
                 enabled = !state.isSaving,
             )
@@ -187,14 +186,14 @@ private fun EditUserBottomSheetContent(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "ط­ط§ظ„ط© ط§ظ„ط­ط³ط§ط¨",
+                        text = stringResource(R.string.edit_user_status_label),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(Modifier.height(d.spaceXS))
                     Text(
-                        text = "ط§ظ„ط³ظ…ط§ط­ ظ„ظ„ظ…ط³طھط®ط¯ظ… ط¨ط§ظ„ظˆطµظˆظ„ ط¥ظ„ظ‰ ط§ظ„ظ†ط¸ط§ظ…",
+                        text = stringResource(R.string.edit_user_status_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -213,7 +212,11 @@ private fun EditUserBottomSheetContent(
         Spacer(Modifier.height(d.spaceXL))
 
         PharmaButton(
-            text = if (state.isSaving) "ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸..." else "ط­ظپط¸ ط§ظ„طھط؛ظٹظٹط±ط§طھ",
+            text = if (state.isSaving) {
+                stringResource(R.string.edit_user_saving)
+            } else {
+                stringResource(R.string.edit_user_save_button)
+            },
             onClick = { onAction(EditUserAction.OnSaveClicked) },
             enabled = !state.isSaving,
             modifier = Modifier.fillMaxWidth(),
@@ -247,7 +250,7 @@ private fun AccountTypeDropdown(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "ظ†ظˆط¹ ط§ظ„ط­ط³ط§ط¨",
+            text = stringResource(R.string.edit_user_account_type_label),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = d.spaceXS),
@@ -276,12 +279,7 @@ private fun AccountTypeDropdown(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = when (selectedType) {
-                            AccountType.PHARMACY -> "ظ…ط¯ظٹط± طµظٹط¯ظ„ظٹط©"
-                            AccountType.WAREHOUSE -> "ظ…ط¯ظٹط± ظ…ط³طھظˆط¯ط¹"
-                            AccountType.ADMIN -> "ظ…ط³ط¤ظˆظ„ ظ†ط¸ط§ظ…"
-                            AccountType.PUBLIC_USER -> "ظ…ط³طھط®ط¯ظ… ط¹ط§ظ…"
-                        },
+                        text = accountTypeLabel(selectedType),
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (enabled) {
                             MaterialTheme.colorScheme.onSurface
@@ -298,7 +296,7 @@ private fun AccountTypeDropdown(
                 onDismissRequest = { expanded = false },
             ) {
                 DropdownMenuItem(
-                    text = { Text("ظ…ط¯ظٹط± طµظٹط¯ظ„ظٹط©") },
+                    text = { Text(stringResource(R.string.edit_user_account_type_pharmacy)) },
                     onClick = {
                         onTypeSelected(AccountType.PHARMACY)
                         expanded = false
@@ -306,7 +304,7 @@ private fun AccountTypeDropdown(
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                 )
                 DropdownMenuItem(
-                    text = { Text("ظ…ط¯ظٹط± ظ…ط³طھظˆط¯ط¹") },
+                    text = { Text(stringResource(R.string.edit_user_account_type_warehouse)) },
                     onClick = {
                         onTypeSelected(AccountType.WAREHOUSE)
                         expanded = false
@@ -314,7 +312,7 @@ private fun AccountTypeDropdown(
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                 )
                 DropdownMenuItem(
-                    text = { Text("ظ…ط³ط¤ظˆظ„ ظ†ط¸ط§ظ…") },
+                    text = { Text(stringResource(R.string.edit_user_account_type_admin)) },
                     onClick = {
                         onTypeSelected(AccountType.ADMIN)
                         expanded = false
@@ -322,7 +320,7 @@ private fun AccountTypeDropdown(
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                 )
                 DropdownMenuItem(
-                    text = { Text("ظ…ط³طھط®ط¯ظ… ط¹ط§ظ…") },
+                    text = { Text(stringResource(R.string.edit_user_account_type_public)) },
                     onClick = {
                         onTypeSelected(AccountType.PUBLIC_USER)
                         expanded = false
@@ -334,6 +332,16 @@ private fun AccountTypeDropdown(
     }
 }
 
+@Composable
+private fun accountTypeLabel(type: AccountType): String {
+    return when (type) {
+        AccountType.PHARMACY -> stringResource(R.string.edit_user_account_type_pharmacy)
+        AccountType.WAREHOUSE -> stringResource(R.string.edit_user_account_type_warehouse)
+        AccountType.ADMIN -> stringResource(R.string.edit_user_account_type_admin)
+        AccountType.PUBLIC_USER -> stringResource(R.string.edit_user_account_type_public)
+    }
+}
+
 @Preview(showBackground = true, locale = "ar")
 @Composable
 private fun PreviewEditUserBottomSheet() {
@@ -341,7 +349,7 @@ private fun PreviewEditUserBottomSheet() {
         EditUserBottomSheetContent(
             state = EditUserUiState(
                 userId = "user-123",
-                fullName = "ط£ط­ظ…ط¯ ظ…ط­ظ…ظˆط¯",
+                fullName = "أحمد محمود",
                 accountType = AccountType.PHARMACY,
                 facilityId = "550e8400-e29b-41d4-a716-446655440000",
                 isActive = true,

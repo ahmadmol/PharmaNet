@@ -52,12 +52,7 @@ import com.pharmalink.designsystem.components.PharmaSkeletonLine
 import com.pharmalink.designsystem.components.PharmaStateView
 import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
-import com.pharmalink.domain.model.AuditLog
 import com.pharmalink.feature.admin.R
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -86,7 +81,7 @@ fun AuditLogDetailScreen(
                 subtitle = state.message,
                 tone = com.pharmalink.designsystem.components.PharmaStateTone.Error,
                 actionLabel = stringResource(R.string.audit_log_error_retry),
-                onAction = { viewModel.retry() },
+                onAction = { viewModel.onAction(AuditLogDetailAction.OnRetryClicked) },
             )
         }
         is AuditLogDetailUiState.Success -> AuditLogDetailContent(
@@ -116,7 +111,7 @@ private fun AuditLogDetailLoading(modifier: Modifier = Modifier) {
 
 @Composable
 private fun AuditLogDetailContent(
-    auditLog: AuditLog,
+    auditLog: AuditLogDetailModel,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -204,7 +199,7 @@ private fun AuditLogDetailTopBar(
 }
 
 @Composable
-private fun MainInfoCard(auditLog: AuditLog, modifier: Modifier = Modifier) {
+private fun MainInfoCard(auditLog: AuditLogDetailModel, modifier: Modifier = Modifier) {
     val d = MaterialTheme.dimens
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -280,7 +275,7 @@ private fun MainInfoCard(auditLog: AuditLog, modifier: Modifier = Modifier) {
                 )
                 InfoTile(
                     label = stringResource(R.string.audit_log_datetime_label),
-                    value = formatAuditDateTime(auditLog.createdAt),
+                    value = auditLog.formattedDateTime,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -317,7 +312,7 @@ private fun InfoTile(
 }
 
 @Composable
-private fun TargetEntityCard(auditLog: AuditLog, modifier: Modifier = Modifier) {
+private fun TargetEntityCard(auditLog: AuditLogDetailModel, modifier: Modifier = Modifier) {
     val d = MaterialTheme.dimens
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -391,7 +386,7 @@ private fun TargetEntityCard(auditLog: AuditLog, modifier: Modifier = Modifier) 
 }
 
 @Composable
-private fun JsonDiffRow(auditLog: AuditLog, modifier: Modifier = Modifier) {
+private fun JsonDiffRow(auditLog: AuditLogDetailModel, modifier: Modifier = Modifier) {
     val d = MaterialTheme.dimens
     val highlight = remember(auditLog.oldValue, auditLog.newValue) {
         collectChangedPrimitiveContents(auditLog.oldValue, auditLog.newValue)
@@ -546,7 +541,7 @@ private fun buildHighlightedJsonAnnotatedString(
 }
 
 @Composable
-private fun TechnicalDetailsCard(auditLog: AuditLog, modifier: Modifier = Modifier) {
+private fun TechnicalDetailsCard(auditLog: AuditLogDetailModel, modifier: Modifier = Modifier) {
     val d = MaterialTheme.dimens
     val dash = stringResource(R.string.placeholder_em_dash)
     Card(
@@ -617,12 +612,6 @@ private fun TechnicalRow(
     }
 }
 
-private fun formatAuditDateTime(instant: Instant): String {
-    val zoned = instant.atZone(ZoneId.systemDefault())
-    val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy - hh:mm a", Locale.forLanguageTag("ar"))
-    return formatter.format(zoned)
-}
-
 private fun collectChangedPrimitiveContents(oldRaw: String, newRaw: String): Set<String> {
     val oldEl = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(oldRaw) }.getOrNull()
         ?: return emptySet()
@@ -663,13 +652,11 @@ private fun diffJsonLeaves(a: JsonElement, b: JsonElement, out: MutableSet<Strin
 private fun PreviewAuditLogDetailContent() {
     PharmaTheme {
         AuditLogDetailContent(
-            auditLog = AuditLog(
-                id = "550e8400-e29b-41d4-a716-446655440000",
-                action = "STOCK_UPDATE",
+            auditLog = AuditLogDetailModel(
                 actionLabel = "تعديل بيانات المخزون",
-                adminId = "admin-1",
+                isSuccess = true,
                 adminName = "د. أحمد خالد",
-                adminEmail = "ahmed@example.com",
+                formattedDateTime = "12 أكتوبر 2023 - 07:45 AM",
                 targetEntityName = "أوجمنتين 1 جم",
                 targetWarehouseName = "مستودع الرياض المركزي",
                 targetSku = "PH-99203",
@@ -678,8 +665,6 @@ private fun PreviewAuditLogDetailContent() {
                 ipAddress = "192.168.1.104",
                 userAgent = "Chrome v118 (Windows 11)",
                 transactionId = "TRX-7729-AX",
-                createdAt = Instant.parse("2023-10-12T07:45:00Z"),
-                isSuccess = true,
             ),
             onBack = {},
         )

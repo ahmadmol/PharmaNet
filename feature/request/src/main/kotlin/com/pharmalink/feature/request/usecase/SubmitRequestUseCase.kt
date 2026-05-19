@@ -21,7 +21,7 @@ class SubmitRequestUseCase @Inject constructor(
     suspend operator fun invoke(
         request: Request,
         accountType: AccountType,
-    ): Result<Unit> {
+    ): Result<Request> {
         // Rule 1: Only PHARMACY can submit
         if (accountType != AccountType.PHARMACY) {
             return Result.failure(
@@ -44,6 +44,6 @@ class SubmitRequestUseCase @Inject constructor(
         }
 
         // Rule 3: Submit via repository (repository handles ownership check)
-        return pharmaRepository.submitRequest(request.id)
+        return pharmaRepository.submitPharmacyRequest(request.id)
     }
 }

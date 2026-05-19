@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,6 +79,8 @@ import com.pharmalink.designsystem.utils.CollectEffect
 fun AdminPharmaciesScreen(
     onNavigateToCreatePharmacy: () -> Unit,
     onNavigateToPharmacyDetail: (String) -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onShowAdminMenu: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AdminPharmaciesViewModel = hiltViewModel(),
 ) {
@@ -89,14 +92,15 @@ fun AdminPharmaciesScreen(
             is AdminPharmaciesEffect.ShowMessage -> {
                 snackbarHostState.showSnackbar(effect.message)
             }
+            AdminPharmaciesEffect.ShowAdminMenu -> onShowAdminMenu()
             is AdminPharmaciesEffect.NavigateToPharmacyDetail -> {
                 onNavigateToPharmacyDetail(effect.pharmacyId)
             }
             is AdminPharmaciesEffect.NavigateToBranchManagement -> {
-                snackbarHostState.showSnackbar("إدارة الفرع: قيد التطوير")
+                // No backend RPC available — button is disabled in UI
             }
             AdminPharmaciesEffect.NavigateToCoverageMap -> {
-                snackbarHostState.showSnackbar("خريطة التغطية: قيد التطوير")
+                // No backend RPC available — card is disabled in UI
             }
         }
     }
@@ -105,6 +109,7 @@ fun AdminPharmaciesScreen(
         state = state,
         onAction = viewModel::onAction,
         onNavigateToCreatePharmacy = onNavigateToCreatePharmacy,
+        onNavigateToProfile = onNavigateToProfile,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -116,6 +121,7 @@ private fun AdminPharmaciesContent(
     state: AdminPharmaciesUiState,
     onAction: (AdminPharmaciesAction) -> Unit,
     onNavigateToCreatePharmacy: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -155,12 +161,17 @@ private fun AdminPharmaciesContent(
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     shape = CircleShape,
                                 )
-                                .background(MaterialTheme.colorScheme.primary),
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(),
+                                    onClick = onNavigateToProfile,
+                                ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Person,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.admin_profile_cd),
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(24.dp),
                             )
@@ -168,7 +179,7 @@ private fun AdminPharmaciesContent(
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -253,7 +264,7 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
     ) {
         PharmaStateView(
             title = stringResource(R.string.admin_pharmacies_empty),
-            subtitle = stringResource(R.string.audit_log_no_logs),
+            subtitle = stringResource(R.string.admin_pharmacies_empty_subtitle),
             tone = PharmaStateTone.Neutral,
         )
     }
@@ -447,13 +458,13 @@ private fun PharmacyCard(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(MaterialTheme.shapes.medium)
-                            .background(Color(0xFF10B981).copy(alpha = 0.15f)),
+                            .background(StatusActive.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocalPharmacy,
                             contentDescription = null,
-                            tint = Color(0xFF10B981),
+                            tint = StatusActive,
                             modifier = Modifier.size(24.dp),
                         )
                     }
@@ -478,7 +489,7 @@ private fun PharmacyCard(
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = if (pharmacy.isActive) {
-                        Color(0xFF10B981).copy(alpha = 0.15f)
+                        StatusActive.copy(alpha = 0.15f)
                     } else {
                         MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
                     },
@@ -488,7 +499,7 @@ private fun PharmacyCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = if (pharmacy.isActive) {
-                            Color(0xFF10B981)
+                            StatusActive
                         } else {
                             MaterialTheme.colorScheme.error
                         },
@@ -500,19 +511,13 @@ private fun PharmacyCard(
                 }
             }
             
-            // Employee Count
-            Text(
-                text = stringResource(R.string.admin_pharmacies_employee_count, pharmacy.employeeCount),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            
             HorizontalDivider()
             
             // Action Button
             PharmaButton(
                 text = stringResource(R.string.admin_pharmacies_manage_branch),
                 onClick = onManageBranchClick,
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -529,15 +534,10 @@ private fun CoverageMapCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(),
-                onClick = onClick,
-            ),
+            .height(200.dp),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
@@ -585,19 +585,18 @@ private fun PreviewAdminPharmaciesScreen() {
                         name = "صيدلية الشفاء المركزية",
                         location = "شارع الملك فهد، الرياض",
                         isActive = true,
-                        employeeCount = 12,
                     ),
                     PharmacyItemModel(
                         id = "2",
                         name = "صيدلية النهضة",
                         location = "حي السلامة، جدة",
                         isActive = false,
-                        employeeCount = 8,
                     ),
                 ),
             ),
             onAction = {},
             onNavigateToCreatePharmacy = {},
+            onNavigateToProfile = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

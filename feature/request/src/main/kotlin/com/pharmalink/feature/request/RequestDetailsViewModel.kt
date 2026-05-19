@@ -13,7 +13,6 @@ import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.RequestTransitions
-import com.pharmalink.domain.model.RequestUpdate
 import com.pharmalink.feature.request.usecase.DeleteRequestUseCase
 import com.pharmalink.feature.request.usecase.SubmitRequestUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +21,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 data class RequestDetailsUiState(
@@ -48,6 +48,21 @@ class RequestDetailsViewModel @Inject constructor(
 
     init {
         loadRequestDetails()
+        observeNotifications()
+    }
+    
+    private fun observeNotifications() {
+        viewModelScope.launch {
+            pharmaRepository.observeNotifications().collect { notifications ->
+                notifications.forEach { notification ->
+                    if (notification.type == com.pharmalink.domain.model.NotificationType.ORDER_UPDATE &&
+                        notification.destination == com.pharmalink.domain.model.NotificationDestination.REQUEST &&
+                        notification.destinationId == requestId) {
+                        refreshRequest()
+                    }
+                }
+            }
+        }
     }
     
     private fun loadRequestDetails() {
@@ -98,6 +113,46 @@ class RequestDetailsViewModel @Inject constructor(
         loadRequestDetails()
     }
 
+    fun acceptRequest(totalPriceCents: Long) {
+        val currentRequest = (_uiState.value.screenState as? ScreenState.Success)?.data ?: return
+        if (_uiState.value.isActionInProgress) return
+        val role = _uiState.value.accountType
+        if (role != AccountType.WAREHOUSE ||
+            !RequestTransitions.canTransition(currentRequest.status, RequestStatus.ACCEPTED, role)
+        ) {
+            _uiState.value = _uiState.value.copy(
+                actionErrorMessage = context.getString(R.string.error_permission),
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isActionInProgress = true,
+                actionErrorMessage = null,
+            )
+
+            pharmaRepository.warehouseAcceptB2bRequest(
+                requestId = currentRequest.id,
+                totalPriceCents = totalPriceCents,
+            ).fold(
+                onSuccess = { updatedRequest ->
+                    _uiState.value = _uiState.value.copy(
+                        screenState = ScreenState.Success(updatedRequest),
+                        isActionInProgress = false,
+                        actionErrorMessage = null,
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isActionInProgress = false,
+                        actionErrorMessage = mapErrorToUserMessage(error),
+                    )
+                },
+            )
+        }
+    }
+
     fun updateRequestStatus(targetStatus: RequestStatus) {
         val currentRequest = (_uiState.value.screenState as? ScreenState.Success)?.data ?: return
         if (_uiState.value.isActionInProgress) return
@@ -121,10 +176,19 @@ class RequestDetailsViewModel @Inject constructor(
                 actionErrorMessage = null,
             )
 
-            pharmaRepository.updateRequest(
-                requestId = currentRequest.id,
-                updates = RequestUpdate(status = targetStatus),
-            ).fold(
+            val result = when (targetStatus) {
+                RequestStatus.ACCEPTED -> Result.failure(
+                    IllegalStateException("Accepting a B2B request requires a total price"),
+                )
+                RequestStatus.REJECTED -> pharmaRepository.warehouseRejectB2bRequest(currentRequest.id)
+                RequestStatus.IN_PROGRESS -> pharmaRepository.warehouseStartB2bFulfillment(currentRequest.id)
+                RequestStatus.FULFILLED -> pharmaRepository.warehouseMarkB2bDelivered(currentRequest.id)
+                else -> Result.failure(
+                    IllegalStateException("Unsupported warehouse B2B transition target: $targetStatus"),
+                )
+            }
+
+            result.fold(
                 onSuccess = { updatedRequest ->
                     _uiState.value = _uiState.value.copy(
                         screenState = ScreenState.Success(updatedRequest),
@@ -157,29 +221,11 @@ class RequestDetailsViewModel @Inject constructor(
                 request = currentRequest,
                 accountType = currentAccountType,
             ).fold(
-                onSuccess = {
-                    pharmaRepository.getRequest(currentRequest.id).fold(
-                        onSuccess = { refreshedRequest ->
-                            _uiState.value = if (refreshedRequest != null) {
-                                _uiState.value.copy(
-                                    screenState = ScreenState.Success(refreshedRequest),
-                                    isActionInProgress = false,
-                                    actionErrorMessage = null,
-                                )
-                            } else {
-                                _uiState.value.copy(
-                                    screenState = ScreenState.Error(context.getString(R.string.request_error_not_found)),
-                                    isActionInProgress = false,
-                                    actionErrorMessage = null,
-                                )
-                            }
-                        },
-                        onFailure = { error ->
-                            _uiState.value = _uiState.value.copy(
-                                isActionInProgress = false,
-                                actionErrorMessage = mapErrorToUserMessage(error),
-                            )
-                        },
+                onSuccess = { updatedRequest ->
+                    _uiState.value = _uiState.value.copy(
+                        screenState = ScreenState.Success(updatedRequest),
+                        isActionInProgress = false,
+                        actionErrorMessage = null,
                     )
                 },
                 onFailure = { error ->

@@ -28,7 +28,10 @@ class PharmacyDetailsViewModel @Inject constructor(
     private val _state = MutableStateFlow(PharmacyDetailsUiState())
     val state: StateFlow<PharmacyDetailsUiState> = _state.asStateFlow()
 
-    private val _effect = MutableSharedFlow<PharmacyDetailsEffect>()
+    private val _effect = MutableSharedFlow<PharmacyDetailsEffect>(
+        replay = 0,
+        extraBufferCapacity = 1,
+    )
     val effect: SharedFlow<PharmacyDetailsEffect> = _effect.asSharedFlow()
 
     init {
@@ -95,6 +98,8 @@ class PharmacyDetailsViewModel @Inject constructor(
     }
 
     private fun Pharmacy.toDetailModel(): PharmacyDetailModel {
+        // Note: Secondary stats (totalEmployees, totalOrders, totalCustomers, averageRating)
+        // are not included because endpoints are not available yet
         return PharmacyDetailModel(
             id = id,
             name = name,
@@ -103,10 +108,6 @@ class PharmacyDetailsViewModel @Inject constructor(
             licenseNumber = licenseNumber ?: "",
             isActive = isActive,
             createdAt = createdAt,
-            totalEmployees = 0, // TODO: fetch real stats when employees endpoint is added
-            totalOrders = 0, // TODO: fetch real stats when orders/requests RPCs are added
-            totalCustomers = 0, // TODO: fetch real stats when customers endpoint is added
-            averageRating = 0f, // TODO: fetch real rating when reviews endpoint is added
         )
     }
 }

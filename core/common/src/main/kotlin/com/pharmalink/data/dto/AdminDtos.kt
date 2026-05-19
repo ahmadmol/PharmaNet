@@ -16,39 +16,35 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
-data class PharmacyDto(
+data class FacilityDto(
     val id: String,
     val name: String,
+    @SerialName("formatted_address") val formattedAddress: String? = null,
     val location: String? = null,
+    @SerialName("latitude") val latitude: Double? = null,
+    @SerialName("longitude") val longitude: Double? = null,
     @SerialName("contact_number") val contactNumber: String? = null,
     @SerialName("license_number") val licenseNumber: String? = null,
     @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("created_at") val createdAt: String
 ) {
-    fun toDomain() = Pharmacy(
+    private val resolvedAddress: String?
+        get() = formattedAddress ?: location
+
+    fun toPharmacy() = Pharmacy(
         id = id,
         name = name,
-        location = location,
+        location = resolvedAddress,
         contactNumber = contactNumber,
         licenseNumber = licenseNumber,
         isActive = isActive,
         createdAt = createdAt
     )
-}
 
-@Serializable
-data class WarehouseAdminDto(
-    val id: String,
-    val name: String,
-    val location: String? = null,
-    @SerialName("contact_number") val contactNumber: String? = null,
-    @SerialName("is_active") val isActive: Boolean = true,
-    @SerialName("created_at") val createdAt: String
-) {
-    fun toDomain() = com.pharmalink.domain.model.Warehouse(
+    fun toWarehouse() = com.pharmalink.domain.model.Warehouse(
         id = id,
         name = name,
-        city = location.orEmpty(),
+        city = resolvedAddress.orEmpty(),
         district = "",
         supportsColdChain = false,
         inStockPercent = 0,
@@ -64,7 +60,7 @@ data class WarehouseAdminDto(
 @Serializable
 data class AdminUserDto(
     val id: String,
-    val email: String,
+    val email: String? = null,
     @SerialName("account_type") val accountType: String,
     @SerialName("pharmacy_id") val pharmacyId: String? = null,
     @SerialName("warehouse_id") val warehouseId: String? = null,
@@ -77,7 +73,7 @@ data class AdminUserDto(
 ) {
     fun toDomain() = AdminUser(
         id = id,
-        email = email,
+        email = email.orEmpty(),
         accountType = AccountType.valueOf(accountType),
         pharmacyId = pharmacyId,
         warehouseId = warehouseId,
@@ -184,6 +180,7 @@ private fun String.toArabicActionLabel(): String = when (this) {
 @Serializable
 data class UpdateUserProfileRpcParams(
     @SerialName("p_target_user_id") val targetUserId: String,
+    @SerialName("p_full_name") val fullName: String? = null,
     @SerialName("p_account_type") val accountType: String,
     @SerialName("p_pharmacy_id") val pharmacyId: String? = null,
     @SerialName("p_warehouse_id") val warehouseId: String? = null,
@@ -203,6 +200,25 @@ data class CreateWarehouseRpcParams(
     @SerialName("p_name") val name: String,
     @SerialName("p_location") val location: String,
     @SerialName("p_contact_number") val contactNumber: String
+)
+
+@Serializable
+data class CreatePharmacyWithCoordinatesRpcParams(
+    @SerialName("p_name") val name: String,
+    @SerialName("p_location") val location: String,
+    @SerialName("p_contact_number") val contactNumber: String,
+    @SerialName("p_license_number") val licenseNumber: String,
+    @SerialName("p_latitude") val latitude: Double,
+    @SerialName("p_longitude") val longitude: Double,
+)
+
+@Serializable
+data class CreateWarehouseWithCoordinatesRpcParams(
+    @SerialName("p_name") val name: String,
+    @SerialName("p_location") val location: String,
+    @SerialName("p_contact_number") val contactNumber: String,
+    @SerialName("p_latitude") val latitude: Double,
+    @SerialName("p_longitude") val longitude: Double,
 )
 
 @Serializable

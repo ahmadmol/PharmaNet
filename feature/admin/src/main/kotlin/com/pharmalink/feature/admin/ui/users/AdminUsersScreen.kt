@@ -61,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -83,23 +84,21 @@ import com.pharmalink.domain.model.AccountType
 fun AdminUsersScreen(
     onNavigateToCreateUser: () -> Unit,
     onNavigateToUserDetail: (String) -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onShowAdminMenu: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AdminUsersViewModel = hiltViewModel(),
+    editUserViewModel: EditUserViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    var showEditSheet by remember { mutableStateOf(false) }
-    var editUserData by remember { mutableStateOf<AdminUsersEffect.ShowEditUserSheet?>(null) }
 
     CollectEffect(effect = viewModel.effect) { effect ->
         when (effect) {
             is AdminUsersEffect.ShowMessage -> {
                 snackbarHostState.showSnackbar(effect.message)
             }
-            is AdminUsersEffect.ShowEditUserSheet -> {
-                editUserData = effect
-                showEditSheet = true
-            }
+            AdminUsersEffect.ShowAdminMenu -> onShowAdminMenu()
             is AdminUsersEffect.ShowDeleteConfirmation -> {
                 snackbarHostState.showSnackbar("حذف المستخدم: قيد التطوير")
             }
@@ -111,23 +110,28 @@ fun AdminUsersScreen(
         onAction = viewModel::onAction,
         onNavigateToCreateUser = onNavigateToCreateUser,
         onNavigateToUserDetail = onNavigateToUserDetail,
+        onNavigateToProfile = onNavigateToProfile,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
 
-    if (showEditSheet && editUserData != null) {
+    if (state.isEditSheetVisible && state.editSheetUserId.isNotBlank()) {
+        val accountType = runCatching {
+            AccountType.valueOf(state.editSheetAccountType)
+        }.getOrElse { AccountType.PUBLIC_USER }
+
         EditUserBottomSheet(
-            userId = editUserData!!.userId,
-            fullName = editUserData!!.fullName ?: "",
-            accountType = editUserData!!.accountType,
-            facilityId = editUserData!!.facilityId.orEmpty(),
-            isActive = editUserData!!.isActive,
+            userId = state.editSheetUserId,
+            fullName = state.editSheetFullName,
+            accountType = accountType,
+            facilityId = state.editSheetFacilityId,
+            isActive = state.editSheetIsActive,
             onDismiss = {
-                showEditSheet = false
-                editUserData = null
+                viewModel.onAction(AdminUsersAction.OnDismissEditSheet)
                 viewModel.onAction(AdminUsersAction.OnRefreshTriggered)
             },
             snackbarHostState = snackbarHostState,
+            viewModel = editUserViewModel,
         )
     }
 }
@@ -139,6 +143,7 @@ private fun AdminUsersContent(
     onAction: (AdminUsersAction) -> Unit,
     onNavigateToCreateUser: () -> Unit,
     onNavigateToUserDetail: (String) -> Unit,
+    onNavigateToProfile: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -178,12 +183,17 @@ private fun AdminUsersContent(
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     shape = CircleShape,
                                 )
-                                .background(MaterialTheme.colorScheme.primary),
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(),
+                                    onClick = onNavigateToProfile,
+                                ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Person,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.admin_profile_cd),
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(24.dp),
                             )
@@ -191,24 +201,14 @@ private fun AdminUsersContent(
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToCreateUser,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.admin_add_user_cd),
-                )
-            }
-        },
+        // Note: Add User FAB removed - users can self-register
+        // Admin can manage existing users through Edit functionality
     ) { padding ->
         when {
             state.isLoading -> LoadingContent(modifier = Modifier.padding(padding))
@@ -278,7 +278,7 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
     ) {
         PharmaStateView(
             title = stringResource(R.string.admin_users_empty),
-            subtitle = stringResource(R.string.audit_log_no_logs),
+            subtitle = stringResource(R.string.admin_users_empty_subtitle),
             tone = PharmaStateTone.Neutral,
         )
     }
@@ -333,21 +333,21 @@ private fun SuccessContent(
                         onDismissRequest = { sortExpanded = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("الاسم") },
+                            text = { Text(stringResource(R.string.admin_sort_name)) },
                             onClick = {
                                 onAction(AdminUsersAction.OnSortByChanged(UserSortBy.NAME))
                                 sortExpanded = false
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("تاريخ الانضمام") },
+                            text = { Text(stringResource(R.string.admin_sort_date_joined)) },
                             onClick = {
                                 onAction(AdminUsersAction.OnSortByChanged(UserSortBy.DATE_JOINED))
                                 sortExpanded = false
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("نوع الحساب") },
+                            text = { Text(stringResource(R.string.admin_sort_account_type)) },
                             onClick = {
                                 onAction(AdminUsersAction.OnSortByChanged(UserSortBy.ACCOUNT_TYPE))
                                 sortExpanded = false
@@ -367,21 +367,21 @@ private fun SuccessContent(
                     FilterChip(
                         selected = state.filterStatus == UserFilterStatus.ALL,
                         onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.ALL)) },
-                        label = { Text("الكل") }
+                        label = { Text(stringResource(R.string.admin_filter_all)) }
                     )
                 }
                 item {
                     FilterChip(
                         selected = state.filterStatus == UserFilterStatus.ACTIVE,
                         onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.ACTIVE)) },
-                        label = { Text("نشط") }
+                        label = { Text(stringResource(R.string.admin_filter_active)) }
                     )
                 }
                 item {
                     FilterChip(
                         selected = state.filterStatus == UserFilterStatus.INACTIVE,
                         onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.INACTIVE)) },
-                        label = { Text("غير نشط") }
+                        label = { Text(stringResource(R.string.admin_filter_inactive)) }
                     )
                 }
             }
@@ -585,7 +585,7 @@ private fun UserCard(
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = if (user.isActive) {
-                        Color(0xFF10B981).copy(alpha = 0.15f)
+                        StatusActive.copy(alpha = 0.15f)
                     } else {
                         MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
                     },
@@ -595,7 +595,7 @@ private fun UserCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = if (user.isActive) {
-                            Color(0xFF10B981)
+                            StatusActive
                         } else {
                             MaterialTheme.colorScheme.error
                         },
@@ -708,7 +708,10 @@ private fun PreviewAdminUsersScreen() {
             onAction = {},
             onNavigateToCreateUser = {},
             onNavigateToUserDetail = {},
+            onNavigateToProfile = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }
+
+

@@ -13,6 +13,7 @@ import com.pharmalink.domain.model.Medicine
 import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
 import com.pharmalink.domain.model.Pharmacy
+import com.pharmalink.domain.model.PharmacyCustomerOrder
 import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Request
@@ -21,6 +22,8 @@ import com.pharmalink.domain.model.CustomerRequestUrgency
 import com.pharmalink.domain.model.RequestUpdate
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.domain.model.WarehouseShipment
+import com.pharmalink.data.dto.NearbyOrderDto
+import com.pharmalink.core.location.FacilityLocation
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -44,6 +47,12 @@ interface PharmaRepository {
 
     suspend fun updateProfile(profile: PharmacyProfile): Result<Unit>
 
+    suspend fun updateMyWarehouseLocation(
+        address: String,
+        latitude: Double,
+        longitude: Double,
+    ): Result<Warehouse>
+
     fun observeCompliance(): Flow<ComplianceOverview>
 
     suspend fun fetchHomeStats(): Result<HomeStats>
@@ -52,7 +61,15 @@ interface PharmaRepository {
 
     suspend fun fetchMedicines(): Result<List<Medicine>>
 
+    suspend fun getPublicPharmacies(): Result<List<PublicPharmacyForMedicine>>
+
     suspend fun getPublicPharmaciesForMedicine(medicineId: String): Result<List<PublicPharmacyForMedicine>>
+
+    suspend fun getCurrentPharmacyFacilityLocation(): Result<FacilityLocation?>
+
+    suspend fun getNearbyOrders(lat: Double, lng: Double, radius: Double): Result<List<NearbyOrderDto>>
+
+    suspend fun addMedicine(medicine: Medicine, warehouseId: String): Result<Unit>
 
     suspend fun getOrder(orderId: String): Result<Order?>
 
@@ -70,6 +87,26 @@ interface PharmaRepository {
 
     suspend fun submitRequest(requestId: String): Result<Unit>
 
+    suspend fun submitPharmacyRequest(requestId: String): Result<Request>
+
+    suspend fun warehouseAcceptB2bRequest(
+        requestId: String,
+        totalPriceCents: Long,
+        note: String? = null
+    ): Result<Request>
+
+    suspend fun warehouseRejectB2bRequest(
+        requestId: String,
+        reason: String? = null
+    ): Result<Request>
+
+    suspend fun warehouseStartB2bFulfillment(requestId: String): Result<Request>
+
+    suspend fun warehouseMarkB2bDelivered(
+        requestId: String,
+        deliveryNote: String? = null
+    ): Result<Request>
+
     suspend fun markNotificationRead(notificationId: String): Result<Unit>
 
     suspend fun markAllNotificationsRead(): Result<Unit>
@@ -79,6 +116,12 @@ interface PharmaRepository {
     suspend fun deleteAllNotifications(): Result<Unit>
 
     suspend fun updateNotificationsPreference(enabled: Boolean): Result<Unit>
+
+    suspend fun submitSupportRequest(
+        subject: String,
+        message: String,
+        category: String? = null,
+    ): Result<Unit>
 
     suspend fun getDeliveryTracking(orderId: String): Result<DeliveryTracking>
 
@@ -102,11 +145,22 @@ interface PharmaRepository {
         requestScope: CustomerRequestScope,
         fulfillmentType: FulfillmentType,
         deliveryAddress: String?,
+        deliveryLatitude: Double?,
+        deliveryLongitude: Double?,
         deliveryPhone: String?,
         notes: String?,
+        prescriptionUrl: String? = null,
     ): Result<Order>
 
+    suspend fun uploadPrescription(uri: android.net.Uri): Result<String>
+
+    suspend fun uploadMedicineImage(uri: android.net.Uri): Result<String>
+
     suspend fun cancelCustomerOrder(orderId: String): Result<Unit>
+
+    suspend fun acceptCustomerOrderPrice(orderId: String): Result<Unit>
+
+    suspend fun rejectCustomerOrderPrice(orderId: String): Result<Unit>
 
     suspend fun confirmOrder(orderId: String, totalPriceCents: Long): Result<Order>
 
@@ -120,6 +174,24 @@ interface PharmaRepository {
 
     suspend fun getMyOrders(customerId: String): Result<List<Order>>
 
+    // ==================== PHARMACY Customer Inbox Methods ====================
+
+    suspend fun getPharmacyCustomerOrders(): Result<List<PharmacyCustomerOrder>>
+
+    suspend fun getPharmacyCustomerOrderDetail(orderId: String): Result<PharmacyCustomerOrder>
+
+    suspend fun claimNearbyCustomerOrder(orderId: String, radiusKm: Double = 10.0): Result<Unit>
+
+    suspend fun confirmCustomerOrder(orderId: String, totalPriceCents: Long): Result<Unit>
+
+    suspend fun rejectCustomerOrder(orderId: String): Result<Unit>
+
+    suspend fun markCustomerOrderReadyForPickup(orderId: String): Result<Unit>
+
+    suspend fun markCustomerOrderOutForDelivery(orderId: String): Result<Unit>
+
+    suspend fun markCustomerOrderDelivered(orderId: String): Result<Unit>
+
     // ==================== Admin Management Methods (Phase 4.5.6) ====================
 
     // Admin: User Management
@@ -127,6 +199,7 @@ interface PharmaRepository {
 
     suspend fun adminUpdateUserProfile(
         targetUserId: String,
+        fullName: String?,
         accountType: AccountType,
         pharmacyId: String?,
         warehouseId: String?,
@@ -164,4 +237,23 @@ interface PharmaRepository {
 
     // Admin: Dashboard Statistics
     suspend fun adminGetDashboardStats(): Result<com.pharmalink.domain.model.AdminDashboardStats>
+
+    // Admin: Dashboard Additional Data
+    suspend fun adminGetPendingRequests(limit: Int = 5): Result<List<com.pharmalink.domain.model.PendingRequest>>
+    
+    suspend fun adminGetRecentActivities(limit: Int = 5): Result<List<com.pharmalink.domain.model.RecentActivity>>
+    
+    suspend fun adminGetSystemHealth(): Result<com.pharmalink.domain.model.SystemHealth>
+
+    // Admin: Orders Management
+    suspend fun adminGetAllOrders(
+        orderType: String? = null,
+        status: String? = null,
+        isUrgent: Boolean? = null,
+        search: String? = null,
+        limit: Int = 100,
+        offset: Int = 0
+    ): Result<List<com.pharmalink.domain.model.AdminOrder>>
+
+    suspend fun adminGetOrderDetail(orderId: String): Result<com.pharmalink.domain.model.AdminOrder?>
 }

@@ -85,7 +85,7 @@ class AdminUsersViewModel @Inject constructor(
             AdminUsersAction.OnRefreshTriggered -> refreshUsers()
             AdminUsersAction.OnMenuClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(AdminUsersEffect.ShowMessage("القائمة: قيد التطوير"))
+                    _effect.emit(AdminUsersEffect.ShowAdminMenu)
                 }
             }
             is AdminUsersAction.OnSearchQueryChanged -> updateSearchQuery(action.query)
@@ -100,13 +100,27 @@ class AdminUsersViewModel @Inject constructor(
             is AdminUsersAction.OnEditUserClicked -> showEditSheet(action.user)
             is AdminUsersAction.OnDeleteUserClicked -> showDeleteConfirmation(action.userId)
             AdminUsersAction.OnAddUserClicked -> {
-                // TODO: Navigate to add user
+                // PRODUCTION: Add user feature not available - users self-register via auth
+                // Admin manages existing users through Edit functionality only
+                viewModelScope.launch {
+                    _effect.emit(AdminUsersEffect.ShowMessage("إضافة مستخدم غير متاح - المستخدمون يسجلون ذاتياً"))
+                }
             }
             AdminUsersAction.OnDismissEditSheet -> {
-                // Handled in UI
+                _state.update {
+                    it.copy(
+                        isEditSheetVisible = false,
+                        editSheetUserId = "",
+                    )
+                }
             }
             AdminUsersAction.OnConfirmDelete -> {
-                // TODO: Implement delete
+                // PRODUCTION: Destructive delete not available - use deactivation instead
+                // Backend does not support user deletion for data integrity
+                // Admin must use Edit User to deactivate accounts
+                viewModelScope.launch {
+                    _effect.emit(AdminUsersEffect.ShowMessage("الحذف غير متاح - استخدم تعطيل الحساب من خلال التعديل"))
+                }
             }
             AdminUsersAction.OnDismissDeleteDialog -> {
                 // Handled in UI
@@ -186,15 +200,14 @@ class AdminUsersViewModel @Inject constructor(
     }
 
     private fun showEditSheet(user: UserItemModel) {
-        viewModelScope.launch {
-            _effect.emit(
-                AdminUsersEffect.ShowEditUserSheet(
-                    userId = user.id,
-                    fullName = user.fullName,
-                    accountType = user.accountType,
-                    facilityId = user.facilityId,
-                    isActive = user.isActive,
-                )
+        _state.update {
+            it.copy(
+                isEditSheetVisible = true,
+                editSheetUserId = user.id,
+                editSheetFullName = user.fullName ?: "",
+                editSheetAccountType = user.accountType.name,
+                editSheetFacilityId = user.facilityId ?: "",
+                editSheetIsActive = user.isActive,
             )
         }
     }
@@ -214,8 +227,7 @@ class AdminUsersViewModel @Inject constructor(
     }
 
     private fun calculateGrowth(totalUsers: Int): Float {
-        // Simulate monthly growth percentage
-        return if (totalUsers > 0) (totalUsers * 0.12f) else 0f
+        return 0f
     }
 
     private fun AdminUser.toUiModel(): UserItemModel {
@@ -232,3 +244,6 @@ class AdminUsersViewModel @Inject constructor(
         )
     }
 }
+
+
+

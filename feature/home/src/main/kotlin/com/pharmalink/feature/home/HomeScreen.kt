@@ -67,6 +67,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -78,6 +79,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.designsystem.stitch.StitchTheme
 import com.pharmalink.designsystem.stitch.components.StitchButton
+import com.pharmalink.designsystem.components.DashboardWelcomeCard
 import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.designsystem.theme.PharmaBlue50
 import com.pharmalink.designsystem.theme.PharmaBlue500
@@ -90,6 +92,7 @@ import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.HomeStats
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.feature.home.R
+import com.pharmalink.designsystem.R as DsR
 
 @Composable
 fun HomeScreen(
@@ -143,6 +146,7 @@ private fun HomeContent(
 ) {
     val d = MaterialTheme.dimens
     val isPublicUser = uiState.accountType == AccountType.PUBLIC_USER
+    val isPharmacy = uiState.accountType == AccountType.PHARMACY
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         LazyColumn(
@@ -165,7 +169,22 @@ private fun HomeContent(
                     showNotifications = !isPublicUser,
                 )
             }
-            item { HomeSearchCard(onSearchClick = onNavigateToMedicineSearch) }
+            if (!isPublicUser) {
+                item {
+                    DashboardWelcomeCard(
+                        title = "أهلاً بك في صيدليتي",
+                        subtitle = "نظرة سريعة على نشاطك اليومي",
+                        stats = listOf(
+                            "طلبات اليوم" to (uiState.stats?.requestsTodayCount?.toString() ?: "0"),
+                            "المخزون" to (uiState.stats?.totalInventoryCount?.toString() ?: "-"),
+                            "المبيعات" to (uiState.stats?.weeklySalesAmount ?: "-"),
+                        ),
+                    )
+                }
+            }
+            if (isPublicUser) {
+                item { HomeSearchCard(onSearchClick = onNavigateToMedicineSearch) }
+            }
             if (isPublicUser) {
                 item {
                     PublicUserCustomerActions(
@@ -194,6 +213,7 @@ private fun HomeContent(
             item {
                 QuickActionsSection(
                     canAddMedicine = uiState.canAddMedicine,
+                    isPharmacy = isPharmacy,
                     onQuickRequestClick = onNavigateToCreateRequest,
                     onChatClick = onNavigateToProfile,
                     onReportsClick = onNavigateToOrders,
@@ -246,12 +266,16 @@ private fun HomeHeader(
             shadowElevation = d.cardElevation,
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Outlined.LocalPharmacy, contentDescription = null, modifier = Modifier.size(d.iconM))
+                Icon(
+                    painter = painterResource(id = DsR.drawable.sydaliti_logo_icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(d.iconM),
+                )
             }
         }
 
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-            Text("طاب يومك", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("يومك سعيد", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 text = "أهلاً، $userName",
                 style = MaterialTheme.typography.titleLarge,
@@ -277,6 +301,7 @@ private fun HomeHeader(
         }
     }
 }
+
 
 @Composable
 private fun HomeSearchCard(onSearchClick: () -> Unit) {
@@ -362,8 +387,8 @@ private fun PublicUserCustomerActions(
             )
         }
         InfoBannerLikeCard(
-            title = "الصيدليات القريبة والمناوبة",
-            body = "تظهر داخل شاشة اختيار الصيدلية بعد تحديد الدواء، بدون بيانات وهمية.",
+            title = "تصفح الصيدليات",
+            body = "تصفح الصيدليات المتاحة والمناوبة مباشرة من تبويب الصيدليات.",
         )
     }
 }
@@ -440,9 +465,9 @@ private fun HomeStatsSection(
     
     val displayStats = remember(stats) {
         listOf(
-            StatItem("الطلبات اليوم", stats?.requestsTodayCount?.toString() ?: "—", "", stats?.requestsTodayTrend ?: ""),
-            StatItem("المخزون الكلي", stats?.totalInventoryCount?.toString() ?: "—", "", stats?.totalInventoryUnit.orEmpty()),
-            StatItem("المبيعات", stats?.weeklySalesAmount ?: "—", "", stats?.weeklySalesTrend.orEmpty()),
+            StatItem("طلبات اليوم", stats?.requestsTodayCount?.toString() ?: "-", "", stats?.requestsTodayTrend ?: ""),
+            StatItem("المخزون الكلي", stats?.totalInventoryCount?.toString() ?: "-", "", stats?.totalInventoryUnit.orEmpty()),
+            StatItem("المبيعات", stats?.weeklySalesAmount ?: "-", "", stats?.weeklySalesTrend.orEmpty()),
         )
     }
 
@@ -566,13 +591,14 @@ private fun HomeAlertCard(message: String, onReviewClick: () -> Unit) {
 @Composable
 private fun QuickActionsSection(
     canAddMedicine: Boolean,
+    isPharmacy: Boolean,
     onQuickRequestClick: () -> Unit,
     onChatClick: () -> Unit,
     onReportsClick: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
 
-    val actions = remember(canAddMedicine, onQuickRequestClick, onChatClick, onReportsClick) {
+    val actions = remember(canAddMedicine, isPharmacy, onQuickRequestClick, onChatClick, onReportsClick) {
         buildList {
             add(QuickActionItem(icon = Icons.Filled.FastRewind, text = "طلب سريع", onClick = onQuickRequestClick))
             if (canAddMedicine) {
@@ -1200,3 +1226,4 @@ private fun HomeScreenPreview() {
         )
     }
 }
+

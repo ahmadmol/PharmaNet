@@ -8,8 +8,10 @@ import com.pharmalink.core.common.ui.ScreenState
 import com.pharmalink.core.navigation.NavArgs
 import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.domain.model.AccountType
+import com.pharmalink.feature.orders.usecase.AcceptCustomerOrderPriceUseCase
 import com.pharmalink.feature.orders.usecase.CancelCustomerOrderUseCase
 import com.pharmalink.feature.orders.usecase.GetMyOrdersUseCase
+import com.pharmalink.feature.orders.usecase.RejectCustomerOrderPriceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -23,7 +25,10 @@ data class CustomerOrderDetailUiState(
     val screenState: ScreenState<CustomerOrderDetailUi> = ScreenState.Loading,
     val isCancelDialogVisible: Boolean = false,
     val isCancelling: Boolean = false,
+    val isAcceptingPrice: Boolean = false,
+    val isRejectingPrice: Boolean = false,
     val actionErrorMessage: String? = null,
+    val actionSuccessMessage: String? = null,
     val cancelCompleted: Boolean = false,
 )
 
@@ -32,6 +37,8 @@ class CustomerOrderDetailViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val getMyOrdersUseCase: GetMyOrdersUseCase,
     private val cancelCustomerOrderUseCase: CancelCustomerOrderUseCase,
+    private val acceptCustomerOrderPriceUseCase: AcceptCustomerOrderPriceUseCase,
+    private val rejectCustomerOrderPriceUseCase: RejectCustomerOrderPriceUseCase,
     @param:ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -151,6 +158,194 @@ class CustomerOrderDetailViewModel @Inject constructor(
         _uiState.update { it.copy(actionErrorMessage = null) }
     }
 
+    fun acceptPrice() {
+        if (_uiState.value.isAcceptingPrice || _uiState.value.isRejectingPrice) return
+
+        viewModelScope.launch {
+            val snapshot = authRepository.getUserSnapshot()
+            val customerId = snapshot?.userId.orEmpty()
+            val accountType = snapshot?.accountType
+
+            if (customerId.isBlank() || accountType != AccountType.PUBLIC_USER) {
+                _uiState.update {
+                    it.copy(
+                        actionErrorMessage = context.getString(R.string.error_permission),
+                    )
+                }
+                return@launch
+            }
+
+            val currentOrder = (_uiState.value.screenState as? ScreenState.Success)?.data
+                ?: run {
+                    _uiState.update {
+                        it.copy(
+                            actionErrorMessage = context.getString(R.string.customer_order_detail_not_found),
+                        )
+                    }
+                    return@launch
+                }
+
+            val matchingOrder = getMyOrdersUseCase(
+                customerId = customerId,
+                accountType = accountType,
+            ).getOrElse { error ->
+                _uiState.update {
+                    it.copy(
+                        actionErrorMessage = mapErrorToMessage(error),
+                    )
+                }
+                return@launch
+            }.firstOrNull { it.id == currentOrder.id && it.isVisiblePublicUserOrder() }
+
+            if (matchingOrder == null) {
+                _uiState.update {
+                    it.copy(
+                        actionErrorMessage = context.getString(R.string.customer_order_detail_not_found),
+                    )
+                }
+                return@launch
+            }
+
+            _uiState.update {
+                it.copy(
+                    isAcceptingPrice = true,
+                    actionErrorMessage = null,
+                    actionSuccessMessage = null,
+                )
+            }
+
+            acceptCustomerOrderPriceUseCase(
+                order = matchingOrder,
+                accountType = accountType,
+                customerId = customerId,
+            ).fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(
+                            isAcceptingPrice = false,
+                            actionSuccessMessage = context.getString(R.string.customer_order_accept_price_success),
+                        )
+                    }
+                    // Refresh order to show new status
+                    loadOrder()
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isAcceptingPrice = false,
+                            actionErrorMessage = mapPriceActionErrorToMessage(error, isAccept = true),
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    fun rejectPrice() {
+        if (_uiState.value.isAcceptingPrice || _uiState.value.isRejectingPrice) return
+
+        viewModelScope.launch {
+            val snapshot = authRepository.getUserSnapshot()
+            val customerId = snapshot?.userId.orEmpty()
+            val accountType = snapshot?.accountType
+
+            if (customerId.isBlank() || accountType != AccountType.PUBLIC_USER) {
+                _uiState.update {
+                    it.copy(
+                        actionErrorMessage = context.getString(R.string.error_permission),
+                    )
+                }
+                return@launch
+            }
+
+            val currentOrder = (_uiState.value.screenState as? ScreenState.Success)?.data
+                ?: run {
+                    _uiState.update {
+                        it.copy(
+                            actionErrorMessage = context.getString(R.string.customer_order_detail_not_found),
+                        )
+                    }
+                    return@launch
+                }
+
+            val matchingOrder = getMyOrdersUseCase(
+                customerId = customerId,
+                accountType = accountType,
+            ).getOrElse { error ->
+                _uiState.update {
+                    it.copy(
+                        actionErrorMessage = mapErrorToMessage(error),
+                    )
+                }
+                return@launch
+            }.firstOrNull { it.id == currentOrder.id && it.isVisiblePublicUserOrder() }
+
+            if (matchingOrder == null) {
+                _uiState.update {
+                    it.copy(
+                        actionErrorMessage = context.getString(R.string.customer_order_detail_not_found),
+                    )
+                }
+                return@launch
+            }
+
+            _uiState.update {
+                it.copy(
+                    isRejectingPrice = true,
+                    actionErrorMessage = null,
+                    actionSuccessMessage = null,
+                )
+            }
+
+            rejectCustomerOrderPriceUseCase(
+                order = matchingOrder,
+                accountType = accountType,
+                customerId = customerId,
+            ).fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(
+                            isRejectingPrice = false,
+                            actionSuccessMessage = context.getString(R.string.customer_order_reject_price_success),
+                        )
+                    }
+                    // Refresh order to show new status
+                    loadOrder()
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isRejectingPrice = false,
+                            actionErrorMessage = mapPriceActionErrorToMessage(error, isAccept = false),
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    private fun mapPriceActionErrorToMessage(error: Throwable, isAccept: Boolean): String {
+        val message = error.message.orEmpty()
+        return when {
+            message.contains("confirmed", ignoreCase = true) ->
+                context.getString(R.string.customer_order_cancel_pending_only) // Reuse similar message
+            message.contains("permission", ignoreCase = true) ||
+                message.contains("public users", ignoreCase = true) ||
+                message.contains("unauthorized", ignoreCase = true) ->
+                context.getString(R.string.error_permission)
+            message.contains("network", ignoreCase = true) ||
+                message.contains("connection", ignoreCase = true) ->
+                context.getString(R.string.error_network)
+            message.contains("not found", ignoreCase = true) ->
+                context.getString(R.string.customer_order_detail_not_found)
+            else -> if (isAccept) {
+                context.getString(R.string.customer_order_accept_price_failed)
+            } else {
+                context.getString(R.string.customer_order_reject_price_failed)
+            }
+        }
+    }
+
     private fun loadOrder() {
         viewModelScope.launch {
             if (orderId.isBlank()) {
@@ -183,6 +378,7 @@ class CustomerOrderDetailViewModel @Inject constructor(
                     isCancelling = false,
                     isCancelDialogVisible = false,
                     actionErrorMessage = null,
+                    actionSuccessMessage = null,
                 )
             }
 

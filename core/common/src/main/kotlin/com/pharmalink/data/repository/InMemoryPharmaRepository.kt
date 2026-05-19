@@ -1,5 +1,7 @@
 package com.pharmalink.data.repository
 
+import com.pharmalink.data.dto.NearbyOrderDto
+import com.pharmalink.core.location.FacilityLocation
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.AdminUser
 import com.pharmalink.domain.model.AppNotification
@@ -23,6 +25,7 @@ import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.OrderStatus
 import com.pharmalink.domain.model.OrderType
 import com.pharmalink.domain.model.Pharmacy
+import com.pharmalink.domain.model.PharmacyCustomerOrder
 import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Request
@@ -67,6 +70,14 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         return Result.success(Unit)
     }
 
+    override suspend fun updateMyWarehouseLocation(
+        address: String,
+        latitude: Double,
+        longitude: Double,
+    ): Result<Warehouse> = Result.failure(
+        UnsupportedOperationException("updateMyWarehouseLocation requires SupabasePharmaRepository."),
+    )
+
     override suspend fun fetchHomeStats(): Result<HomeStats> = Result.success(
         HomeStats(
             requestsTodayCount = requests.value.size,
@@ -85,9 +96,27 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     override suspend fun fetchMedicines(): Result<List<Medicine>> =
         Result.success(sampleMedicines())
 
+    override suspend fun addMedicine(medicine: Medicine, warehouseId: String): Result<Unit> =
+        Result.failure(
+            UnsupportedOperationException("addMedicine is not supported in InMemoryPharmaRepository.")
+        )
+
+    override suspend fun getPublicPharmacies(): Result<List<PublicPharmacyForMedicine>> =
+        Result.failure(
+            UnsupportedOperationException("getPublicPharmacies is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for PUBLIC_USER discovery.")
+        )
+
     override suspend fun getPublicPharmaciesForMedicine(medicineId: String): Result<List<PublicPharmacyForMedicine>> =
         Result.failure(
             UnsupportedOperationException("getPublicPharmaciesForMedicine is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for PUBLIC_USER discovery.")
+        )
+
+    override suspend fun getCurrentPharmacyFacilityLocation(): Result<FacilityLocation?> =
+        Result.success(null)
+
+    override suspend fun getNearbyOrders(lat: Double, lng: Double, radius: Double): Result<List<NearbyOrderDto>> =
+        Result.failure(
+            UnsupportedOperationException("getNearbyOrders is not supported in InMemoryPharmaRepository.")
         )
 
     override suspend fun getOrder(orderId: String): Result<Order?> =
@@ -105,49 +134,19 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     override suspend fun createRequest(request: Request): Result<Request> {
         val warehouse = warehouses.value.firstOrNull { it.id == request.warehouseId } ?: warehouses.value.first()
         val requestId = "REQ-${1280 + requests.value.size + 1}"
-        val orderId = "ORD-${880 + orders.value.size + 1}"
 
         val createdRequest = request.copy(
             id = requestId,
             warehouseId = warehouse.id,
             warehouseName = warehouse.name,
             supplierName = warehouse.name,
-            status = RequestStatus.PENDING,
+            status = RequestStatus.DRAFT,
             createdAtLabel = "الآن",
             updatedAtLabel = "تم الإرسال الآن",
-            relatedOrderId = orderId,
-        )
-        val now = java.time.Instant.now()
-        val createdOrder = Order(
-            id = orderId,
-            medicineId = "med_${createdRequest.medicineName.hashCode()}",
-            medicineName = createdRequest.medicineName,
-            quantity = createdRequest.quantity,
-            unit = createdRequest.unit,
-            status = OrderStatus.PENDING,
-            orderType = OrderType.PHARMACY_WAREHOUSE,
-            fulfillmentType = FulfillmentType.DELIVERY,
-            pharmacyId = createdRequest.pharmacyId,
-            warehouseId = warehouse.id,
-            customerId = null,
-            requestId = requestId,
-            totalPriceCents = null,
-            currency = "SAR",
-            deliveryAddress = null,
-            deliveryPhone = null,
-            notes = null,
-            createdAt = now,
-            updatedAt = now,
-            confirmedAt = null,
-            fulfilledAt = null,
-            warehouseName = warehouse.name,
-            supplierName = warehouse.name,
-            etaLabel = warehouse.estimatedDeliveryLabel,
-            isUrgent = createdRequest.priority == RequestPriority.URGENT,
+            relatedOrderId = null,
         )
 
         requests.value = listOf(createdRequest) + requests.value
-        orders.value = listOf(createdOrder) + orders.value
         notifications.value = listOf(
             AppNotification(
                 id = "NOT-${notifications.value.size + 1}",
@@ -162,10 +161,6 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
                 destinationId = createdRequest.id,
             ),
         ) + notifications.value
-        profile.value = profile.value.copy(
-            totalOrders = profile.value.totalOrders + 1,
-            activeOrders = profile.value.activeOrders + 1,
-        )
 
         return Result.success(createdRequest)
     }
@@ -186,6 +181,12 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         profile.value = profile.value.copy(notificationsEnabled = enabled)
         return Result.success(Unit)
     }
+
+    override suspend fun submitSupportRequest(
+        subject: String,
+        message: String,
+        category: String?,
+    ): Result<Unit> = Result.success(Unit)
 
     override suspend fun updateRequest(requestId: String, updates: com.pharmalink.domain.model.RequestUpdate): Result<Request> {
         val idx = requests.value.indexOfFirst { it.id == requestId }
@@ -214,15 +215,169 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         else Result.failure(IllegalArgumentException("Request not found"))
     }
 
-    override suspend fun submitRequest(requestId: String): Result<Unit> {
+    override suspend fun submitRequest(requestId: String): Result<Unit> =
+        submitPharmacyRequest(requestId).map { Unit }
+
+    override suspend fun submitPharmacyRequest(requestId: String): Result<Request> {
         val idx = requests.value.indexOfFirst { it.id == requestId }
         return if (idx >= 0) {
+            val current = requests.value[idx]
+            require(current.status == RequestStatus.DRAFT) { "Can only submit DRAFT requests" }
+            require(!current.medicineId.isNullOrBlank()) { "medicineId is required for B2B pharmacy requests" }
+            require(orders.value.none { it.requestId == requestId && it.orderType == OrderType.PHARMACY_WAREHOUSE }) {
+                "Order already exists for request"
+            }
+            val orderId = "ORD-${880 + orders.value.size + 1}"
+            val now = Instant.now()
+            val updatedRequest = current.copy(
+                status = RequestStatus.PENDING,
+                updatedAtLabel = "now",
+                relatedOrderId = orderId,
+            )
+            val createdOrder = Order(
+                id = orderId,
+                medicineId = current.medicineId,
+                medicineName = current.medicineName,
+                quantity = current.quantity,
+                unit = current.unit,
+                status = OrderStatus.PENDING,
+                orderType = OrderType.PHARMACY_WAREHOUSE,
+                fulfillmentType = FulfillmentType.DELIVERY,
+                pharmacyId = current.pharmacyId,
+                warehouseId = current.warehouseId,
+                customerId = null,
+                requestId = requestId,
+                totalPriceCents = null,
+                currency = "SAR",
+                deliveryAddress = null,
+                deliveryPhone = null,
+                notes = current.notes,
+                createdAt = now,
+                updatedAt = now,
+                confirmedAt = null,
+                fulfilledAt = null,
+                warehouseName = current.warehouseName,
+                supplierName = current.supplierName,
+                etaLabel = current.etaLabel,
+                isUrgent = current.priority == RequestPriority.URGENT,
+            )
             val mutable = requests.value.toMutableList()
-            mutable[idx] = mutable[idx].copy(status = RequestStatus.PENDING, updatedAtLabel = "الآن")
+            mutable[idx] = updatedRequest
             requests.value = mutable
-            Result.success(Unit)
+            orders.value = listOf(createdOrder) + orders.value
+            Result.success(updatedRequest)
         } else {
             Result.failure(IllegalArgumentException("Request not found"))
+        }
+    }
+
+    override suspend fun warehouseAcceptB2bRequest(
+        requestId: String,
+        totalPriceCents: Long,
+        note: String?,
+    ): Result<Request> =
+        updateB2bRequestAndOrder(
+            requestId = requestId,
+            expectedRequestStatus = RequestStatus.PENDING,
+            expectedOrderStatus = OrderStatus.PENDING,
+            nextRequestStatus = RequestStatus.ACCEPTED,
+            nextOrderStatus = OrderStatus.CONFIRMED,
+            orderTransform = { order ->
+                order.copy(
+                    totalPriceCents = totalPriceCents,
+                    notes = note ?: order.notes,
+                    confirmedAt = Instant.now(),
+                )
+            },
+        )
+
+    override suspend fun warehouseRejectB2bRequest(requestId: String, reason: String?): Result<Request> =
+        updateB2bRequestAndOrder(
+            requestId = requestId,
+            expectedRequestStatus = RequestStatus.PENDING,
+            expectedOrderStatus = OrderStatus.PENDING,
+            nextRequestStatus = RequestStatus.REJECTED,
+            nextOrderStatus = OrderStatus.REJECTED,
+            requestTransform = { request -> request.copy(rejectionReason = reason) },
+        )
+
+    override suspend fun warehouseStartB2bFulfillment(requestId: String): Result<Request> =
+        updateB2bRequestAndOrder(
+            requestId = requestId,
+            expectedRequestStatus = RequestStatus.ACCEPTED,
+            expectedOrderStatus = OrderStatus.CONFIRMED,
+            nextRequestStatus = RequestStatus.IN_PROGRESS,
+            nextOrderStatus = OrderStatus.IN_PROGRESS,
+        )
+
+    override suspend fun warehouseMarkB2bDelivered(
+        requestId: String,
+        deliveryNote: String?,
+    ): Result<Request> =
+        updateB2bRequestAndOrder(
+            requestId = requestId,
+            expectedRequestStatus = RequestStatus.IN_PROGRESS,
+            expectedOrderStatus = OrderStatus.IN_PROGRESS,
+            nextRequestStatus = RequestStatus.FULFILLED,
+            nextOrderStatus = OrderStatus.DELIVERED,
+            orderTransform = { order ->
+                order.copy(
+                    notes = deliveryNote ?: order.notes,
+                    fulfilledAt = Instant.now(),
+                )
+            },
+        )
+
+    private fun updateB2bRequestAndOrder(
+        requestId: String,
+        expectedRequestStatus: RequestStatus,
+        expectedOrderStatus: OrderStatus,
+        nextRequestStatus: RequestStatus,
+        nextOrderStatus: OrderStatus,
+        requestTransform: (Request) -> Request = { it },
+        orderTransform: (Order) -> Order = { it },
+    ): Result<Request> {
+        val requestIdx = requests.value.indexOfFirst { it.id == requestId }
+        if (requestIdx < 0) return Result.failure(IllegalArgumentException("Request not found"))
+
+        val currentRequest = requests.value[requestIdx]
+        val orderIdx = orders.value.indexOfFirst {
+            it.requestId == requestId && it.orderType == OrderType.PHARMACY_WAREHOUSE
+        }
+        if (orderIdx < 0) return Result.failure(IllegalArgumentException("B2B order not found"))
+
+        val currentOrder = orders.value[orderIdx]
+        return runCatching {
+            require(currentRequest.status == expectedRequestStatus) {
+                "Expected request status $expectedRequestStatus but was ${currentRequest.status}"
+            }
+            require(currentOrder.status == expectedOrderStatus) {
+                "Expected order status $expectedOrderStatus but was ${currentOrder.status}"
+            }
+
+            val now = Instant.now()
+            val updatedRequest = requestTransform(
+                currentRequest.copy(
+                    status = nextRequestStatus,
+                    updatedAtLabel = "now",
+                )
+            )
+            val updatedOrder = orderTransform(
+                currentOrder.copy(
+                    status = nextOrderStatus,
+                    updatedAt = now,
+                )
+            )
+
+            val mutableRequests = requests.value.toMutableList()
+            mutableRequests[requestIdx] = updatedRequest
+            requests.value = mutableRequests
+
+            val mutableOrders = orders.value.toMutableList()
+            mutableOrders[orderIdx] = updatedOrder
+            orders.value = mutableOrders
+
+            updatedRequest
         }
     }
 
@@ -285,15 +440,24 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         requestScope: CustomerRequestScope,
         fulfillmentType: FulfillmentType,
         deliveryAddress: String?,
+        deliveryLatitude: Double?,
+        deliveryLongitude: Double?,
         deliveryPhone: String?,
         notes: String?,
-    ): Result<Order> = Result.failure(
-        UnsupportedOperationException("createCustomerOrder is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
-    )
+        prescriptionUrl: String?,
+    ): Result<Order> = Result.failure(UnsupportedOperationException("Mock not implemented"))
 
-    override suspend fun cancelCustomerOrder(orderId: String): Result<Unit> = Result.failure(
-        UnsupportedOperationException("cancelCustomerOrder is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
-    )
+    override suspend fun uploadPrescription(uri: android.net.Uri): Result<String> =
+        Result.failure(UnsupportedOperationException("Mock not implemented"))
+
+    override suspend fun uploadMedicineImage(uri: android.net.Uri): Result<String> =
+        Result.failure(UnsupportedOperationException("Mock not implemented"))
+
+    override suspend fun cancelCustomerOrder(orderId: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun acceptCustomerOrderPrice(orderId: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun rejectCustomerOrderPrice(orderId: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun confirmOrder(orderId: String, totalPriceCents: Long): Result<Order> = Result.failure(
         UnsupportedOperationException("confirmOrder is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
@@ -319,10 +483,79 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         UnsupportedOperationException("getMyOrders is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for B2C operations.")
     )
 
+    override suspend fun getPharmacyCustomerOrders(): Result<List<PharmacyCustomerOrder>> =
+        Result.success(
+            orders.value
+                .filter {
+                    it.orderType == OrderType.CUSTOMER_PHARMACY &&
+                        it.requestScope == CustomerRequestScope.SPECIFIC_PHARMACY
+                }
+                .map { it.toPharmacyCustomerOrder() },
+        )
+
+    override suspend fun getPharmacyCustomerOrderDetail(orderId: String): Result<PharmacyCustomerOrder> =
+        getPharmacyCustomerOrders().mapCatching { list ->
+            list.firstOrNull { it.id == orderId } ?: throw IllegalArgumentException("Customer order not found")
+        }
+
+    override suspend fun claimNearbyCustomerOrder(orderId: String, radiusKm: Double): Result<Unit> =
+        updateCustomerOrder(orderId) { order ->
+            require(order.orderType == OrderType.CUSTOMER_PHARMACY) { "Order is not a customer order" }
+            require(order.requestScope == CustomerRequestScope.ALL_PHARMACIES) { "Order is not a radar order" }
+            require(order.status == OrderStatus.PENDING) { "Can only claim pending radar orders" }
+            order.copy(
+                pharmacyId = "pharmacy_1",
+                requestScope = CustomerRequestScope.SPECIFIC_PHARMACY,
+                updatedAt = Instant.now(),
+            )
+        }
+
+    override suspend fun confirmCustomerOrder(orderId: String, totalPriceCents: Long): Result<Unit> =
+        updateCustomerOrder(orderId) { order ->
+            require(order.status == OrderStatus.PENDING) { "Can only confirm pending orders" }
+            order.copy(
+                status = OrderStatus.CONFIRMED,
+                totalPriceCents = totalPriceCents,
+                confirmedAt = Instant.now(),
+                updatedAt = Instant.now(),
+            )
+        }
+
+    override suspend fun rejectCustomerOrder(orderId: String): Result<Unit> =
+        updateCustomerOrder(orderId) { order ->
+            require(order.status == OrderStatus.PENDING) { "Can only reject pending orders" }
+            order.copy(status = OrderStatus.REJECTED, updatedAt = Instant.now())
+        }
+
+    override suspend fun markCustomerOrderReadyForPickup(orderId: String): Result<Unit> =
+        updateCustomerOrder(orderId) { order ->
+            require(
+                order.status in setOf(OrderStatus.CONFIRMED, OrderStatus.IN_PROGRESS) &&
+                    order.fulfillmentType == FulfillmentType.PICKUP
+            )
+            order.copy(status = OrderStatus.READY_FOR_PICKUP, updatedAt = Instant.now())
+        }
+
+    override suspend fun markCustomerOrderOutForDelivery(orderId: String): Result<Unit> =
+        updateCustomerOrder(orderId) { order ->
+            require(
+                order.status in setOf(OrderStatus.CONFIRMED, OrderStatus.IN_PROGRESS) &&
+                    order.fulfillmentType == FulfillmentType.DELIVERY
+            )
+            order.copy(status = OrderStatus.OUT_FOR_DELIVERY, updatedAt = Instant.now())
+        }
+
+    override suspend fun markCustomerOrderDelivered(orderId: String): Result<Unit> =
+        updateCustomerOrder(orderId) { order ->
+            require(order.status == OrderStatus.READY_FOR_PICKUP || order.status == OrderStatus.OUT_FOR_DELIVERY)
+            order.copy(status = OrderStatus.DELIVERED, fulfilledAt = Instant.now(), updatedAt = Instant.now())
+        }
+
     override suspend fun adminGetAllUsers(): Result<List<AdminUser>> = Result.success(emptyList())
 
     override suspend fun adminUpdateUserProfile(
         targetUserId: String,
+        fullName: String?,
         accountType: AccountType,
         pharmacyId: String?,
         warehouseId: String?,
@@ -372,14 +605,82 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     override suspend fun adminGetDashboardStats(): Result<com.pharmalink.domain.model.AdminDashboardStats> =
         Result.success(
             com.pharmalink.domain.model.AdminDashboardStats(
-                totalUsers = 0,
-                totalPharmacies = 0,
-                totalWarehouses = 0,
-                totalOrders = 0,
-                pendingOrdersCount = 0,
-                activePharmacies = 0,
-                activeWarehouses = 0,
+                totalUsers = 15,
+                totalPharmacies = 8,
+                totalWarehouses = 5,
+                totalOrders = 42,
+                b2cOrdersCount = 25,
+                b2bOrdersCount = 17,
+                urgentOrdersCount = 8,
+                pendingOrdersCount = 12,
+                confirmedOrdersCount = 18,
+                deliveredOrdersCount = 10,
+                activePharmacies = 7,
+                activeWarehouses = 4,
             )
+        )
+
+    override suspend fun adminGetAllOrders(
+        orderType: String?,
+        status: String?,
+        isUrgent: Boolean?,
+        search: String?,
+        limit: Int,
+        offset: Int
+    ): Result<List<com.pharmalink.domain.model.AdminOrder>> =
+        Result.success(emptyList()) // InMemory implementation returns empty list
+
+    override suspend fun adminGetOrderDetail(orderId: String): Result<com.pharmalink.domain.model.AdminOrder?> =
+        Result.success(null) // InMemory implementation returns null
+
+    override suspend fun adminGetPendingRequests(limit: Int): Result<List<com.pharmalink.domain.model.PendingRequest>> =
+        Result.success(emptyList()) // InMemory implementation returns empty list
+
+    override suspend fun adminGetRecentActivities(limit: Int): Result<List<com.pharmalink.domain.model.RecentActivity>> =
+        Result.success(emptyList()) // InMemory implementation returns empty list
+
+    override suspend fun adminGetSystemHealth(): Result<com.pharmalink.domain.model.SystemHealth> =
+        Result.success(
+            com.pharmalink.domain.model.SystemHealth(
+                healthPercent = 95,
+                healthStatus = "ممتاز",
+                // activeConnections removed
+            )
+        ) // InMemory implementation returns default health
+
+    private fun updateCustomerOrder(
+        orderId: String,
+        transform: (Order) -> Order,
+    ): Result<Unit> = runCatching {
+        val index = orders.value.indexOfFirst {
+            it.id == orderId && it.orderType == OrderType.CUSTOMER_PHARMACY
+        }
+        require(index >= 0) { "Customer order not found" }
+        val mutable = orders.value.toMutableList()
+        mutable[index] = transform(mutable[index])
+        orders.value = mutable
+    }
+
+    private fun Order.toPharmacyCustomerOrder(): PharmacyCustomerOrder =
+        PharmacyCustomerOrder(
+            id = id,
+            customerId = customerId,
+            customerName = null,
+            medicineId = medicineId,
+            medicineName = medicineName,
+            quantity = quantity,
+            unit = unit,
+            status = status,
+            fulfillmentType = fulfillmentType,
+            deliveryAddress = deliveryAddress,
+            deliveryPhone = deliveryPhone,
+            notes = notes,
+            totalPriceCents = totalPriceCents,
+            currency = currency,
+            urgency = urgency,
+            requestScope = requestScope,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
         )
 
     private fun sampleAuditLogs(): List<AuditLog> = listOf(
@@ -470,9 +771,9 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     }
 
     private fun sampleMedicines(): List<Medicine> = listOf(
-        Medicine("m1", "باراسيتامول", "جنريك", "500 ملغ", 12.0, null),
-        Medicine("m2", "أموكسيسيلين", "سبيكترا", "شراب", 45.0, null),
-        Medicine("m3", "فيتامين د3", "نيوتري", "1000 وحدة", 28.5, null),
+        Medicine("m1", "باراسيتامول", "جنريك", "500 ملغ", 12.0, 0, null),
+        Medicine("m2", "أموكسيسيلين", "سبيكترا", "شراب", 45.0, 0, null),
+        Medicine("m3", "فيتامين د3", "نيوتري", "1000 وحدة", 28.5, 0, null),
     )
 
     private fun sampleWarehouses(): List<Warehouse> = listOf(

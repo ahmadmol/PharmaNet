@@ -19,7 +19,7 @@
 
     <string name="featured_warehouses_screen_title">المستودعات المميزة</string>
     <string name="featured_warehouses_back_cd">الرجوع من المستودعات المميزة</string>
-    <string name="featured_hero_badge">اختيار PharmaLink</string>
+    <string name="featured_hero_badge">اختيار صيدليتي</string>
     <string name="featured_hero_title">مستودعات عالية الاعتمادية لتوريد أسرع</string>
     <string name="featured_hero_subtitle">شبكة مستودعات منتقاة بجاهزية مخزون مرتفعة وخيارات توصيل مرنة لدعم التشغيل اليومي.</string>
     <string name="featured_filter_all">الكل</string>
@@ -45,4 +45,37 @@
     <string name="featured_empty_source_state">لا توجد مستودعات مميزة متاحة حالياً.</string>
     <string name="featured_location_fallback">موقع غير محدد</string>
     <string name="featured_delivery_fallback">توصيل حسب الجاهزية</string>
+
+    <string name="warehouse_category_all">الكل</string>
+    <string name="warehouse_category_chronic">أدوية مزمنة</string>
+    <string name="warehouse_category_vaccines">لقاحات</string>
+    <string name="warehouse_category_supplies">مستلزمات طبية</string>
+    <string name="warehouse_add_facility">إضافة منشأة</string>
+    <string name="warehouse_available_title">المستودعات المتاحة</string>
+    <string name="warehouse_view_all">عرض الكل</string>
+    <string name="search_warehouses_or_supplier_placeholder">ابحث عن مستودع أو مورد...</string>
+    <string name="warehouse_action_view_incoming">عرض الطلبات الواردة</string>
+    <string name="warehouse_action_request_now">اطلب الآن</string>
+    <string name="warehouse_metric_delivery_speed">سرعة التوصيل</string>
+    <string name="warehouse_metric_minimum">الحد الأدنى</string>
+    <string name="warehouse_not_specified">غير محدد</string>
+    <string name="warehouse_tag_special_cooling">تبريد خاص</string>
+    <string name="warehouse_tag_fast_shipping">شحن سريع</string>
+    <string name="warehouse_tag_stock_percent">المخزون %1$d%%</string>
+    <string name="warehouse_distance_not_specified">المسافة غير محددة</string>
+    <string name="warehouse_promo_title">عرض خاص للمستودعات</string>
+    <string name="warehouse_promo_subtitle">اشترك في باقة التوريد الذكي الآن</string>
+    <string name="warehouse_status_available_now">متاح الآن</string>
+    <string name="warehouse_status_closed_now">مغلق حالياً</string>
+    <string name="warehouse_preview_name">مستودع دمشق المركزي</string>
+    <string name="warehouse_preview_address">دمشق، المنطقة البركة</string>
+    <string name="warehouse_preview_distance">5 كم</string>
+    <string name="warehouse_preview_delivery">2 ساعة</string>
+    <string name="warehouse_preview_updated">منذ قليل</string>
+
+    <!-- Keywords for delivery fast detection -->
+    <string name="delivery_keyword_fast">سريع</string>
+    <string name="delivery_keyword_same_day">نفس اليوم</string>
+    <string name="delivery_keyword_hour_sa">ساعة</string>
+    <string name="delivery_keyword_hour_saat">ساعت</string>
 </resources>

@@ -1,42 +1,111 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="auth_app_title">PharmaLink</string>
-    <string name="auth_brand_title">ملاذ الصيدلة</string>
-    <string name="auth_tagline">نظام إدارة الصيدلية المتكامل</string>
-    <string name="auth_cd_logo">شعار التطبيق</string>
-    <string name="auth_cd_biometric">المصادقة البيومترية</string>
-    <string name="auth_signup_title">إنشاء حساب جديد</string>
-    <string name="auth_error_fields_required">يرجى ملء جميع الحقول المطلوبة</string>
-    <string name="auth_error_phone_syrian">رقم الهاتف غير صحيح (مطلوب صيغة سورية +963)</string>
-    <string name="auth_error_login_failed">تعذر تسجيل الدخول. حاول مرة أخرى.</string>
-    <string name="auth_error_signup_failed">تعذر إنشاء الحساب. حاول مرة أخرى.</string>
+    <string name="splash_tagline">بوابتك الرقمية لعالم الصيدلة المتكامل</string>
+    <string name="auth_error_fields_required">يرجى تعبئة جميع الحقول المطلوبة</string>
+    <string name="auth_error_phone_syrian">يرجى إدخال رقم سوري صالح</string>
+    <string name="auth_error_invalid_credentials">بيانات تسجيل الدخول غير صحيحة</string>
+    <string name="auth_error_user_not_found">المستخدم غير موجود</string>
+    <string name="auth_error_email_not_confirmed">الحساب غير مؤكد بعد</string>
+    <string name="error_network">حدث خطأ في الاتصال بالشبكة</string>
+    <string name="error_unknown">حدث خطأ غير متوقع</string>
+    <string name="signup_success_created">تم إنشاء الحساب بنجاح</string>
+    <string name="signup_success_login_required">يمكنك الآن تسجيل الدخول إلى حسابك</string>
+    <string name="auth_error_password_short">كلمة المرور قصيرة جداً</string>
+    <string name="auth_error_password_mismatch">كلمتا المرور غير متطابقتين</string>
+    <string name="auth_error_invalid_phone">رقم الهاتف غير صالح</string>
+    <string name="auth_error_name_required">الاسم الكامل مطلوب</string>
     <string name="auth_error_pharmacy_name_required">اسم الصيدلية مطلوب</string>
     <string name="auth_error_warehouse_name_required">اسم المستودع مطلوب</string>
     <string name="auth_error_warehouse_location_required">موقع المستودع مطلوب</string>
-    <string name="auth_error_password_short">كلمة المرور يجب أن تكون 6 أحرف على الأقل</string>
-    <string name="auth_error_password_mismatch">كلمات المرور غير متطابقة</string>
-    <string name="auth_email_label">البريد الإلكتروني</string>
-    <string name="auth_password_label">كلمة المرور</string>
-    <string name="auth_continue">متابعة</string>
-    <string name="auth_welcome_back">مرحباً بك مجدداً</string>
-    <string name="auth_login_subtitle">قم بتسجيل الدخول لمتابعة مخزونك وطلباتك</string>
-    <string name="auth_remember_me">تذكرني</string>
-    <string name="auth_forgot_password">نسيت كلمة المرور؟</string>
+    <string name="auth_error_phone_exists">رقم الهاتف مستخدم بالفعل</string>
+    <string name="auth_error_weak_password">كلمة المرور ضعيفة</string>
+    <string name="auth_error_signup_failed">تعذر إنشاء الحساب</string>
+    <string name="auth_cd_logo">شعار صيدليتي</string>
+    <string name="auth_account_type_admin">مدير</string>
+    <string name="auth_account_type_pharmacy">صيدلية</string>
+    <string name="auth_account_type_warehouse">مستودع</string>
+    <string name="auth_account_type_public_user">مستخدم عام</string>
+    <string name="auth_brand_title">صيدليتي</string>
+    <string name="auth_tagline">منصة متكاملة لإدارة الصيدليات والمستودعات</string>
+    <string name="auth_welcome_back">مرحباً بعودتك</string>
+    <string name="auth_login_subtitle">سجّل الدخول للمتابعة</string>
+    <string name="auth_forgot_password">هل نسيت كلمة المرور؟</string>
     <string name="auth_login_button">تسجيل الدخول</string>
-    <string name="auth_create_account">إنشاء حساب جديد</string>
+    <string name="auth_create_account">إنشاء حساب</string>
     <string name="auth_or_via">أو عبر</string>
+    <string name="auth_or">أو</string>
     <string name="auth_google">Google</string>
-    <string name="auth_biometric">Biometric</string>
-    <string name="auth_error_invalid_credentials">Invalid login credentials</string>
-    <string name="auth_error_user_not_found">User not found</string>
-    <string name="auth_error_email_not_confirmed">Email is not confirmed</string>
-    <string name="auth_error_invalid_phone">Invalid phone number</string>
-    <string name="auth_error_name_required">Name is required</string>
-    <string name="auth_error_phone_exists">Phone number already registered</string>
-    <string name="auth_error_weak_password">Password is too weak</string>
-    <string name="auth_account_type_admin">مسؤول</string>
-    <string name="signup_success_created">تم إنشاء الحساب بنجاح</string>
-    <string name="signup_success_login_required">يرجى تسجيل الدخول</string>
-    <string name="error_network">Network error</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="auth_cd_biometric">تسجيل الدخول بالبصمة</string>
+    <string name="auth_biometric">البصمة</string>
+    <string name="auth_signup_title">إنشاء حساب جديد</string>
+    <string name="auth_phone_label">رقم الهاتف</string>
+    <string name="auth_password_label">كلمة المرور</string>
+    <string name="auth_email_label">البريد الإلكتروني</string>
+    <string name="auth_full_name_label">الاسم الكامل</string>
+    <string name="auth_pharmacy_name_label">اسم الصيدلية</string>
+    <string name="auth_location_label">الموقع</string>
+    <string name="auth_warehouse_name_label">اسم المستودع / المورد</string>
+    <string name="auth_password_hide">إخفاء</string>
+    <string name="auth_password_show">إظهار</string>
+    <string name="auth_password_hide_full">إخفاء كلمة المرور</string>
+    <string name="auth_password_show_full">إظهار كلمة المرور</string>
+    <string name="auth_city_line">دمشق • حلب، سوريا</string>
+    <string name="auth_trust_fast_delivery">توصيل طبي فائق السرعة</string>
+    <string name="auth_trust_certified_platform">منصة طبية معتمدة</string>
+
+    <!-- Location Picker -->
+    <string name="location_picker_title">اختيار الموقع من الخريطة</string>
+    <string name="location_picker_selected_title">الموقع المحدد</string>
+    <string name="location_picker_manual_disabled_message">اختيار الموقع اليدوي غير متاح حالياً. استخدم الموقع الحالي أو عد لاحقاً.</string>
+    <string name="location_picker_confirm">تأكيد الموقع</string>
+    <string name="location_picker_cancel">إلغاء</string>
+    <string name="location_picker_select_on_map">اختيار على الخريطة</string>
+    <string name="location_picker_change_location">تغيير الموقع على الخريطة</string>
+    <string name="location_picker_confirm_button">تأكيد الموقع</string>
+    <string name="location_picker_resolving_address">جاري تحديد العنوان...</string>
+    <string name="location_picker_detected_address">العنوان المكتشف</string>
+    <string name="location_picker_lat_lng_format">Lat: %.6f, Lng: %.6f</string>
+    <string name="location_picker_use_current_location">استخدام موقعي الحالي</string>
+    <string name="location_picker_use_current_location_cd">تحديد الموقع الحالي</string>
+    <string name="location_picker_current_location_hint">سيتم تحديد العنوان والإحداثيات من GPS ثم عرض الموقع على الخريطة.</string>
+    <string name="location_picker_no_location_selected">لم يتم اختيار موقع بعد</string>
+    <string name="location_picker_open_app_settings">فتح إعدادات التطبيق</string>
+    <string name="location_picker_open_location_settings">فتح إعدادات الموقع</string>
+    <string name="location_picker_success_warehouse">تم تحديد موقع المستودع بنجاح</string>
+    <string name="location_picker_success_pharmacy">تم تحديد موقع الصيدلية بنجاح</string>
+    <string name="location_error_permission_required">يرجى السماح بالوصول إلى الموقع لتحديد العنوان والإحداثيات.</string>
+    <string name="location_error_permission_settings">يرجى السماح بالوصول إلى الموقع من إعدادات التطبيق.</string>
+    <string name="location_error_gps_disabled">خدمات الموقع معطلة. يرجى تفعيل GPS من إعدادات الجهاز.</string>
+    <string name="location_error_unavailable">تعذر تحديد الموقع الحالي. حاول مرة أخرى.</string>
+    <string name="location_error_generic">تعذر تحديد الموقع حالياً.</string>
+
+    <!-- SignUp Steps -->
+    <string name="signup_step_1_account_type">الخطوة 1: نوع الحساب</string>
+    <string name="signup_step_2_personal_info">الخطوة 2: المعلومات الشخصية</string>
+    <string name="signup_step_3_pharmacy_details">الخطوة 3: تفاصيل الصيدلية</string>
+    <string name="signup_step_3_warehouse_details">الخطوة 3: تفاصيل المستودع</string>
+    <string name="signup_subtitle">ابدأ رحلتك في إدارة صيدليتك باحترافية</string>
+    <string name="signup_create_account">إنشاء حساب</string>
+    <string name="signup_have_account">لديك حساب بالفعل؟</string>
+    <string name="signup_login">تسجيل الدخول</string>
+    <string name="signup_copyright">© 2024 منصة الصيدلية الذكية - جميع الحقوق محفوظة</string>
+
+    <!-- Field Labels -->
+    <string name="field_label_location_pharmacy">الموقع (الحي / الشارع)</string>
+    <string name="field_label_location_warehouse">موقع المستودع</string>
+    <string name="field_label_confirm_password">تأكيد كلمة المرور</string>
+
+    <!-- Error Messages -->
+    <string name="error_full_name_required">الاسم الكامل مطلوب</string>
+    <string name="error_phone_required">رقم الهاتف مطلوب</string>
+    <string name="error_password_required">كلمة المرور مطلوبة</string>
+    <string name="error_confirm_password_required">تأكيد كلمة المرور مطلوب</string>
+    <string name="error_password_mismatch_detail">كلمات المرور غير متطابقة</string>
+    <string name="error_pharmacy_name_required">اسم الصيدلية مطلوب</string>
+    <string name="error_warehouse_name_required">اسم المستودع مطلوب</string>
+    <string name="error_warehouse_location_required">موقع المستودع مطلوب</string>
+    <string name="auth_error_warehouse_map_location_required">اختر موقع المستودع من الخريطة</string>
 </resources>
+
+
+

@@ -20,12 +20,14 @@ enum class RequestStatus {
 data class Request(
     val id: String,
     val pharmacyId: String,
+    val medicineId: String? = null,
     val medicineName: String,
     val medicineSubtitle: String = "",
     val quantity: Int,
     val unit: String,
     val notes: String,
     val storageNotes: String = "",
+    val totalPrice: Double = 0.0,
     val priority: RequestPriority,
     val status: RequestStatus,
     val warehouseId: String,
@@ -35,6 +37,7 @@ data class Request(
     val updatedAtLabel: String,
     val etaLabel: String = "",
     val relatedOrderId: String? = null,
+    val rejectionReason: String? = null,
     val attachmentUrl: String? = null,
     val medicineImageUrl: String? = null,
 )

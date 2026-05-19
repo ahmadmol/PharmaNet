@@ -60,21 +60,21 @@ fun OrdersSummary(
         ) {
             SummaryItem(
                 value = activeOrders.toString(),
-                label = "نشط",
+                label = "نشطة",
                 icon = Icons.Outlined.Assignment,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f),
             )
             SummaryItem(
                 value = urgentOrders.toString(),
-                label = "عاجل",
+                label = "عاجلة",
                 icon = Icons.Outlined.PriorityHigh,
                 color = PremiumUrgent,
                 modifier = Modifier.weight(1f),
             )
             SummaryItem(
                 value = completedToday.toString(),
-                label = "مكتمل",
+                label = "مكتملة",
                 icon = Icons.Outlined.CheckCircle,
                 color = Color(0xFF4CAF50), // Success green
                 modifier = Modifier.weight(1f),

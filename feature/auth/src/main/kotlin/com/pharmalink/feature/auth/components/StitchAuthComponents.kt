@@ -120,7 +120,7 @@ fun StitchPhoneRow(
 
     Column(modifier) {
         Text(
-            text = "رقم الهاتف",
+            text = stringResource(R.string.auth_phone_label),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = d.spaceXS),
@@ -225,7 +225,7 @@ fun StitchPasswordRow(
 
     Column(modifier) {
         Text(
-            text = "كلمة المرور",
+            text = stringResource(R.string.auth_password_label),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = d.spaceXS),
@@ -265,7 +265,11 @@ fun StitchPasswordRow(
                 IconButton(onClick = { visible = !visible }) {
                     Icon(
                         if (visible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
-                        contentDescription = if (visible) "إخفاء" else "إظهار",
+                        contentDescription = if (visible) {
+                            stringResource(R.string.auth_password_hide)
+                        } else {
+                            stringResource(R.string.auth_password_show)
+                        },
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -307,8 +311,8 @@ fun StitchGradientPrimaryButton(
             .fillMaxWidth()
             .height(56.dp)
             .scale(scale)
-            .shadow(8.dp, RoundedCornerShape(50))
-            .clip(RoundedCornerShape(50))
+            .shadow(8.dp, RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(brush)
             .clickable(
                 enabled = enabled && !isLoading,
@@ -361,7 +365,7 @@ fun StitchOrDivider(modifier: Modifier = Modifier) {
                 .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)),
         )
         Text(
-            text = "أو",
+            text = stringResource(R.string.auth_or),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(horizontal = d.spaceM),
@@ -408,19 +412,19 @@ fun StitchAccountTypeSelector(
         verticalArrangement = Arrangement.spacedBy(d.spaceM),
     ) {
         StitchAccountTypeCard(
-            title = "صيدلية",
+            title = stringResource(R.string.auth_account_type_pharmacy),
             icon = Icons.Outlined.LocalPharmacy,
             selected = selected == AccountType.PHARMACY,
             onClick = { onSelect(AccountType.PHARMACY) },
         )
         StitchAccountTypeCard(
-            title = "مستودع",
+            title = stringResource(R.string.auth_account_type_warehouse),
             icon = Icons.Outlined.Inventory,
             selected = selected == AccountType.WAREHOUSE,
             onClick = { onSelect(AccountType.WAREHOUSE) },
         )
         StitchAccountTypeCard(
-            title = "مستخدم عام",
+            title = stringResource(R.string.auth_account_type_public_user),
             icon = Icons.Outlined.Person,
             selected = selected == AccountType.PUBLIC_USER,
             onClick = { onSelect(AccountType.PUBLIC_USER) },
@@ -442,16 +446,11 @@ private fun StitchAccountTypeCard(
     onClick: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
-    val shape = RoundedCornerShape(d.radiusL)
+    val shape = RoundedCornerShape(24.dp)
     val borderColor = if (selected) {
-        MaterialTheme.colorScheme.primary
+        Color(0xFF00796B)
     } else {
         Color.Transparent
-    }
-    val bg = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f)
-    } else {
-        MaterialTheme.colorScheme.surface
     }
     Surface(
         modifier = Modifier
@@ -460,8 +459,8 @@ private fun StitchAccountTypeCard(
             .border(2.dp, borderColor, shape)
             .clickable(onClick = onClick),
         shape = shape,
-        color = bg,
-        shadowElevation = if (selected) 4.dp else 1.dp,
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 4.dp,
     ) {
         Box(Modifier.fillMaxSize()) {
             if (selected) {

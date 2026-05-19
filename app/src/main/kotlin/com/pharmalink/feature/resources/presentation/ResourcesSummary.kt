@@ -60,21 +60,21 @@ fun ResourcesSummary(
         ) {
             SummaryItem(
                 value = activeWarehouses.toString(),
-                label = "نشط",
+                label = "نشطة",
                 icon = Icons.Outlined.Assignment,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f),
             )
             SummaryItem(
                 value = urgentWarehouses.toString(),
-                label = "عاجل",
+                label = "عاجلة",
                 icon = Icons.Outlined.PriorityHigh,
                 color = PremiumUrgent,
                 modifier = Modifier.weight(1f),
             )
             SummaryItem(
                 value = availableNow.toString(),
-                label = "متوفر",
+                label = "متاحة",
                 icon = Icons.Outlined.CheckCircle,
                 color = Color(0xFF4CAF50), // Success green
                 modifier = Modifier.weight(1f),

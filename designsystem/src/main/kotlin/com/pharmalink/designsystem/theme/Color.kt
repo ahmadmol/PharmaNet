@@ -38,6 +38,10 @@ val PharmaSuccess = PremiumSecondary
 val PharmaError = PremiumUrgent
 val PharmaWarning = Color(0xFFF59E0B)
 
+// Status / Admin semantic colors
+val StatusActive = Color(0xFF10B981)
+val StatusInfo = Color(0xFF3B82F6)
+
 // Gradient helpers (use with Brush.linearGradient)
 val GradientPrimaryStart = PharmaBlue700
 val GradientPrimaryEnd = PremiumPrimary

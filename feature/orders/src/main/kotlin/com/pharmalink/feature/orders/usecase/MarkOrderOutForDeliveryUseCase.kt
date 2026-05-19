@@ -15,7 +15,7 @@ import javax.inject.Inject
  * - Only PHARMACY can mark orders out for delivery
  * - Must own the pharmacy
  * - Only DELIVERY orders can be marked out for delivery
- * - Only CONFIRMED orders can transition to OUT_FOR_DELIVERY
+ * - Only CONFIRMED or IN_PROGRESS orders can transition to OUT_FOR_DELIVERY
  */
 class MarkOrderOutForDeliveryUseCase @Inject constructor(
     private val pharmaRepository: PharmaRepository,
@@ -52,10 +52,10 @@ class MarkOrderOutForDeliveryUseCase @Inject constructor(
             )
         }
 
-        // Rule 4: Valid status transition (CONFIRMED -> OUT_FOR_DELIVERY)
-        if (order.status != OrderStatus.CONFIRMED) {
+        // Rule 4: Valid status transition (CONFIRMED/IN_PROGRESS -> OUT_FOR_DELIVERY)
+        if (order.status != OrderStatus.CONFIRMED && order.status != OrderStatus.IN_PROGRESS) {
             return Result.failure(
-                IllegalStateException("Can only mark CONFIRMED orders as out for delivery. Current status: ${order.status}")
+                IllegalStateException("Can only mark CONFIRMED or IN_PROGRESS orders as out for delivery. Current status: ${order.status}")
             )
         }
 

@@ -73,26 +73,22 @@ import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AccountType
 
-private val warehouseCategories = listOf(
-    "الكل",
-    "أدوية مزمنة",
-    "لقاحات",
-    "مستلزمات طبية",
-)
-
 @Composable
 fun WarehousesScreen(
     viewModel: WarehousesViewModel = hiltViewModel(),
     accountType: AccountType? = null,
     onWarehouseClick: (String) -> Unit = {},
     onViewIncomingRequests: () -> Unit = {},
+    onManageInventory: () -> Unit = {},
     onAdminCreateFacility: (() -> Unit)? = null,
 ) {
-    val screenTitle = when (accountType) {
-        AccountType.WAREHOUSE -> "المستودعات في الشبكة"
-        else -> "المستودعات المتاحة"
-    }
     val uiState by viewModel.uiState.collectAsState()
+    val warehouseCategories = listOf(
+        stringResource(R.string.warehouse_category_all),
+        stringResource(R.string.warehouse_category_chronic),
+        stringResource(R.string.warehouse_category_vaccines),
+        stringResource(R.string.warehouse_category_supplies),
+    )
     var selectedCategory by remember { mutableStateOf(warehouseCategories.first()) }
     val isWarehouse = accountType == AccountType.WAREHOUSE
     val canCreateRequest = accountType == AccountType.PHARMACY
@@ -114,6 +110,7 @@ fun WarehousesScreen(
             else -> {
                 WarehousesContent(
                     warehouses = uiState.warehouses,
+                    categories = warehouseCategories,
                     isRefreshing = uiState.isLoading,
                     selectedCategory = selectedCategory,
                     onCategorySelected = { selectedCategory = it },
@@ -121,6 +118,7 @@ fun WarehousesScreen(
                     isWarehouse = isWarehouse,
                     canCreateRequest = canCreateRequest,
                     onViewIncomingRequests = onViewIncomingRequests,
+                    onManageInventory = onManageInventory,
                     onAdminCreateFacility = onAdminCreateFacility,
                 )
             }
@@ -131,6 +129,7 @@ fun WarehousesScreen(
 @Composable
 private fun WarehousesContent(
     warehouses: List<WarehouseItem>,
+    categories: List<String>,
     isRefreshing: Boolean,
     selectedCategory: String,
     onCategorySelected: (String) -> Unit,
@@ -138,6 +137,7 @@ private fun WarehousesContent(
     isWarehouse: Boolean = false,
     canCreateRequest: Boolean = false,
     onViewIncomingRequests: () -> Unit = {},
+    onManageInventory: () -> Unit = {},
     onAdminCreateFacility: (() -> Unit)? = null,
 ) {
     val d = MaterialTheme.dimens
@@ -151,6 +151,7 @@ private fun WarehousesContent(
     ) {
         item {
             WarehousesSearchBar(
+                showFilterIcon = !isWarehouse,
                 modifier = Modifier.padding(horizontal = d.spaceL),
             )
         }
@@ -175,7 +176,7 @@ private fun WarehousesContent(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "إضافة منشأة",
+                            text = stringResource(R.string.warehouse_add_facility),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
@@ -184,12 +185,15 @@ private fun WarehousesContent(
                 }
             }
         }
-        item {
-            CategoryChips(
-                selectedCategory = selectedCategory,
-                onCategorySelected = onCategorySelected,
-                modifier = Modifier.padding(horizontal = d.spaceL),
-            )
+        if (!isWarehouse) {
+            item {
+                CategoryChips(
+                    categories = categories,
+                    selectedCategory = selectedCategory,
+                    onCategorySelected = onCategorySelected,
+                    modifier = Modifier.padding(horizontal = d.spaceL),
+                )
+            }
         }
         item {
             Row(
@@ -200,13 +204,13 @@ private fun WarehousesContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "المستودعات المتاحة",
+                    text = stringResource(R.string.warehouse_available_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "عرض الكل",
+                    text = stringResource(R.string.warehouse_view_all),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = PharmaBlue500,
@@ -235,6 +239,7 @@ private fun WarehousesContent(
                 isWarehouse = isWarehouse,
                 canCreateRequest = canCreateRequest,
                 onViewIncomingRequests = onViewIncomingRequests,
+                onManageInventory = onManageInventory,
             )
         }
         item {
@@ -246,7 +251,10 @@ private fun WarehousesContent(
 }
 
 @Composable
-private fun WarehousesSearchBar(modifier: Modifier = Modifier) {
+private fun WarehousesSearchBar(
+    showFilterIcon: Boolean = true,
+    modifier: Modifier = Modifier,
+) {
     val d = MaterialTheme.dimens
 
     Surface(
@@ -269,7 +277,7 @@ private fun WarehousesSearchBar(modifier: Modifier = Modifier) {
                 modifier = Modifier.size(d.iconS),
             )
             Text(
-                text = "ابحث عن مستودع أو مورد...",
+                text = stringResource(R.string.search_warehouses_or_supplier_placeholder),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -277,18 +285,21 @@ private fun WarehousesSearchBar(modifier: Modifier = Modifier) {
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Start,
             )
-            Icon(
-                imageVector = Icons.Outlined.FilterList,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(d.iconS),
-            )
+            if (showFilterIcon) {
+                Icon(
+                    imageVector = Icons.Outlined.FilterList,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(d.iconS),
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun CategoryChips(
+    categories: List<String>,
     selectedCategory: String,
     onCategorySelected: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -299,7 +310,7 @@ private fun CategoryChips(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(d.spaceS),
     ) {
-        items(warehouseCategories) { category ->
+        items(categories) { category ->
             val selected = category == selectedCategory
             Surface(
                 shape = CircleShape,
@@ -336,11 +347,12 @@ private fun WarehouseCard(
     isWarehouse: Boolean = false,
     canCreateRequest: Boolean = false,
     onViewIncomingRequests: () -> Unit = {},
+    onManageInventory: () -> Unit = {},
 ) {
     val actionText = if (isWarehouse) {
-        "عرض الطلبات الواردة"
+        stringResource(R.string.warehouse_action_view_incoming)
     } else if (canCreateRequest) {
-        "اطلب الآن"
+        stringResource(R.string.warehouse_action_request_now)
     } else {
         null
     }
@@ -431,15 +443,15 @@ private fun WarehouseCard(
                 horizontalArrangement = Arrangement.spacedBy(d.spaceM),
             ) {
                 WarehouseMetric(
-                    label = "سرعة التوصيل",
-                    value = item.estimatedDelivery.ifBlank { "غير محدد" },
+                    label = stringResource(R.string.warehouse_metric_delivery_speed),
+                    value = item.estimatedDelivery.ifBlank { stringResource(R.string.warehouse_not_specified) },
                     icon = Icons.Outlined.Bolt,
                     valueColor = if (fastDelivery) PharmaSuccess else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
                 WarehouseMetric(
-                    label = "الحد الأدنى",
-                    value = "غير محدد",
+                    label = stringResource(R.string.warehouse_metric_minimum),
+                    value = stringResource(R.string.warehouse_not_specified),
                     icon = Icons.Outlined.Inventory2,
                     modifier = Modifier.weight(1f),
                 )
@@ -451,13 +463,13 @@ private fun WarehouseCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (item.supportsColdChain) {
-                    WarehouseTag(text = "تبريد خاص", icon = Icons.Outlined.AcUnit)
+                    WarehouseTag(text = stringResource(R.string.warehouse_tag_special_cooling), icon = Icons.Outlined.AcUnit)
                 }
                 if (fastDelivery) {
-                    WarehouseTag(text = "شحن سريع", icon = Icons.Outlined.Bolt)
+                    WarehouseTag(text = stringResource(R.string.warehouse_tag_fast_shipping), icon = Icons.Outlined.Bolt)
                 }
                 if (item.stockPercent > 0) {
-                    WarehouseTag(text = "المخزون ${item.stockPercent}%", icon = Icons.Outlined.Store)
+                    WarehouseTag(text = stringResource(R.string.warehouse_tag_stock_percent, item.stockPercent), icon = Icons.Outlined.Store)
                 }
             }
 
@@ -468,7 +480,7 @@ private fun WarehouseCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = item.distance.ifBlank { "المسافة غير محددة" },
+                        text = item.distance.ifBlank { stringResource(R.string.warehouse_distance_not_specified) },
                         style = MaterialTheme.typography.labelSmall,
                         color = PharmaNeutral600,
                     )
@@ -499,6 +511,19 @@ private fun WarehouseCard(
                     enabled = true,
                 ) {
                     Text(actionText)
+                }
+            }
+            if (isWarehouse) {
+                Button(
+                    onClick = onManageInventory,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                    enabled = true,
+                ) {
+                    Text("إدارة المخزون")
                 }
             }
         }
@@ -536,13 +561,13 @@ private fun WarehousePromo(modifier: Modifier = Modifier) {
                 horizontalAlignment = Alignment.Start,
             ) {
                 Text(
-                    text = "عرض خاص للمستودعات",
+                    text = stringResource(R.string.warehouse_promo_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                 )
                 Text(
-                    text = "اشترك في باقة التوريد الذكي الآن",
+                    text = stringResource(R.string.warehouse_promo_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.86f),
                 )
@@ -724,9 +749,9 @@ private fun WarehousesEmptyState() {
 
 @Composable
 private fun statusLabel(statusType: StatusType): String = when (statusType) {
-    StatusType.AVAILABLE -> "متاح الآن"
+    StatusType.AVAILABLE -> stringResource(R.string.warehouse_status_available_now)
     StatusType.LOW_STOCK -> "مخزون منخفض"
-    StatusType.CLOSED -> "مغلق حالياً"
+    StatusType.CLOSED -> stringResource(R.string.warehouse_status_closed_now)
 }
 
 @Composable
@@ -749,19 +774,25 @@ fun WarehousesScreenPreview() {
             warehouses = listOf(
                 WarehouseItem(
                     id = "1",
-                    name = "مستودع دمشق المركزي",
-                    address = "دمشق، المنطقة البركة",
+                    name = stringResource(R.string.warehouse_preview_name),
+                    address = stringResource(R.string.warehouse_preview_address),
                     status = "متاح",
                     statusType = StatusType.AVAILABLE,
                     supportsColdChain = true,
                     stockPercent = 88,
-                    distance = "5 كم",
-                    estimatedDelivery = "2 ساعة",
-                    lastUpdated = "منذ قليل",
+                    distance = stringResource(R.string.warehouse_preview_distance),
+                    estimatedDelivery = stringResource(R.string.warehouse_preview_delivery),
+                    lastUpdated = stringResource(R.string.warehouse_preview_updated),
                 ),
             ),
+            categories = listOf(
+                stringResource(R.string.warehouse_category_all),
+                stringResource(R.string.warehouse_category_chronic),
+                stringResource(R.string.warehouse_category_vaccines),
+                stringResource(R.string.warehouse_category_supplies),
+            ),
             isRefreshing = false,
-            selectedCategory = "الكل",
+            selectedCategory = stringResource(R.string.warehouse_category_all),
             onCategorySelected = {},
             onWarehouseClick = {},
         )

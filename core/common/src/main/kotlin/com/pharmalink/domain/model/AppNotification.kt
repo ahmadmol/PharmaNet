@@ -22,6 +22,7 @@ enum class NotificationDestination {
     WAREHOUSE,
     COMPLIANCE,
     HELP,
+    PHARMACY_CUSTOMER_ORDER,
 }
 
 data class AppNotification(

@@ -41,16 +41,10 @@ sealed interface WarehouseInventoryAction {
     data class OnSearchQueryChanged(val query: String) : WarehouseInventoryAction
     data object OnFilterClicked : WarehouseInventoryAction
     data object OnAddMedicineClicked : WarehouseInventoryAction
-    data class OnMedicineClicked(val medicineId: String) : WarehouseInventoryAction
-    data class OnEditInventoryClicked(val medicineId: String) : WarehouseInventoryAction
-    data class OnDeleteInventoryClicked(val medicineId: String) : WarehouseInventoryAction
 }
 
 sealed interface WarehouseInventoryEffect {
     data class ShowMessage(val message: String) : WarehouseInventoryEffect
     data object NavigateBack : WarehouseInventoryEffect
     data object NavigateToAddMedicine : WarehouseInventoryEffect
-    data class NavigateToMedicineDetail(val medicineId: String) : WarehouseInventoryEffect
-    data class NavigateToEditInventory(val medicineId: String) : WarehouseInventoryEffect
-    data class ShowDeleteConfirmation(val medicineId: String, val medicineName: String) : WarehouseInventoryEffect
 }

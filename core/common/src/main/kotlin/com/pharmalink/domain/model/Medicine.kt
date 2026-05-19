@@ -6,5 +6,6 @@ data class Medicine(
     val brand: String,
     val strength: String,
     val price: Double,
+    val stockQuantity: Int = 0,
     val imageUrl: String? = null
 )

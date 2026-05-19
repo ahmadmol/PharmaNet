@@ -1,5 +1,6 @@
 package com.pharmalink.feature.profile
 
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,14 +43,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -84,6 +84,7 @@ fun ProfileScreen(
     onOpenHelpSupport: () -> Unit = {},
     onOpenAboutApp: () -> Unit = {},
     onOpenContactUs: () -> Unit = {},
+    onOpenLanguage: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -97,6 +98,8 @@ fun ProfileScreen(
             onOpenHelpSupport = onOpenHelpSupport,
             onOpenAboutApp = onOpenAboutApp,
             onOpenContactUs = onOpenContactUs,
+            onOpenLanguage = onOpenLanguage,
+            onNotificationsToggle = viewModel::updateNotifications,
         )
     }
 }
@@ -110,16 +113,16 @@ private fun ProfileContent(
     onOpenHelpSupport: () -> Unit,
     onOpenAboutApp: () -> Unit,
     onOpenContactUs: () -> Unit,
+    onOpenLanguage: () -> Unit,
+    onNotificationsToggle: (Boolean) -> Unit,
 ) {
     val d = MaterialTheme.dimens
     val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
-    val settingsGroups = remember(uiState.settingsOptions, isPublicUser) {
-        uiState.settingsOptions
-            .filterNot { isPublicUser && it.isNotification() }
-            .groupForProfile()
-    }
-    var languagePreview by remember { mutableStateOf("العربية") }
-    var isLanguageSheetVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val settingsGroups = uiState.settingsOptions
+        .filterNot { isPublicUser && it.isNotification(context) }
+        .groupForProfile(uiState.accountTypeEnum, context)
+    val languagePreview = stringResource(R.string.profile_language_arabic_only)
 
     LazyColumn(
         modifier = Modifier
@@ -133,6 +136,7 @@ private fun ProfileContent(
             ProfileHeroSection(
                 userName = uiState.userName,
                 accountType = uiState.accountType,
+                accountTypeEnum = uiState.accountTypeEnum,
                 pharmacyName = uiState.pharmacyName,
                 pharmacyAddress = uiState.pharmacyAddress,
                 isPublicUser = isPublicUser,
@@ -150,11 +154,14 @@ private fun ProfileContent(
             ProfileSettingsSection(
                 group = group,
                 languagePreview = languagePreview,
-                onLanguageClick = { isLanguageSheetVisible = true },
+                onLanguageClick = onOpenLanguage,
                 onSecurityClick = onChangePassword,
                 onHelpSupportClick = onOpenHelpSupport,
                 onAboutClick = onOpenAboutApp,
                 onContactClick = onOpenContactUs,
+                notificationsEnabled = uiState.notificationsEnabled,
+                notificationsError = uiState.notificationsError,
+                onNotificationsClick = { onNotificationsToggle(!uiState.notificationsEnabled) },
                 modifier = Modifier.padding(horizontal = d.spaceL),
             )
         }
@@ -167,20 +174,13 @@ private fun ProfileContent(
         item {
             ProfileFooter(
                 text = uiState.settingsOptions
-                    .firstOrNull { it.isAbout() }
+                    .firstOrNull { it.isAbout(context) }
                     ?.subtitle
                     .orEmpty(),
             )
         }
     }
 
-    if (isLanguageSheetVisible) {
-        LanguageSettingsSheet(
-            selectedLanguage = languagePreview,
-            onLanguageSelected = { languagePreview = it },
-            onDismiss = { isLanguageSheetVisible = false },
-        )
-    }
 }
 
 @Composable
@@ -199,7 +199,7 @@ private fun ProfileHeader() {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "الملف الشخصي",
+                text = stringResource(R.string.profile_header_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -213,6 +213,7 @@ private fun ProfileHeader() {
 private fun ProfileHeroSection(
     userName: String,
     accountType: String,
+    accountTypeEnum: com.pharmalink.domain.model.AccountType?,
     pharmacyName: String,
     pharmacyAddress: String,
     isPublicUser: Boolean,
@@ -220,6 +221,13 @@ private fun ProfileHeroSection(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val context = LocalContext.current
+    val isWarehouse = accountTypeEnum == com.pharmalink.domain.model.AccountType.WAREHOUSE
+    val organizationFallback = if (isWarehouse) {
+        stringResource(R.string.edit_profile_role_warehouse)
+    } else {
+        accountType
+    }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -270,7 +278,7 @@ private fun ProfileHeroSection(
             textAlign = TextAlign.Center,
         )
         Text(
-            text = if (isPublicUser) accountType else pharmacyName.ifBlank { accountType },
+            text = if (isPublicUser) accountType else pharmacyName.ifBlank { organizationFallback },
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             color = PharmaBlue500,
@@ -314,11 +322,17 @@ private fun ProfileSummaryCard(
 ) {
     val d = MaterialTheme.dimens
     val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
+    val isWarehouse = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.WAREHOUSE
     val organizationLabel = when {
-        isPublicUser -> "العنوان"
-        uiState.accountType.contains("PHARMACY", ignoreCase = true) -> "الصيدلية"
-        uiState.accountType.contains("WAREHOUSE", ignoreCase = true) -> "المستودع"
-        else -> "الجهة"
+        isPublicUser -> stringResource(R.string.profile_org_label_user)
+        isWarehouse -> stringResource(R.string.profile_org_label_warehouse)
+        uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PHARMACY -> stringResource(R.string.profile_org_label_pharmacy)
+        else -> stringResource(R.string.profile_org_label_fallback)
+    }
+    val accountTypeLabel = if (isWarehouse) {
+        stringResource(R.string.edit_profile_role_warehouse)
+    } else {
+        uiState.accountType
     }
 
     Surface(
@@ -349,12 +363,12 @@ private fun ProfileSummaryCard(
                 ) {
                     Column(horizontalAlignment = Alignment.Start) {
                         Text(
-                            "ملخص الحساب",
+                            text = stringResource(R.string.profile_summary_account_type),
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White.copy(alpha = 0.82f),
                         )
                         Text(
-                            text = uiState.accountType,
+                            text = accountTypeLabel,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -384,13 +398,13 @@ private fun ProfileSummaryCard(
                         modifier = Modifier.weight(1f),
                     )
                     SummaryInfo(
-                        label = "الهاتف",
+                        label = stringResource(R.string.profile_summary_phone),
                         value = uiState.userPhone,
                         modifier = Modifier.weight(1f),
                     )
                 }
                 SummaryInfo(
-                    label = "البريد الإلكتروني",
+                    label = stringResource(R.string.profile_summary_email),
                     value = uiState.userEmail,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -428,9 +442,13 @@ private fun ProfileSettingsSection(
     onHelpSupportClick: () -> Unit,
     onAboutClick: () -> Unit,
     onContactClick: () -> Unit,
+    notificationsEnabled: Boolean,
+    notificationsError: String?,
+    onNotificationsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val context = LocalContext.current
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -468,13 +486,23 @@ private fun ProfileSettingsSection(
                         isLast = index == group.items.lastIndex,
                         languagePreview = languagePreview,
                         onClick = when {
-                            item.isLanguage() -> onLanguageClick
-                            item.isSecurity() -> onSecurityClick
-                            item.isAbout() -> onAboutClick
-                            item.isContact() -> onContactClick
-                            item.isHelpSupport() -> onHelpSupportClick
+                            item.isLanguage(context) -> onLanguageClick
+                            item.isSecurity(context) -> onSecurityClick
+                            item.isAbout(context) -> onAboutClick
+                            item.isContact(context) -> onContactClick
+                            item.isHelpSupport(context) -> onHelpSupportClick
+                            item.isNotification(context) -> onNotificationsClick
                             else -> ({})
                         },
+                        notificationsEnabled = notificationsEnabled,
+                    )
+                }
+                if (!notificationsError.isNullOrBlank()) {
+                    Text(
+                        text = notificationsError,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PremiumUrgent,
+                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceS),
                     )
                 }
             }
@@ -488,20 +516,24 @@ private fun ProfileSettingRow(
     isLast: Boolean,
     languagePreview: String,
     onClick: () -> Unit,
+    notificationsEnabled: Boolean,
 ) {
     val d = MaterialTheme.dimens
-    val icon = settingIcon(item.title)
-    val isLanguage = item.isLanguage()
+    val context = LocalContext.current
+    val icon = settingIcon(item.title, context)
+    val isLanguage = item.isLanguage(context)
     val badgeText = when {
         isLanguage -> languagePreview
-        item.isAbout() -> "متاح"
-        item.isNotification() -> "مفعل"
-        item.isHelpSupport() || item.isContact() || item.isSecurity() -> "متاح"
-        else -> "متاح"
+        item.isAbout(context) -> stringResource(R.string.badge_about)
+        item.isNotification(context) -> if (notificationsEnabled) stringResource(R.string.badge_notification_on) else stringResource(R.string.badge_notification_off)
+        item.isHelpSupport(context) -> stringResource(R.string.badge_help_support)
+        item.isContact(context) -> stringResource(R.string.badge_contact)
+        item.isSecurity(context) -> stringResource(R.string.badge_security)
+        else -> stringResource(R.string.badge_default)
     }
     val badgeColor = when {
-        isLanguage || item.isNotification() -> PharmaSuccess
-        item.isHelpSupport() || item.isContact() || item.isSecurity() -> PharmaBlue500
+        isLanguage || item.isNotification(context) -> PharmaSuccess
+        item.isHelpSupport(context) || item.isContact(context) || item.isSecurity(context) -> PharmaBlue500
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -549,7 +581,7 @@ private fun ProfileSettingRow(
                     if (item.subtitle.isNotBlank()) {
                         Text(
                             text = if (isLanguage) {
-                                "اللغة الحالية: $languagePreview - لا يغير لغة التطبيق بعد"
+                                stringResource(R.string.profile_language_subtitle_with_preview, languagePreview)
                             } else {
                                 item.subtitle
                             },
@@ -643,54 +675,79 @@ private fun ProfileFooter(text: String) {
     )
 }
 
-private fun List<SettingItem>.groupForProfile(): List<SettingsGroup> {
-    val general = filter { it.isNotification() || it.isLanguage() || it.isAbout() }
-    val security = filter { it.isSecurity() }
-    val support = filter { it.isHelpSupport() || it.isContact() }
+private fun List<SettingItem>.groupForProfile(accountType: com.pharmalink.domain.model.AccountType?, context: Context): List<SettingsGroup> {
+    val general = filter { it.isNotification(context) || it.isLanguage(context) }
+    val security = filter { it.isSecurity(context) }
+    val support = if (accountType == com.pharmalink.domain.model.AccountType.ADMIN) {
+        emptyList()
+    } else {
+        filter { it.isHelpSupport(context) || it.isContact(context) }
+    }
     val grouped = general + security + support
     val fallback = filterNot { it in grouped }
 
     return buildList {
         if (general.isNotEmpty()) {
-            add(SettingsGroup("الإعدادات العامة", "اللغة والتنبيهات ومعلومات التطبيق", general))
+            add(SettingsGroup(
+                title = context.getString(R.string.settings_group_general_title),
+                subtitle = context.getString(R.string.settings_group_general_subtitle),
+                items = general))
         }
         if (security.isNotEmpty()) {
-            add(SettingsGroup("الأمان والخصوصية", "خيارات جاهزة للتفعيل عند ربط الحساب", security))
+            add(SettingsGroup(
+                title = context.getString(R.string.settings_group_security_title),
+                subtitle = context.getString(R.string.settings_group_security_subtitle),
+                items = security))
         }
         if (support.isNotEmpty()) {
-            add(SettingsGroup("الدعم والمساعدة", "مداخل آمنة ومباشرة لرحلة الدعم", support))
+            add(SettingsGroup(
+                title = context.getString(R.string.settings_group_support_title),
+                subtitle = context.getString(R.string.settings_group_support_subtitle),
+                items = support))
         }
         if (fallback.isNotEmpty()) {
-            add(SettingsGroup("خيارات أخرى", "عناصر إضافية غير مصنفة", fallback))
+            add(SettingsGroup(
+                title = context.getString(R.string.settings_group_fallback_title),
+                subtitle = context.getString(R.string.settings_group_fallback_subtitle),
+                items = fallback))
         }
     }
 }
 
-private fun settingIcon(title: String): ImageVector = when {
-    SettingItem(title, "").isNotification() -> Icons.Outlined.Notifications
-    SettingItem(title, "").isLanguage() -> Icons.Outlined.Language
-    SettingItem(title, "").isSecurity() -> Icons.Outlined.Lock
-    SettingItem(title, "").isHelpSupport() -> Icons.Outlined.HelpOutline
-    SettingItem(title, "").isContact() -> Icons.Outlined.Phone
-    SettingItem(title, "").isAbout() -> Icons.Outlined.Info
+private fun settingIcon(title: String, context: Context): ImageVector = when {
+    SettingItem(title, "").isNotification(context) -> Icons.Outlined.Notifications
+    SettingItem(title, "").isLanguage(context) -> Icons.Outlined.Language
+    SettingItem(title, "").isSecurity(context) -> Icons.Outlined.Lock
+    SettingItem(title, "").isHelpSupport(context) -> Icons.Outlined.HelpOutline
+    SettingItem(title, "").isContact(context) -> Icons.Outlined.Phone
+    SettingItem(title, "").isAbout(context) -> Icons.Outlined.Info
     else -> Icons.Outlined.Settings
 }
 
-private fun SettingItem.isNotification(): Boolean = title.contains("إشعار") || title.contains("ط¥ط´ط¹ط§ط±")
+private fun SettingItem.isNotification(context: Context): Boolean =
+    title.contains(context.getString(R.string.keyword_notification)) ||
+    title.contains(context.getString(R.string.keyword_notification_plural))
 
-private fun SettingItem.isLanguage(): Boolean = title.contains("لغة") || title.contains("ظ„ط؛ط©")
+private fun SettingItem.isLanguage(context: Context): Boolean =
+    title.contains(context.getString(R.string.keyword_language))
 
-private fun SettingItem.isSecurity(): Boolean =
-    title.contains("أمان") || title.contains("خصوص") || title.contains("كلمة") ||
-        title.contains("ط£ظ…ط§ظ†") || title.contains("ط®طµظˆطµ") || title.contains("ظƒظ„ظ…ط©")
+private fun SettingItem.isSecurity(context: Context): Boolean =
+    title.contains(context.getString(R.string.keyword_security_aman)) ||
+    title.contains(context.getString(R.string.keyword_security_khulos)) ||
+    title.contains(context.getString(R.string.keyword_security_password)) ||
+    title.contains(context.getString(R.string.keyword_security_aman_alt)) ||
+    title.contains(context.getString(R.string.keyword_security_himayah)) ||
+    title.contains(context.getString(R.string.keyword_security_sirya))
 
-private fun SettingItem.isHelpSupport(): Boolean =
-    title.contains("مساعدة") || title.contains("دعم") || title.contains("ظ…ط³ط§ط¹ط¯ط©") || title.contains("ط¯ط¹ظ…")
+private fun SettingItem.isHelpSupport(context: Context): Boolean =
+    title.contains(context.getString(R.string.keyword_help_moaan)) ||
+    title.contains(context.getString(R.string.keyword_help_daam))
 
-private fun SettingItem.isContact(): Boolean =
-    title.contains("تواصل") || title.contains("اتصال") || title.contains("طھظˆط§طµظ„")
+private fun SettingItem.isContact(context: Context): Boolean =
+    title.contains(context.getString(R.string.keyword_contact))
 
-private fun SettingItem.isAbout(): Boolean = title.contains("حول") || title.contains("ط­ظˆظ„")
+private fun SettingItem.isAbout(context: Context): Boolean =
+    title.contains(context.getString(R.string.keyword_about))
 
 @Preview(showBackground = true)
 @Composable
@@ -704,6 +761,8 @@ fun ProfileScreenPreview() {
             onOpenHelpSupport = {},
             onOpenAboutApp = {},
             onOpenContactUs = {},
+            onOpenLanguage = {},
+            onNotificationsToggle = {},
         )
     }
 }

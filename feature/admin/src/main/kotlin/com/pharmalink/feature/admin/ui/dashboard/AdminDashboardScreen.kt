@@ -46,21 +46,27 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.StatusActive
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.designsystem.components.PharmaButton
-import com.pharmalink.designsystem.components.PharmaButtonStyle
+import com.pharmalink.designsystem.components.DashboardWelcomeCard
 import com.pharmalink.designsystem.components.PharmaCard
+import com.pharmalink.designsystem.components.PharmaButtonStyle
 import com.pharmalink.designsystem.components.PharmaSkeletonLine
 import com.pharmalink.designsystem.components.PharmaStateView
 import com.pharmalink.designsystem.components.PharmaStateTone
@@ -68,16 +74,22 @@ import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
 import com.pharmalink.feature.admin.R
+import com.pharmalink.designsystem.R as DsR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(
     onNavigateToAddFacility: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onNavigateToUsers: () -> Unit,
     onNavigateToPharmacies: () -> Unit,
     onNavigateToWarehouses: () -> Unit,
     onNavigateToAuditLog: () -> Unit,
+    onNavigateToOrders: () -> Unit,
+    onNavigateToOrderDetail: (String) -> Unit,
+    onShowAdminMenu: () -> Unit,
+    onShowReportDialog: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AdminDashboardViewModel = hiltViewModel(),
 ) {
@@ -91,22 +103,26 @@ fun AdminDashboardScreen(
             }
             AdminDashboardEffect.NavigateToAddFacility -> onNavigateToAddFacility()
             AdminDashboardEffect.NavigateToNotifications -> onNavigateToNotifications()
+            AdminDashboardEffect.NavigateToProfile -> onNavigateToProfile()
             AdminDashboardEffect.NavigateToUsers -> onNavigateToUsers()
             AdminDashboardEffect.NavigateToPharmacies -> onNavigateToPharmacies()
             AdminDashboardEffect.NavigateToWarehouses -> onNavigateToWarehouses()
             AdminDashboardEffect.NavigateToAllActivities -> onNavigateToAuditLog()
-            else -> {
-                snackbarHostState.showSnackbar("قيد التطوير")
-            }
+            AdminDashboardEffect.NavigateToOrders -> onNavigateToOrders()
+            is AdminDashboardEffect.NavigateToOrderDetail -> onNavigateToOrderDetail(effect.orderId)
+            AdminDashboardEffect.ShowAdminMenu -> onShowAdminMenu()
+            AdminDashboardEffect.NavigateToReports -> onShowReportDialog()
         }
     }
 
-    AdminDashboardContent(
-        state = state,
-        onAction = viewModel::onAction,
-        snackbarHostState = snackbarHostState,
-        modifier = modifier,
-    )
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        AdminDashboardContent(
+            state = state,
+            onAction = viewModel::onAction,
+            snackbarHostState = snackbarHostState,
+            modifier = modifier,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,12 +143,20 @@ private fun AdminDashboardContent(
             Column {
                 CenterAlignedTopAppBar(
                     title = {
-                        Text(
-                            text = stringResource(R.string.admin_dashboard_title),
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(
+                                painter = painterResource(id = DsR.drawable.sydaliti_logo_icon),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Text(
+                                text = stringResource(R.string.admin_dashboard_title),
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = { onAction(AdminDashboardAction.OnMenuClicked) }) {
@@ -156,6 +180,11 @@ private fun AdminDashboardContent(
                             modifier = Modifier
                                 .size(44.dp)
                                 .clip(CircleShape)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(),
+                                    onClick = { onAction(AdminDashboardAction.OnProfileClicked) },
+                                )
                                 .border(
                                     width = 2.dp,
                                     color = MaterialTheme.colorScheme.primaryContainer,
@@ -166,7 +195,7 @@ private fun AdminDashboardContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Person,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.admin_profile_cd),
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(24.dp),
                             )
@@ -174,7 +203,7 @@ private fun AdminDashboardContent(
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -184,7 +213,7 @@ private fun AdminDashboardContent(
         when {
             state.isLoading -> LoadingContent(modifier = Modifier.padding(padding))
             state.contentError.isNotEmpty() -> ErrorContent(
-                message = state.contentError,
+                message = state.contentError.ifEmpty { stringResource(R.string.admin_dashboard_loading_failed_message) },
                 onRetry = { onAction(AdminDashboardAction.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
@@ -251,7 +280,10 @@ private fun SuccessContent(
         // Welcome Section
         item {
             WelcomeSection(
-                adminName = state.adminName,
+                adminName = state.adminName.ifEmpty { stringResource(R.string.admin_dashboard_default_admin_name) },
+                totalUsers = state.totalUsers,
+                totalOrders = state.totalOrders,
+                pendingRequests = state.pendingRequests.size,
             )
         }
 
@@ -271,6 +303,19 @@ private fun SuccessContent(
             )
         }
 
+        // Orders Breakdown
+        item {
+            OrdersBreakdownSection(
+                b2cOrders = state.b2cOrdersCount,
+                b2bOrders = state.b2bOrdersCount,
+                urgentOrders = state.urgentOrdersCount,
+                pendingOrders = state.pendingOrdersCount,
+                confirmedOrders = state.confirmedOrdersCount,
+                deliveredOrders = state.deliveredOrdersCount,
+                onAction = onAction,
+            )
+        }
+
         // Pending Requests
         if (state.pendingRequests.isNotEmpty()) {
             item {
@@ -286,7 +331,6 @@ private fun SuccessContent(
             SystemHealthCard(
                 healthPercent = state.systemHealthPercent,
                 healthStatus = state.systemHealthStatus,
-                activeConnections = state.activeConnections,
             )
         }
 
@@ -305,6 +349,9 @@ private fun SuccessContent(
 @Composable
 private fun WelcomeSection(
     adminName: String,
+    totalUsers: Int,
+    totalOrders: Int,
+    pendingRequests: Int,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
@@ -313,6 +360,15 @@ private fun WelcomeSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(d.spaceS),
     ) {
+        DashboardWelcomeCard(
+            title = "أهلاً بك في صيدليتي",
+            subtitle = "لوحة تحكم موحدة للمنشآت والطلبات",
+            stats = listOf(
+                "المستخدمون" to totalUsers.toString(),
+                "الطلبات" to totalOrders.toString(),
+                "المعلّقة" to pendingRequests.toString(),
+            ),
+        )
         Text(
             text = stringResource(R.string.admin_dashboard_welcome),
             style = MaterialTheme.typography.headlineSmall,
@@ -326,7 +382,6 @@ private fun WelcomeSection(
         )
     }
 }
-
 @Composable
 private fun PrimaryActionsRow(
     onAction: (AdminDashboardAction) -> Unit,
@@ -561,7 +616,6 @@ private fun PendingRequestCard(
 private fun SystemHealthCard(
     healthPercent: Int,
     healthStatus: String,
-    activeConnections: Int,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
@@ -596,21 +650,23 @@ private fun SystemHealthCard(
                 Text(
                     text = healthStatus,
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color(0xFF10B981),
+                    color = StatusActive,
                 )
             }
             
             LinearProgressIndicator(
                 progress = { healthPercent / 100f },
                 modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFF10B981),
+                color = StatusActive,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
             
+            // Note: Active connections telemetry is not available in current schema
+            // Showing "غير متاح" instead of fake 0 value
             Text(
-                text = stringResource(R.string.admin_dashboard_active_connections, activeConnections),
+                text = stringResource(R.string.admin_dashboard_active_connections_unavailable),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             )
         }
     }
@@ -688,7 +744,7 @@ private fun ActivityRow(
             },
             contentDescription = null,
             tint = when (activity.status) {
-                ActivityStatus.SUCCESS -> Color(0xFF10B981)
+                ActivityStatus.SUCCESS -> StatusActive
                 ActivityStatus.FAILED -> MaterialTheme.colorScheme.error
                 ActivityStatus.PENDING -> MaterialTheme.colorScheme.primary
             },
@@ -717,6 +773,92 @@ private fun ActivityRow(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun OrdersBreakdownSection(
+    b2cOrders: Int,
+    b2bOrders: Int,
+    urgentOrders: Int,
+    pendingOrders: Int,
+    confirmedOrders: Int,
+    deliveredOrders: Int,
+    onAction: (AdminDashboardAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(d.spaceM),
+    ) {
+        Text(
+            text = stringResource(R.string.admin_dashboard_orders_breakdown_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        
+        // Order Types
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            StatCard(
+                title = stringResource(R.string.admin_dashboard_orders_b2c),
+                value = b2cOrders.toString(),
+                modifier = Modifier.weight(1f),
+                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
+            )
+            
+            StatCard(
+                title = stringResource(R.string.admin_dashboard_orders_b2b),
+                value = b2bOrders.toString(),
+                modifier = Modifier.weight(1f),
+                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
+            )
+        }
+        
+        // Urgent Orders
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            StatCard(
+                title = stringResource(R.string.admin_dashboard_orders_urgent),
+                value = urgentOrders.toString(),
+                modifier = Modifier.weight(1f),
+                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
+            )
+            
+            StatCard(
+                title = stringResource(R.string.admin_dashboard_orders_pending),
+                value = pendingOrders.toString(),
+                modifier = Modifier.weight(1f),
+                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
+            )
+        }
+        
+        // Order Status
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            StatCard(
+                title = stringResource(R.string.admin_dashboard_orders_confirmed),
+                value = confirmedOrders.toString(),
+                modifier = Modifier.weight(1f),
+                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
+            )
+            
+            StatCard(
+                title = stringResource(R.string.admin_dashboard_orders_delivered),
+                value = deliveredOrders.toString(),
+                modifier = Modifier.weight(1f),
+                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
+            )
+        }
     }
 }
 
@@ -758,10 +900,11 @@ private fun PreviewAdminDashboardScreen() {
                 ),
                 systemHealthPercent = 94,
                 systemHealthStatus = "ممتاز",
-                activeConnections = 127,
+                // activeConnections removed - not available
             ),
             onAction = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }
+

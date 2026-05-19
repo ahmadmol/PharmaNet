@@ -75,7 +75,7 @@ class AdminWarehousesViewModel @Inject constructor(
             AdminWarehousesAction.OnRefreshTriggered -> refreshWarehouses()
             AdminWarehousesAction.OnMenuClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(AdminWarehousesEffect.ShowMessage("القائمة: قيد التطوير"))
+                    _effect.emit(AdminWarehousesEffect.ShowAdminMenu)
                 }
             }
             is AdminWarehousesAction.OnSearchQueryChanged -> updateSearchQuery(action.query)
@@ -159,18 +159,20 @@ class AdminWarehousesViewModel @Inject constructor(
     }
 
     private fun Warehouse.toUiModel(): WarehouseItemModel {
-        val address = "$district، $city"
+        val address = "$district، $city".trimStart('،').trim()
         val temperature = if (supportsColdChain) "2-8°C" else "عادي"
-        val inventoryCount = (100 - outOfStockCount - lowStockCount) // Simulated
-        
+
         return WarehouseItemModel(
             id = id,
             name = name,
-            address = address,
-            isActive = true, // Warehouses are always active in current model
+            address = address.ifBlank { city },
+            isActive = true,
             temperature = temperature,
-            inventoryCount = inventoryCount,
+            inventoryCount = inStockPercent, // real field: % of items in stock
             lastUpdatedLabel = lastUpdatedLabel ?: "",
         )
     }
 }
+
+
+

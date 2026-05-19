@@ -1,5 +1,6 @@
 package com.pharmalink.feature.notifications
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pharmalink.core.common.ui.ScreenState
@@ -49,6 +50,9 @@ data class NotificationsUiState(
 class NotificationsViewModel @Inject constructor(
     private val repository: PharmaRepository,
 ) : ViewModel() {
+    private companion object {
+        const val TAG = "NotificationsVM"
+    }
 
     private val selectedFilter = MutableStateFlow(NotificationFilter.All)
     private val _state = MutableStateFlow(NotificationsUiState())
@@ -56,10 +60,12 @@ class NotificationsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            Log.d(TAG, "start collecting notifications")
             combine(
                 repository.observeNotifications(),
                 selectedFilter,
             ) { notifications, filter ->
+                Log.d(TAG, "collected notifications count=${notifications.size}, filter=$filter")
                 val filtered = notifications.filterBy(filter)
                 NotificationsUiState(
                     selectedFilter = filter,
@@ -77,6 +83,7 @@ class NotificationsViewModel @Inject constructor(
                 )
             }
                 .catch { error ->
+                    Log.e(TAG, "notifications collection failed", error)
                     _state.value = _state.value.copy(
                         screenState = ScreenState.Error(
                             error.message ?: "تعذر تحميل الإشعارات حاليًا.",
@@ -100,6 +107,18 @@ class NotificationsViewModel @Inject constructor(
     fun markAllRead() {
         viewModelScope.launch {
             repository.markAllNotificationsRead()
+        }
+    }
+
+    fun deleteNotification(notificationId: String) {
+        viewModelScope.launch {
+            repository.deleteNotification(notificationId)
+        }
+    }
+
+    fun deleteAllNotifications() {
+        viewModelScope.launch {
+            repository.deleteAllNotifications()
         }
     }
 

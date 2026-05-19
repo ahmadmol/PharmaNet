@@ -117,19 +117,10 @@ class AdminAuditLogViewModel @Inject constructor(
     }
 
     private fun exportLogs() {
+        // Export is not yet implemented — no backend RPC available.
+        // Button is disabled in UI; this path should not be reached.
         viewModelScope.launch {
-            _state.update { it.copy(isExporting = true) }
-            
-            // Simulate export delay
-            kotlinx.coroutines.delay(1500)
-            
-            // In a real implementation, this would:
-            // 1. Format logs as CSV/PDF
-            // 2. Save to device storage or share via intent
-            // 3. Use Android's file sharing APIs
-            
-            _state.update { it.copy(isExporting = false) }
-            _effect.emit(AdminAuditLogEffect.ShowMessage("تم تصدير السجل بنجاح"))
+            _effect.emit(AdminAuditLogEffect.ShowMessage("تصدير السجل غير متاح حالياً"))
         }
     }
 

@@ -1,5 +1,13 @@
 package com.pharmalink.feature.profile
-
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +35,7 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,9 +43,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,12 +57,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pharmalink.designsystem.stitch.components.StitchButton
 import com.pharmalink.designsystem.theme.ClinicalCanvas
@@ -61,8 +76,6 @@ import com.pharmalink.designsystem.theme.PharmaGradients
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.dimens
 
-import androidx.compose.runtime.DisposableEffect
-
 @Composable
 fun EditProfileScreen(
     onBack: () -> Unit,
@@ -70,6 +83,20 @@ fun EditProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val updateStatus by viewModel.updateStatus.collectAsState()
+    val context = LocalContext.current
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+    ) { permissions ->
+        if (permissions.values.any { it }) {
+            viewModel.updateWarehouseLocationFromCurrentGps()
+        } else {
+            val activity = context.findActivity()
+            val permanentlyDenied = activity != null && permissions.keys.none { permission ->
+                ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+            }
+            viewModel.onWarehouseLocationPermissionDenied(permanentlyDenied)
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -85,6 +112,22 @@ fun EditProfileScreen(
     var message by remember { mutableStateOf<String?>(null) }
     var isSuccess by remember { mutableStateOf(false) }
     val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
+    val isWarehouse = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.WAREHOUSE
+    val organizationNameLabel = if (isWarehouse) {
+        stringResource(R.string.edit_profile_label_warehouse_name)
+    } else {
+        stringResource(R.string.edit_profile_label_pharmacy_name)
+    }
+    val organizationLocationLabel = when {
+        isPublicUser -> stringResource(R.string.edit_profile_label_address_user)
+        isWarehouse -> stringResource(R.string.edit_profile_label_warehouse_location)
+        else -> stringResource(R.string.edit_profile_label_address)
+    }
+    val roleLabel = when {
+        isPublicUser -> stringResource(R.string.edit_profile_role_user)
+        isWarehouse -> stringResource(R.string.edit_profile_role_warehouse)
+        else -> stringResource(R.string.edit_profile_role_pharmacy)
+    }
 
     LaunchedEffect(uiState) {
         name = uiState.userName
@@ -97,7 +140,7 @@ fun EditProfileScreen(
     LaunchedEffect(updateStatus) {
         when (val status = updateStatus) {
             is ProfileUpdateStatus.Success -> {
-                message = "تم تحديث الملف الشخصي بنجاح"
+                message = context.getString(R.string.edit_profile_success)
                 isSuccess = true
             }
             is ProfileUpdateStatus.Error -> {
@@ -114,7 +157,7 @@ fun EditProfileScreen(
                 .fillMaxSize()
                 .background(ClinicalCanvas),
         ) {
-            AccountTopBar(title = "تعديل الملف الشخصي", onBack = onBack)
+            AccountTopBar(title = stringResource(R.string.edit_profile_title), onBack = onBack)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -123,17 +166,44 @@ fun EditProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceL),
             ) {
-                AvatarEditor(name = name, isPublicUser = isPublicUser)
-                AccountSection(title = if (isPublicUser) "بيانات العميل" else "الهوية المهنية") {
-                    AccountTextField(value = name, onValueChange = { name = it }, label = "الاسم الكامل", icon = Icons.Outlined.Person)
+                AvatarEditor(name = name, roleLabel = roleLabel)
+                AccountSection(title = if (isPublicUser) stringResource(R.string.edit_profile_section_account_info) else organizationNameLabel) {
+                    AccountTextField(value = name, onValueChange = { name = it }, label = stringResource(R.string.edit_profile_label_full_name), icon = Icons.Outlined.Person)
                     if (!isPublicUser) {
-                        AccountTextField(value = pharmacy, onValueChange = { pharmacy = it }, label = "اسم الصيدلية", icon = Icons.Outlined.Store)
+                        AccountTextField(value = pharmacy, onValueChange = { pharmacy = it }, label = organizationNameLabel, icon = Icons.Outlined.Store)
                     }
                 }
-                AccountSection(title = "بيانات التواصل والموقع") {
-                    AccountTextField(value = phone, onValueChange = { phone = it }, label = "رقم الهاتف", icon = Icons.Outlined.Phone, keyboardType = KeyboardType.Phone)
-                    AccountTextField(value = email, onValueChange = { email = it }, label = "البريد الإلكتروني", icon = Icons.Outlined.Email, keyboardType = KeyboardType.Email, enabled = false)
-                    AccountTextField(value = address, onValueChange = { address = it }, label = if (isPublicUser) "العنوان الافتراضي" else "العنوان بالتفصيل", icon = Icons.Outlined.LocationOn, minLines = 3)
+                AccountSection(title = stringResource(R.string.edit_profile_section_contact_info)) {
+                    AccountTextField(value = phone, onValueChange = { phone = it }, label = stringResource(R.string.edit_profile_label_phone), icon = Icons.Outlined.Phone, keyboardType = KeyboardType.Phone)
+                    AccountTextField(value = email, onValueChange = { email = it }, label = stringResource(R.string.edit_profile_label_email), icon = Icons.Outlined.Email, keyboardType = KeyboardType.Email, enabled = false)
+                    if (isWarehouse) {
+                        WarehouseLocationSection(
+                            address = address,
+                            latitude = uiState.warehouseLatitude,
+                            longitude = uiState.warehouseLongitude,
+                            isLoading = uiState.isUpdatingWarehouseLocation,
+                            message = uiState.warehouseLocationMessage,
+                            isError = uiState.warehouseLocationMessageIsError,
+                            settingsAction = uiState.warehouseLocationSettingsAction,
+                            onUseCurrentLocation = {
+                                if (context.hasLocationPermission()) {
+                                    viewModel.updateWarehouseLocationFromCurrentGps()
+                                } else {
+                                    locationPermissionLauncher.launch(
+                                        arrayOf(
+                                            Manifest.permission.ACCESS_FINE_LOCATION,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        ),
+                                    )
+                                }
+                            },
+                            onOpenSettings = { action ->
+                                context.openWarehouseLocationSettings(action)
+                            },
+                        )
+                    } else {
+                        AccountTextField(value = address, onValueChange = { address = it }, label = organizationLocationLabel, icon = Icons.Outlined.LocationOn, minLines = 3)
+                    }
                 }
                 message?.let {
                     InfoCallout(text = it, isSuccess = isSuccess)
@@ -147,14 +217,14 @@ fun EditProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceM),
             ) {
                 StitchButton(
-                    onClick = { 
-                        viewModel.updateProfile(name, if (isPublicUser) "" else pharmacy, phone, address)
+                    onClick = {
+                        viewModel.updateProfile(name, if (isPublicUser) "" else pharmacy, phone, if (isWarehouse) "" else address)
                     },
                     modifier = Modifier.weight(1f),
                     isLoading = updateStatus is ProfileUpdateStatus.Loading,
                     contentPadding = PaddingValues(vertical = MaterialTheme.dimens.spaceM),
                 ) {
-                    Text("حفظ التغييرات", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.edit_profile_save), fontWeight = FontWeight.Bold)
                 }
                 Surface(
                     modifier = Modifier.weight(1f),
@@ -164,7 +234,7 @@ fun EditProfileScreen(
                     onClick = onBack,
                 ) {
                     Text(
-                        text = "إلغاء",
+                        text = stringResource(R.string.edit_profile_cancel),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -189,7 +259,7 @@ fun AccountTopBar(title: String, onBack: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceM),
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = "رجوع", tint = PharmaBlue500)
+                Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = stringResource(R.string.edit_profile_back), tint = PharmaBlue500)
             }
             Text(
                 text = title,
@@ -199,7 +269,7 @@ fun AccountTopBar(title: String, onBack: () -> Unit) {
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = "الصيدلية الذكية",
+                text = stringResource(R.string.edit_profile_account_type),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = PharmaBlue500,
@@ -209,7 +279,103 @@ fun AccountTopBar(title: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun AvatarEditor(name: String, isPublicUser: Boolean) {
+private fun WarehouseLocationSection(
+    address: String,
+    latitude: Double?,
+    longitude: Double?,
+    isLoading: Boolean,
+    message: String?,
+    isError: Boolean,
+    settingsAction: WarehouseLocationSettingsAction?,
+    onUseCurrentLocation: () -> Unit,
+    onOpenSettings: (WarehouseLocationSettingsAction) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceM),
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(MaterialTheme.dimens.radiusL),
+            color = PharmaBlue50.copy(alpha = 0.65f),
+        ) {
+            Row(
+                modifier = Modifier.padding(MaterialTheme.dimens.spaceM),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceM),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.LocationOn,
+                    contentDescription = null,
+                    tint = PharmaBlue500,
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceXS),
+                ) {
+                    Text(
+                        text = stringResource(R.string.edit_profile_label_warehouse_location),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = address.ifBlank { "لم يتم تحديد موقع المستودع بعد" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    if (latitude != null && longitude != null) {
+                        Text(
+                            text = stringResource(R.string.location_picker_lat_lng_format, latitude, longitude),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+
+        StitchButton(
+            onClick = onUseCurrentLocation,
+            modifier = Modifier.fillMaxWidth(),
+            isLoading = isLoading,
+            enabled = !isLoading,
+            contentPadding = PaddingValues(vertical = MaterialTheme.dimens.spaceM),
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.White,
+                )
+                Spacer(Modifier.size(MaterialTheme.dimens.spaceS))
+            }
+            Text("استخدام موقعي الحالي", fontWeight = FontWeight.Bold)
+        }
+
+        message?.let {
+            InfoCallout(text = it, isSuccess = !isError)
+        }
+
+        settingsAction?.let { action ->
+            TextButton(
+                onClick = { onOpenSettings(action) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = when (action) {
+                        WarehouseLocationSettingsAction.APP_SETTINGS -> "فتح إعدادات التطبيق"
+                        WarehouseLocationSettingsAction.LOCATION_SETTINGS -> "فتح إعدادات الموقع"
+                    },
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AvatarEditor(name: String, roleLabel: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box {
             Surface(
@@ -238,9 +404,38 @@ private fun AvatarEditor(name: String, isPublicUser: Boolean) {
             }
         }
         Spacer(Modifier.height(12.dp))
-        Text(name.ifBlank { "الملف الشخصي" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = PharmaBlue500)
-        Text(if (isPublicUser) "حساب عميل" else "صيدلي معتمد", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(name.ifBlank { stringResource(R.string.edit_profile_label_full_name) }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = PharmaBlue500)
+        Text(roleLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+}
+
+private fun Context.hasLocationPermission(): Boolean {
+    val hasFine = ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+    ) == PackageManager.PERMISSION_GRANTED
+    val hasCoarse = ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+    ) == PackageManager.PERMISSION_GRANTED
+    return hasFine || hasCoarse
+}
+
+private fun Context.openWarehouseLocationSettings(action: WarehouseLocationSettingsAction) {
+    val intent = when (action) {
+        WarehouseLocationSettingsAction.APP_SETTINGS -> Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", packageName, null),
+        )
+        WarehouseLocationSettingsAction.LOCATION_SETTINGS -> Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+    }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    startActivity(intent)
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable

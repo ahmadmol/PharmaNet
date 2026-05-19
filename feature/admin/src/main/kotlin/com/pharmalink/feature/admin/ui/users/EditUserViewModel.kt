@@ -91,12 +91,12 @@ class EditUserViewModel @Inject constructor(
         // Validate
         val errors = mutableMapOf<String, String>()
         if (state.fullName.isBlank()) {
-            errors["fullName"] = "ط§ظ„ط§ط³ظ… ط§ظ„ظƒط§ظ…ظ„ ظ…ط·ظ„ظˆط¨"
+            errors["fullName"] = "الاسم الكامل مطلوب"
         }
         val needsFacility = state.accountType == AccountType.PHARMACY ||
             state.accountType == AccountType.WAREHOUSE
         if (needsFacility && state.facilityId.isBlank()) {
-            errors["facilityId"] = "ظ…ط¹ط±ظپ ط§ظ„ظ…ظ†ط´ط£ط© ظ…ط·ظ„ظˆط¨"
+            errors["facilityId"] = "معرف المنشأة مطلوب"
         }
 
         if (errors.isNotEmpty()) {
@@ -110,13 +110,14 @@ class EditUserViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(isSaving = true, error = "") }
+            _state.update { it.copy(isSaving = true) }
 
             val pharmacyId = if (state.accountType == AccountType.PHARMACY) state.facilityId else null
             val warehouseId = if (state.accountType == AccountType.WAREHOUSE) state.facilityId else null
 
             repository.adminUpdateUserProfile(
                 targetUserId = state.userId,
+                fullName = state.fullName.trim(),
                 accountType = state.accountType,
                 pharmacyId = pharmacyId,
                 warehouseId = warehouseId,
@@ -124,17 +125,12 @@ class EditUserViewModel @Inject constructor(
             )
                 .onSuccess {
                     _state.update { it.copy(isSaving = false) }
-                    _effect.emit(EditUserEffect.ShowMessage("طھظ… ط­ظپط¸ ط§ظ„طھط؛ظٹظٹط±ط§طھ ط¨ظ†ط¬ط§ط­"))
+                    _effect.emit(EditUserEffect.ShowMessage("تم حفظ التغييرات بنجاح"))
                     _effect.emit(EditUserEffect.Dismiss)
                 }
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            error = e.message ?: "ظپط´ظ„ ط­ظپط¸ ط§ظ„طھط؛ظٹظٹط±ط§طھ",
-                        )
-                    }
-                    _effect.emit(EditUserEffect.ShowMessage(e.message ?: "ظپط´ظ„ ط­ظپط¸ ط§ظ„طھط؛ظٹظٹط±ط§طھ"))
+                    _state.update { it.copy(isSaving = false) }
+                    _effect.emit(EditUserEffect.ShowMessage(e.message ?: "فشل حفظ التغييرات"))
                 }
         }
     }

@@ -77,6 +77,11 @@ fun NotificationsScreen(
                     Text(stringResource(R.string.notifications_mark_all_read))
                 }
             }
+            if (state.totalCount > 0) {
+                TextButton(onClick = viewModel::deleteAllNotifications) {
+                    Text(stringResource(R.string.notifications_delete_all))
+                }
+            }
         },
     ) {
         Column(
@@ -151,6 +156,7 @@ fun NotificationsScreen(
                             NotificationCard(
                                 notification = notification,
                                 onMarkRead = { viewModel.markRead(notification.id) },
+                                onDelete = { viewModel.deleteNotification(notification.id) },
                                 onOpen = {
                                     if (!notification.read) {
                                         viewModel.markRead(notification.id)
@@ -246,6 +252,7 @@ private fun FilterRow(
 private fun NotificationCard(
     notification: AppNotification,
     onMarkRead: () -> Unit,
+    onDelete: () -> Unit,
     onOpen: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
@@ -334,6 +341,9 @@ private fun NotificationCard(
                             Text(stringResource(R.string.notifications_mark_read))
                         }
                     }
+                    TextButton(onClick = onDelete) {
+                        Text(stringResource(R.string.notifications_delete_one))
+                    }
                     if (actionable) {
                         TextButton(onClick = onOpen) {
                             Text(notification.actionLabel())
@@ -393,6 +403,7 @@ private fun AppNotification.categoryLabel(): String = when (category) {
 @Composable
 private fun AppNotification.actionLabel(): String = when (destination) {
     NotificationDestination.ORDER -> stringResource(R.string.notifications_action_open_order)
+    NotificationDestination.PHARMACY_CUSTOMER_ORDER -> stringResource(R.string.notifications_action_open_order)
     NotificationDestination.REQUEST -> stringResource(R.string.notifications_action_open_request)
     NotificationDestination.WAREHOUSE -> stringResource(R.string.notifications_action_open_warehouse)
     NotificationDestination.COMPLIANCE -> stringResource(R.string.notifications_action_open_compliance)

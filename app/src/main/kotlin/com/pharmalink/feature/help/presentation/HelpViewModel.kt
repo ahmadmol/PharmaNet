@@ -68,59 +68,63 @@ class HelpViewModel @Inject constructor(
                     screenState = ScreenState.Success(
                         HelpContent(
                             pharmacyName = profile.pharmacyName,
-                            unreadNotifications = notifications.count { !it.read },
+                            unreadNotifications = if (profile.notificationsEnabled) {
+                                notifications.count { !it.read }
+                            } else {
+                                0
+                            },
                             complianceAttentionCount = compliance.alerts.size + compliance.documents.count {
                                 it.status != com.pharmalink.domain.model.ComplianceDocumentStatus.VALID
                             },
                             channels = listOf(
                                 SupportChannel(
-                                    title = "الدعم التشغيلي",
+                                    title = "مركز العمليات",
                                     detail = "+966 800 100 4422",
-                                    availability = "استجابة خلال 15 دقيقة في أوقات العمل",
-                                    guidance = "للطلبات المتأخرة أو نقص المخزون أو المشاكل المرتبطة بالموردين.",
+                                    availability = "متاح خلال 15 دقيقة في أوقات العمل",
+                                    guidance = "للاستفسارات التشغيلية عن حالة الطلبات أو متابعة الشحنات المعلّقة.",
                                     type = SupportChannelType.Operations,
                                 ),
                                 SupportChannel(
-                                    title = "بريد المساندة",
+                                    title = "البريد الإلكتروني",
                                     detail = "support@pharmalink.sa",
-                                    availability = "استجابة خلال ساعتين",
-                                    guidance = "للملاحظات العامة ومتابعة الحالات غير العاجلة وإرفاق التفاصيل المكتوبة.",
+                                    availability = "متاح على مدار الساعة",
+                                    guidance = "استخدمه للطلبات العامة ومشاركة المستندات أو تفاصيل المشكلة.",
                                     type = SupportChannelType.Email,
                                 ),
                                 SupportChannel(
-                                    title = "تصعيد الامتثال",
+                                    title = "فريق الامتثال",
                                     detail = "compliance@pharmalink.sa",
-                                    availability = "مراجعة خلال يوم عمل",
-                                    guidance = "للرخص المنتهية أو الوثائق الناقصة أو مراجعات الجهات التنظيمية.",
+                                    availability = "أيام العمل من 8 ص إلى 5 م",
+                                    guidance = "للاستفسارات المتعلقة بالتراخيص والسياسات أو الوثائق التنظيمية.",
                                     type = SupportChannelType.Compliance,
                                 ),
                             ),
                             guides = listOf(
                                 HelpGuide(
-                                    title = "متابعة الطلبات الحرجة",
-                                    description = "ابدأ من شاشة الإشعارات ثم افتح الطلب أو الطلبية المرتبطة مباشرة لمعرفة آخر تحديث ومسؤول المتابعة.",
+                                    title = "إعداد الحساب لأول مرة",
+                                    description = "ابدأ من ملف التعريف وأكمل بيانات المنشأة ثم فعّل الإشعارات لضمان وصول التنبيهات.",
                                 ),
                                 HelpGuide(
-                                    title = "تحديث وثائق الامتثال",
-                                    description = "راجع تنبيهات انتهاء الصلاحية أولًا ثم جهّز الوثيقة البديلة. سيتم ربط الرفع والمراجعة داخل التطبيق في خطوة لاحقة.",
+                                    title = "متابعة حالة الطلبات",
+                                    description = "راقب مراحل الطلب من لوحة الطلبات اليومية، وتحقق من التحديثات فور حدوثها.",
                                 ),
                                 HelpGuide(
-                                    title = "التعامل مع نقص المخزون",
-                                    description = "انتقل إلى المستودعات، قارن التوفر وزمن التوريد، ثم أنشئ طلبًا جديدًا من المسار الأنسب زمنيًا.",
+                                    title = "الإبلاغ عن مشكلة تقنية",
+                                    description = "التقط وصفاً واضحاً للمشكلة، وأرفق لقطة شاشة إن أمكن، ثم تواصل مع الدعم لتسريع المعالجة.",
                                 ),
                             ),
                             faq = listOf(
                                 HelpFaqItem(
-                                    question = "كيف أتابع حالة الطلب؟",
-                                    answer = "افتح شاشة الطلبات أو الإشعارات، ثم راجع آخر تحديث ووقت التوريد المتوقع والطلب المرتبط بالحالة.",
+                                    question = "كيف أتابع حالة طلبي؟",
+                                    answer = "يمكنك فتح شاشة الطلبات ومراجعة حالة كل طلب مع آخر تحديث مسجل على الطلب.",
                                 ),
                                 HelpFaqItem(
-                                    question = "ماذا أفعل عند قرب انتهاء وثيقة؟",
-                                    answer = "افتح شاشة الامتثال، راجع التنبيه المرتبط، ثم جهّز الوثيقة البديلة قبل تاريخ الانتهاء ونسّق مع المسؤول الإداري.",
+                                    question = "ماذا أفعل عند عدم وصول إشعار؟",
+                                    answer = "تحقق من إعدادات الإشعارات داخل التطبيق، ثم تأكد من منح التطبيق صلاحية الإشعارات على جهازك.",
                                 ),
                                 HelpFaqItem(
-                                    question = "كيف أبلغ عن مشكلة تشغيلية؟",
-                                    answer = "جهّز رقم الطلب أو المورد أو المستودع، ثم استخدم قناة الدعم المناسبة مع وصف مختصر وواضح لما حدث ومتى بدأ.",
+                                    question = "كيف أطلب دعماً تقنياً؟",
+                                    answer = "استخدم قسم التواصل أو البريد المخصص للدعم، مع وصف واضح للمشكلة وأي تفاصيل تساعد الفريق.",
                                 ),
                             ),
                         ),

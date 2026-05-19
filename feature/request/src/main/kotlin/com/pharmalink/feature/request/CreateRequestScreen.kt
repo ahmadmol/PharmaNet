@@ -45,6 +45,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -373,7 +374,11 @@ private fun RequestFormCard(
         Spacer(Modifier.height(d.spaceS))
         ExposedDropdownMenuBox(
             expanded = medicineMenuExpanded,
-            onExpandedChange = onMedicineMenuExpandedChange,
+            onExpandedChange = {
+                if (uiState.medicines.isNotEmpty()) {
+                    onMedicineMenuExpandedChange(it)
+                }
+            },
         ) {
             OutlinedTextField(
                 value = uiState.selectedMedicine?.name.orEmpty(),
@@ -391,29 +396,46 @@ private fun RequestFormCard(
                     .menuAnchor(),
                 shape = RoundedCornerShape(d.radiusL),
                 colors = polishedFieldColors(),
+                supportingText = {
+                    if (uiState.medicines.isEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                            Text("جاري تحميل قائمة الأدوية")
+                        }
+                    }
+                },
             )
             ExposedDropdownMenu(
                 expanded = medicineMenuExpanded,
                 onDismissRequest = { onMedicineMenuExpandedChange(false) },
             ) {
-                uiState.medicines.forEach { medicine ->
-                    DropdownMenuItem(
-                        text = {
-                            Column(horizontalAlignment = Alignment.Start) {
-                                Text(
-                                    text = medicine.name,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Text(
-                                    text = "${medicine.brand} - ${medicine.strength}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        },
-                        onClick = { onMedicineSelected(medicine) },
+                if (uiState.medicines.isEmpty()) {
+                    Text(
+                        text = "جاري تحميل الأدوية...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceS),
                     )
+                } else {
+                    uiState.medicines.forEach { medicine ->
+                        DropdownMenuItem(
+                            text = {
+                                Column(horizontalAlignment = Alignment.Start) {
+                                    Text(
+                                        text = medicine.name,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text = "${medicine.brand} - ${medicine.strength}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            },
+                            onClick = { onMedicineSelected(medicine) },
+                        )
+                    }
                 }
             }
         }

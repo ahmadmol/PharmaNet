@@ -23,9 +23,8 @@ data class WarehouseDetailModel(
     val estimatedDeliveryLabel: String = "",
     val distanceLabel: String = "",
     val lastUpdatedLabel: String = "",
-    val totalInventoryItems: Int = 0,
-    val activeShipments: Int = 0,
-    val completedOrders: Int = 0,
+    // Note: Secondary stats removed - endpoints not available yet
+    // totalInventoryItems, activeShipments, completedOrders
 )
 
 sealed interface WarehouseDetailsAction {

@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -154,27 +155,28 @@ private fun HelpContent(
     onOpenContactUs: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
+    val context = LocalContext.current
     val categories = remember(content) {
         listOf(
             HelpCategory(
                 icon = Icons.Outlined.Description,
-                title = "متابعة الطلبات",
-                subtitle = "إرشادات سريعة للحالات الحرجة والتوريد المتأخر.",
+                title = context.getString(R.string.help_category_user_guide_title),
+                subtitle = context.getString(R.string.help_category_user_guide_subtitle),
             ),
             HelpCategory(
                 icon = Icons.Outlined.Shield,
-                title = "الامتثال",
-                subtitle = "تنبيهات الرخص والوثائق والمسارات التنظيمية.",
+                title = context.getString(R.string.help_category_compliance_title),
+                subtitle = context.getString(R.string.help_category_compliance_subtitle),
             ),
             HelpCategory(
                 icon = Icons.Outlined.Settings,
-                title = "الحساب والإعدادات",
-                subtitle = "اللغة وكلمة المرور والوصول الآمن للحساب.",
+                title = context.getString(R.string.help_category_account_settings_title),
+                subtitle = context.getString(R.string.help_category_account_settings_subtitle),
             ),
             HelpCategory(
                 icon = Icons.Outlined.ContactSupport,
-                title = "التواصل السريع",
-                subtitle = "اختر القناة المناسبة قبل تصعيد الحالة.",
+                title = context.getString(R.string.help_category_quick_contact_title),
+                subtitle = context.getString(R.string.help_category_quick_contact_subtitle),
             ),
         )
     }
@@ -213,8 +215,8 @@ private fun HelpContent(
         }
         item {
             PharmaSectionHeader(
-                title = "ابدأ من هنا",
-                subtitle = "بطاقات مختصرة تقرّبك من نوع الدعم الذي تحتاجه الآن.",
+                title = stringResource(R.string.help_browse_topics_title),
+                subtitle = stringResource(R.string.help_browse_topics_subtitle),
             )
         }
         item {
@@ -238,8 +240,8 @@ private fun HelpContent(
         if (filteredGuides.isEmpty()) {
             item {
                 SearchEmptyCard(
-                    title = "لا توجد إرشادات مطابقة",
-                    subtitle = "جرّب كلمات أقصر أو افتح قنوات الدعم المباشر أدناه.",
+                    title = stringResource(R.string.help_search_no_results_title),
+                    subtitle = stringResource(R.string.help_search_no_results_subtitle),
                 )
             }
         } else {
@@ -269,8 +271,8 @@ private fun HelpContent(
         if (filteredFaq.isEmpty()) {
             item {
                 SearchEmptyCard(
-                    title = "لا توجد أسئلة مطابقة",
-                    subtitle = "البحث الحالي يعمل محليًا على المحتوى الثابت فقط وسيتم توسيعه لاحقًا.",
+                    title = stringResource(R.string.help_faq_empty_title),
+                    subtitle = stringResource(R.string.help_faq_empty_subtitle),
                 )
             }
         } else {
@@ -334,7 +336,7 @@ private fun HelpHeroCard(
                     )
                 },
                 placeholder = {
-                    Text("ابحث في الأسئلة والإرشادات الحالية")
+                    Text(stringResource(R.string.help_search_placeholder))
                 },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -344,7 +346,7 @@ private fun HelpHeroCard(
                 ),
             )
             Text(
-                text = "البحث الحالي محلي داخل هذا المحتوى فقط، وسيتم ربط البحث الذكي لاحقًا دون نتائج وهمية.",
+                text = stringResource(R.string.help_search_helper_text),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.88f),
             )
@@ -451,7 +453,7 @@ private fun SearchEmptyCard(
         icon = Icons.Outlined.HelpOutline,
         title = title,
         subtitle = subtitle,
-        badgeLabel = "محلي",
+        badgeLabel = stringResource(R.string.help_badge_tip),
         badgeTone = StatusTone.Neutral,
     )
 }
@@ -592,13 +594,13 @@ private fun SupportCtaCard(
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             Text(
-                text = "ما زلت تحتاج مساعدة؟",
+                text = stringResource(R.string.help_support_cta_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
             )
             Text(
-                text = "يمكنك فتح الامتثال مباشرة أو الانتقال إلى شاشة التواصل معنا. إنشاء التذاكر والبحث الذكي لم يُربطا بالخلفية بعد عمدًا.",
+                text = stringResource(R.string.help_support_cta_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.92f),
             )
@@ -614,14 +616,14 @@ private fun SupportCtaCard(
                         contentColor = MaterialTheme.colorScheme.primary,
                     ),
                 ) {
-                    Text("التواصل معنا")
+                    Text(stringResource(R.string.help_support_cta_contact_button))
                 }
                 OutlinedButton(
                     onClick = onOpenCompliance,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                 ) {
-                    Text("ملف الامتثال")
+                    Text(stringResource(R.string.help_support_cta_help_center_button))
                 }
             }
         }

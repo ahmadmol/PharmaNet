@@ -61,7 +61,7 @@ class ChangePasswordViewModel @Inject constructor(
                             newPassword = "",
                             confirmPassword = "",
                             isLoading = false,
-                            successMessage = "تم تحديث كلمة المرور بنجاح.",
+                            successMessage = "تم تغيير كلمة المرور بنجاح.",
                             errorMessage = null,
                         )
                     },
@@ -85,10 +85,10 @@ class ChangePasswordViewModel @Inject constructor(
 
     private fun validate(state: ChangePasswordUiState): String? =
         when {
-            state.currentPassword.isBlank() -> "ادخل كلمة المرور الحالية."
-            state.newPassword.length < 8 -> "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل."
+            state.currentPassword.isBlank() -> "أدخل كلمة المرور الحالية."
+            state.newPassword.length < 8 -> "يجب أن تحتوي كلمة المرور الجديدة على 8 أحرف على الأقل."
             state.newPassword != state.confirmPassword -> "كلمة المرور الجديدة وتأكيدها غير متطابقين."
-            state.currentPassword == state.newPassword -> "اختر كلمة مرور جديدة مختلفة عن الحالية."
+            state.currentPassword == state.newPassword -> "يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية."
             else -> null
         }
 
@@ -100,17 +100,17 @@ class ChangePasswordViewModel @Inject constructor(
                 "كلمة المرور الحالية غير صحيحة."
             message.contains("No active session", ignoreCase = true) ||
                 message.contains("session", ignoreCase = true) ->
-                "انتهت الجلسة. سجل الدخول مرة أخرى ثم حاول التحديث."
+                "انتهت الجلسة. سجل الدخول مرة أخرى ثم أعد المحاولة."
             message.contains("same_password", ignoreCase = true) ||
                 message.contains("same password", ignoreCase = true) ->
-                "اختر كلمة مرور جديدة مختلفة عن الحالية."
+                "يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية."
             message.contains("weak", ignoreCase = true) ->
                 "كلمة المرور الجديدة ضعيفة. اختر كلمة أقوى."
             message.contains("network", ignoreCase = true) ||
                 message.contains("timeout", ignoreCase = true) ||
                 message.contains("Unable to resolve host", ignoreCase = true) ->
-                "تعذر الاتصال بالخادم. تحقق من الشبكة وحاول مرة أخرى."
-            else -> message.ifBlank { "تعذر تحديث كلمة المرور الآن." }
+                "تعذر الاتصال بالشبكة. تحقق من الإنترنت ثم أعد المحاولة."
+            else -> message.ifBlank { "تعذر تغيير كلمة المرور." }
         }
     }
 }

@@ -7,7 +7,6 @@ import java.time.LocalDate
 @Immutable
 data class AdminAuditLogUiState(
     val isLoading: Boolean = false,
-    val isExporting: Boolean = false,
     val contentError: String = "",
     val logs: List<AuditLogGroup> = emptyList(),
     val startDate: LocalDate? = null,

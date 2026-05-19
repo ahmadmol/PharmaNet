@@ -1,4 +1,4 @@
-﻿package com.pharmalink.ui.messages
+package com.pharmalink.ui.messages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -65,8 +65,8 @@ fun MessagesScreen(
         )
 
         PharmaSectionHeader(
-            title = "محادثة الموردين",
-            subtitle = "مستودع النور • متصل الآن",
+            title = "المحادثة الحالية",
+            subtitle = "استفسارات الطلبات والدعم",
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
 
@@ -79,19 +79,19 @@ fun MessagesScreen(
         ) {
             item {
                 MessageBubble(
-                    text = "مرحبًا، تم تجهيز الطلب #REQ-1284 ويمكن تسليمه اليوم.",
+                    text = "مرحباً، تم استلام طلبك #REQ-1284 وسيتم مراجعته قريباً.",
                     alignEnd = false,
                 )
             }
             item {
                 MessageBubble(
-                    text = "ممتاز، الرجاء تحديث رقم التتبع وإرسال الفاتورة.",
+                    text = "شكراً، أحتاج تحديثاً حول موعد وصول الشحنة.",
                     alignEnd = true,
                 )
             }
             item {
                 MessageBubble(
-                    text = "تم الإرسال. هل ترغبون بزيادة الكمية في الشحنة القادمة؟",
+                    text = "تم التحديث. من المتوقع وصول الشحنة قبل نهاية اليوم.",
                     alignEnd = false,
                 )
             }

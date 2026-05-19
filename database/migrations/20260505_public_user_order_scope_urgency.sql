@@ -10,24 +10,24 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS urgency text NOT NULL DEFAULT
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS request_scope text NOT NULL DEFAULT 'SPECIFIC_PHARMACY';
 
 -- Step 2: Add CHECK constraints for valid enum values
-DO $
+DO $$
 BEGIN
     ALTER TABLE public.orders ADD CONSTRAINT check_urgency_valid
         CHECK (urgency IN ('URGENT', 'NORMAL'));
 EXCEPTION
     WHEN duplicate_object THEN NULL;
-END $;
+END $$;
 
-DO $
+DO $$
 BEGIN
     ALTER TABLE public.orders ADD CONSTRAINT check_request_scope_valid
         CHECK (request_scope IN ('SPECIFIC_PHARMACY', 'ALL_PHARMACIES'));
 EXCEPTION
     WHEN duplicate_object THEN NULL;
-END $;
+END $$;
 
 -- Step 3: Add constraint for SPECIFIC_PHARMACY requiring pharmacy_id
-DO $
+DO $$
 BEGIN
     ALTER TABLE public.orders ADD CONSTRAINT check_specific_pharmacy_has_id
         CHECK (
@@ -36,7 +36,7 @@ BEGIN
         );
 EXCEPTION
     WHEN duplicate_object THEN NULL;
-END $;
+END $$;
 
 -- Step 4: Update customer_create_order RLS policy to support both scopes
 DROP POLICY IF EXISTS customer_create_order ON public.orders;

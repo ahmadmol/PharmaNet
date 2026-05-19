@@ -30,9 +30,12 @@ class CreateCustomerOrderUseCase @Inject constructor(
         requestScope: CustomerRequestScope,
         fulfillmentType: FulfillmentType,
         deliveryAddress: String?,
+        deliveryLatitude: Double?,
+        deliveryLongitude: Double?,
         deliveryPhone: String?,
         notes: String?,
         accountType: AccountType,
+        prescriptionUrl: String? = null,
     ): Result<Order> {
         // Rule 1: Only PUBLIC_USER can create customer orders
         if (accountType != AccountType.PUBLIC_USER) {
@@ -60,13 +63,24 @@ class CreateCustomerOrderUseCase @Inject constructor(
             )
         }
 
-        // Rule 3: DELIVERY requires address and phone
-        if (fulfillmentType == FulfillmentType.DELIVERY) {
+        val requiresLocation = fulfillmentType == FulfillmentType.DELIVERY ||
+            requestScope == CustomerRequestScope.ALL_PHARMACIES
+
+        // Rule 3: DELIVERY and all-pharmacies radar orders require GPS-backed address.
+        if (requiresLocation) {
             if (deliveryAddress.isNullOrBlank()) {
                 return Result.failure(
-                    IllegalArgumentException("Delivery address is required for delivery orders")
+                    IllegalArgumentException("Delivery address is required for delivery or all-pharmacies orders")
                 )
             }
+            if (deliveryLatitude == null || deliveryLongitude == null) {
+                return Result.failure(
+                    IllegalArgumentException("Delivery latitude and longitude are required for delivery or all-pharmacies orders")
+                )
+            }
+        }
+
+        if (fulfillmentType == FulfillmentType.DELIVERY) {
             if (deliveryPhone.isNullOrBlank()) {
                 return Result.failure(
                     IllegalArgumentException("Delivery phone is required for delivery orders")
@@ -94,8 +108,11 @@ class CreateCustomerOrderUseCase @Inject constructor(
             requestScope = requestScope,
             fulfillmentType = fulfillmentType,
             deliveryAddress = deliveryAddress,
+            deliveryLatitude = deliveryLatitude,
+            deliveryLongitude = deliveryLongitude,
             deliveryPhone = deliveryPhone,
             notes = notes,
+            prescriptionUrl = prescriptionUrl,
         )
     }
 }

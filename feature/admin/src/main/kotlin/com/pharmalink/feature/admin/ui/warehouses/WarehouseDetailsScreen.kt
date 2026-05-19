@@ -39,6 +39,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.PharmaWarning
+import com.pharmalink.designsystem.theme.StatusActive
+import com.pharmalink.designsystem.theme.StatusInfo
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -125,7 +128,7 @@ private fun WarehouseDetailsContent(
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -223,25 +226,8 @@ private fun SuccessContent(
             HeaderCard(warehouse = warehouse)
         }
 
-        // Statistics Cards
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-            ) {
-                StatCard(
-                    title = stringResource(R.string.warehouse_details_inventory_items),
-                    value = warehouse.totalInventoryItems.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-                
-                StatCard(
-                    title = stringResource(R.string.warehouse_details_active_shipments),
-                    value = warehouse.activeShipments.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
+        // Note: Secondary statistics (inventory items, shipments, orders) hidden
+        // because endpoints are not available yet. Showing only primary warehouse data.
 
         // Stock Status Card
         item {
@@ -318,13 +304,13 @@ private fun HeaderCard(
                         Icon(
                             imageVector = Icons.Outlined.AcUnit,
                             contentDescription = null,
-                            tint = Color(0xFF3B82F6),
+                            tint = StatusInfo,
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
                             text = stringResource(R.string.warehouse_details_cold_chain),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF3B82F6),
+                            color = StatusInfo,
                             fontWeight = FontWeight.SemiBold,
                         )
                     }
@@ -405,13 +391,13 @@ private fun StockStatusCard(
                         text = "${warehouse.inStockPercent}%",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF10B981),
+                        color = StatusActive,
                     )
                 }
                 LinearProgressIndicator(
                     progress = { warehouse.inStockPercent / 100f },
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color(0xFF10B981),
+                    color = StatusActive,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
             }
@@ -430,7 +416,7 @@ private fun StockStatusCard(
                     text = warehouse.lowStockCount.toString(),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFF59E0B),
+                    color = PharmaWarning,
                 )
             }
 
@@ -582,12 +568,14 @@ private fun ActionsCard(
             PharmaButton(
                 text = stringResource(R.string.warehouse_details_view_shipments),
                 onClick = { onAction(WarehouseDetailsAction.OnViewShipmentsClicked) },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             PharmaButton(
                 text = stringResource(R.string.warehouse_details_edit),
                 onClick = { onAction(WarehouseDetailsAction.OnEditClicked) },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -613,9 +601,7 @@ private fun PreviewWarehouseDetailsScreen() {
                     estimatedDeliveryLabel = "1-2 أيام",
                     distanceLabel = "5 كم",
                     lastUpdatedLabel = "منذ ساعة",
-                    totalInventoryItems = 342,
-                    activeShipments = 15,
-                    completedOrders = 128,
+                    // Secondary stats removed - not available
                 ),
             ),
             onAction = {},

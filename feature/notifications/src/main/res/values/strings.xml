@@ -1,14 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notifications_title">الإشعارات</string>
     <string name="notifications_empty_title">لا توجد إشعارات</string>
-    <string name="notifications_empty_subtitle">ستظهر هنا تحديثات الطلبات والتنبيهات العاجلة</string>
+    <string name="notifications_empty_subtitle">ستظهر هنا التحديثات الخاصة بالطلبات والمستودعات</string>
     <string name="notifications_empty_filtered_subtitle">لا توجد إشعارات ضمن هذا التصنيف حاليًا</string>
     <string name="notifications_loading_subtitle">جاري تحميل صندوق الإشعارات التشغيلي</string>
     <string name="notifications_error_subtitle">تعذر تحميل الإشعارات الآن</string>
     <string name="notifications_offline_subtitle">أنت غير متصل حاليًا، سيتم تحديث الإشعارات عند عودة الاتصال</string>
     <string name="notifications_mark_read">تحديد كمقروء</string>
     <string name="notifications_mark_all_read">تحديد الكل كمقروء</string>
+    <string name="notifications_delete_all">حذف الكل</string>
+    <string name="notifications_delete_one">حذف</string>
     <string name="notifications_open">فتح التفاصيل</string>
     <string name="notifications_show_all">عرض كل الإشعارات</string>
     <string name="notifications_filter_all">الكل</string>
@@ -20,22 +22,22 @@
     <string name="notifications_filter_support">الدعم</string>
     <string name="notifications_summary_title">ملخص مركز الإشعارات</string>
     <string name="notifications_summary_subtitle">لديك %1$d إشعار غير مقروء يحتاج إلى مراجعة الفريق.</string>
-    <string name="notifications_attention_subtitle">هذه القائمة تجمع التنبيهات التي ترتبط بإجراء أو متابعة تشغيلية.</string>
+    <string name="notifications_attention_subtitle">هذه التنبيهات تحتاج لمتابعة من الفريق المختص.</string>
     <string name="notifications_all_caught_up">تمت مراجعة جميع الإشعارات الحالية بنجاح.</string>
     <string name="notifications_summary_total">الإجمالي</string>
     <string name="notifications_summary_unread">غير مقروءة</string>
     <string name="notifications_summary_attention">تحتاج إجراء</string>
     <string name="notifications_section_attention">تحتاج متابعة</string>
-    <string name="notifications_section_attention_subtitle">إشعارات مرتبطة بقرار أو خطوة تشغيلية</string>
+    <string name="notifications_section_attention_subtitle">تنبيهات تتطلب تدخلاً من قبل الفريق</string>
     <string name="notifications_section_unread">غير مقروءة</string>
-    <string name="notifications_section_unread_subtitle">تحديثات جديدة للاطلاع السريع</string>
+    <string name="notifications_section_unread_subtitle">إشعارات جديدة تنتظر المراجعة</string>
     <string name="notifications_section_archived">مقروءة</string>
     <string name="notifications_section_archived_subtitle">إشعارات تمت مراجعتها أو متابعتها</string>
     <string name="notifications_status_action_needed">تحتاج إجراء</string>
     <string name="notifications_status_read">مقروءة</string>
     <string name="notifications_status_new">جديدة</string>
     <string name="notifications_action_open_request">فتح الطلب</string>
-    <string name="notifications_action_open_order">فتح الطلبية</string>
+    <string name="notifications_action_open_order">فتح الطلب</string>
     <string name="notifications_action_open_warehouse">عرض المستودع</string>
     <string name="notifications_action_open_compliance">فتح الامتثال</string>
     <string name="notifications_action_open_help">فتح الدعم</string>

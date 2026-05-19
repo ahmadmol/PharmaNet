@@ -1,5 +1,6 @@
 package com.pharmalink.feature.compliance.presentation
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -106,7 +108,8 @@ private fun ComplianceContent(
     overview: ComplianceOverview,
 ) {
     val d = MaterialTheme.dimens
-    val supplierAttentionCount = overview.supplierItems.count { it.requiresAttention() }
+    val context = LocalContext.current
+    val supplierAttentionCount = overview.supplierItems.count { it.requiresAttention(context) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -287,13 +290,14 @@ private fun DocumentCard(document: ComplianceDocument) {
 
 @Composable
 private fun SupplierCard(item: SupplierComplianceItem) {
+    val context = LocalContext.current
     ComplianceItemCard(
         icon = Icons.Outlined.VerifiedUser,
         title = item.supplierName,
         subtitle = "${item.nextReviewLabel}\n${item.note}",
-        tone = if (item.requiresAttention()) StatusTone.Warning else StatusTone.Success,
+        tone = if (item.requiresAttention(context)) StatusTone.Warning else StatusTone.Success,
         badgeLabel = item.statusLabel,
-        footerActionLabel = if (item.requiresAttention()) {
+        footerActionLabel = if (item.requiresAttention(context)) {
             stringResource(R.string.compliance_action_monitor_status)
         } else {
             null
@@ -360,6 +364,7 @@ private fun ComplianceItemCard(
     }
 }
 
-private fun SupplierComplianceItem.requiresAttention(): Boolean {
-    return statusLabel.contains("متابعة") || statusLabel.contains("بحاجة")
+private fun SupplierComplianceItem.requiresAttention(context: Context): Boolean {
+    return statusLabel.contains(context.getString(R.string.compliance_keyword_follow_up)) ||
+           statusLabel.contains(context.getString(R.string.compliance_keyword_needs))
 }

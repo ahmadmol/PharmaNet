@@ -48,14 +48,14 @@ fun AuthPrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
-            .clip(RoundedCornerShape(16.dp)),
+            .clip(RoundedCornerShape(24.dp)),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(24.dp),
     ) {
         if (isLoading) {
             Box(

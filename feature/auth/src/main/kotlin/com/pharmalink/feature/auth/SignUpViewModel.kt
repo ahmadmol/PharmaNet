@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pharmalink.core.common.error.MissingPharmacyLinkageException
+import com.pharmalink.core.location.FacilityLocationService
 import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.SignUpRequest
@@ -37,11 +38,23 @@ data class SignUpUiState(
     val pharmacyLocation: String = "",
     val warehouseName: String = "",
     val warehouseLocation: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val isResolvingLocation: Boolean = false,
+    val locationMessage: String? = null,
+    val locationMessageIsError: Boolean = false,
+    val locationSettingsAction: SignUpLocationSettingsAction? = null,
 )
+
+enum class SignUpLocationSettingsAction {
+    APP_SETTINGS,
+    LOCATION_SETTINGS,
+}
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val locationService: FacilityLocationService,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -89,6 +102,109 @@ class SignUpViewModel @Inject constructor(
         _uiState.update { it.copy(warehouseLocation = value) }
     }
 
+    fun onPickLocation(lat: Double, lng: Double, address: String?) {
+        _uiState.update {
+            it.copy(
+                latitude = lat,
+                longitude = lng,
+                pharmacyLocation = if (it.accountType == AccountType.PHARMACY) {
+                    address ?: it.pharmacyLocation
+                } else {
+                    it.pharmacyLocation
+                },
+                warehouseLocation = if (it.accountType == AccountType.WAREHOUSE) {
+                    address ?: it.warehouseLocation
+                } else {
+                    it.warehouseLocation
+                },
+            )
+        }
+    }
+
+    fun requestCurrentLocation() {
+        val accountType = _uiState.value.accountType
+        if (accountType != AccountType.WAREHOUSE && accountType != AccountType.PHARMACY) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isResolvingLocation = true,
+                    locationMessage = null,
+                    locationMessageIsError = false,
+                    locationSettingsAction = null,
+                )
+            }
+
+            locationService.getFreshFacilityLocation()
+                .onSuccess { location ->
+                    _uiState.update { state ->
+                        state.copy(
+                            latitude = location.latitude,
+                            longitude = location.longitude,
+                            pharmacyLocation = if (state.accountType == AccountType.PHARMACY) {
+                                location.areaName
+                            } else {
+                                state.pharmacyLocation
+                            },
+                            warehouseLocation = if (state.accountType == AccountType.WAREHOUSE) {
+                                location.areaName
+                            } else {
+                                state.warehouseLocation
+                            },
+                            isResolvingLocation = false,
+                            locationMessage = if (state.accountType == AccountType.WAREHOUSE) {
+                                context.getString(R.string.location_picker_success_warehouse)
+                            } else {
+                                context.getString(R.string.location_picker_success_pharmacy)
+                            },
+                            locationMessageIsError = false,
+                            locationSettingsAction = null,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    val action = when (error.message) {
+                        "LOCATION_PERMISSION_DENIED" -> SignUpLocationSettingsAction.APP_SETTINGS
+                        "LOCATION_DISABLED" -> SignUpLocationSettingsAction.LOCATION_SETTINGS
+                        else -> null
+                    }
+                    val message = when (error.message) {
+                        "LOCATION_PERMISSION_DENIED" -> context.getString(R.string.location_error_permission_settings)
+                        "LOCATION_DISABLED" -> context.getString(R.string.location_error_gps_disabled)
+                        "LOCATION_UNAVAILABLE" -> context.getString(R.string.location_error_unavailable)
+                        else -> error.message ?: context.getString(R.string.location_error_generic)
+                    }
+                    _uiState.update {
+                        it.copy(
+                            isResolvingLocation = false,
+                            locationMessage = message,
+                            locationMessageIsError = true,
+                            locationSettingsAction = action,
+                        )
+                    }
+                }
+        }
+    }
+
+    fun onLocationPermissionDenied(permanentlyDenied: Boolean) {
+        _uiState.update {
+            it.copy(
+                isResolvingLocation = false,
+                locationMessage = if (permanentlyDenied) {
+                    context.getString(R.string.location_error_permission_settings)
+                } else {
+                    context.getString(R.string.location_error_permission_required)
+                },
+                locationMessageIsError = true,
+                locationSettingsAction = if (permanentlyDenied) {
+                    SignUpLocationSettingsAction.APP_SETTINGS
+                } else {
+                    null
+                },
+            )
+        }
+    }
+
     fun signUp() {
         val currentState = _uiState.value
         Log.d(TAG, "Sign up requested for type=${currentState.accountType}")
@@ -121,6 +237,8 @@ class SignUpViewModel @Inject constructor(
                 pharmacyLocation = currentState.pharmacyLocation,
                 warehouseName = currentState.warehouseName,
                 warehouseLocation = currentState.warehouseLocation,
+                latitude = currentState.latitude,
+                longitude = currentState.longitude,
             )
 
             authRepository.signUp(request).fold(
@@ -216,6 +334,8 @@ class SignUpViewModel @Inject constructor(
                 context.getString(R.string.auth_error_warehouse_name_required)
             state.accountType == AccountType.WAREHOUSE && state.warehouseLocation.isBlank() ->
                 context.getString(R.string.auth_error_warehouse_location_required)
+            state.accountType == AccountType.WAREHOUSE && (state.latitude == null || state.longitude == null) ->
+                context.getString(R.string.auth_error_warehouse_map_location_required)
             else -> null
         }
     }

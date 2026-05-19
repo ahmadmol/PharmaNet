@@ -15,7 +15,7 @@ import javax.inject.Inject
  * - Only PHARMACY can mark orders ready
  * - Must own the pharmacy
  * - Only PICKUP orders can be marked ready
- * - Only CONFIRMED orders can transition to READY_FOR_PICKUP
+ * - Only CONFIRMED or IN_PROGRESS orders can transition to READY_FOR_PICKUP
  */
 class MarkOrderReadyUseCase @Inject constructor(
     private val pharmaRepository: PharmaRepository,
@@ -52,10 +52,10 @@ class MarkOrderReadyUseCase @Inject constructor(
             )
         }
 
-        // Rule 4: Valid status transition (CONFIRMED -> READY_FOR_PICKUP)
-        if (order.status != OrderStatus.CONFIRMED) {
+        // Rule 4: Valid status transition (CONFIRMED/IN_PROGRESS -> READY_FOR_PICKUP)
+        if (order.status != OrderStatus.CONFIRMED && order.status != OrderStatus.IN_PROGRESS) {
             return Result.failure(
-                IllegalStateException("Can only mark CONFIRMED orders as ready. Current status: ${order.status}")
+                IllegalStateException("Can only mark CONFIRMED or IN_PROGRESS orders as ready. Current status: ${order.status}")
             )
         }
 

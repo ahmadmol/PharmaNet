@@ -8,15 +8,32 @@ data class AdminDashboardUiState(
     val isRefreshing: Boolean = false,
     val contentError: String = "",
     val adminName: String = "",
+    
+    // Basic Counts
     val totalUsers: Int = 0,
     val totalPharmacies: Int = 0,
     val totalWarehouses: Int = 0,
     val totalOrders: Int = 0,
+    
+    // Orders Breakdown
+    val b2cOrdersCount: Int = 0,
+    val b2bOrdersCount: Int = 0,
+    val urgentOrdersCount: Int = 0,
+    
+    // Orders by Status
+    val pendingOrdersCount: Int = 0,
+    val confirmedOrdersCount: Int = 0,
+    val deliveredOrdersCount: Int = 0,
+    
+    // Active Facilities
+    val activePharmacies: Int = 0,
+    val activeWarehouses: Int = 0,
+    
     val pendingRequests: List<PendingRequestModel> = emptyList(),
     val recentActivities: List<ActivityModel> = emptyList(),
     val systemHealthPercent: Int = 0,
     val systemHealthStatus: String = "",
-    val activeConnections: Int = 0,
+    // Note: activeConnections removed - telemetry not available in current schema
 )
 
 @Immutable
@@ -56,6 +73,7 @@ sealed interface AdminDashboardAction {
     data object OnGenerateReportClicked : AdminDashboardAction
     data object OnNotificationsClicked : AdminDashboardAction
     data object OnMenuClicked : AdminDashboardAction
+    data object OnProfileClicked : AdminDashboardAction
     data object OnUsersCardClicked : AdminDashboardAction
     data object OnPharmaciesCardClicked : AdminDashboardAction
     data object OnWarehousesCardClicked : AdminDashboardAction
@@ -70,11 +88,12 @@ sealed interface AdminDashboardEffect {
     data object NavigateToAddFacility : AdminDashboardEffect
     data object NavigateToReports : AdminDashboardEffect
     data object NavigateToNotifications : AdminDashboardEffect
+    data object NavigateToProfile : AdminDashboardEffect
     data object NavigateToUsers : AdminDashboardEffect
     data object NavigateToPharmacies : AdminDashboardEffect
     data object NavigateToWarehouses : AdminDashboardEffect
     data object NavigateToOrders : AdminDashboardEffect
-    data class NavigateToRequestDetail(val requestId: String) : AdminDashboardEffect
-    data object NavigateToAllRequests : AdminDashboardEffect
+    data class NavigateToOrderDetail(val orderId: String) : AdminDashboardEffect
     data object NavigateToAllActivities : AdminDashboardEffect
+    data object ShowAdminMenu : AdminDashboardEffect
 }

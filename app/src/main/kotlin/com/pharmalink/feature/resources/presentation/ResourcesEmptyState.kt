@@ -36,8 +36,8 @@ import com.pharmalink.designsystem.theme.dimens
  */
 @Composable
 fun ResourcesEmptyState(
-    title: String = "لا توجد مستودعات",
-    subtitle: String = "لم نجد أي مستودعات تطابق بحثك أو الفلاتر المطبقة",
+    title: String = "لا توجد نتائج",
+    subtitle: String = "لم نعثر على عناصر مطابقة، جرّب تعديل الفلاتر أو إعادة المحاولة.",
     onResetFilters: () -> Unit = {},
     onRetrySearch: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -120,7 +120,7 @@ fun ResourcesEmptyState(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "إعادة تعيين الفلاتر",
+                            text = "إعادة ضبط الفلاتر",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                         )
@@ -131,7 +131,7 @@ fun ResourcesEmptyState(
                         modifier = Modifier.fillMaxWidth(),
                         label = {
                             Text(
-                                text = "بحث مرة أخرى",
+                                text = "إعادة البحث",
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }

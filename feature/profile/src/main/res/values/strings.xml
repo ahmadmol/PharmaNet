@@ -1,6 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="profile_picture_description">Profile picture</string>
     <string name="edit_profile_button">تعديل الملف الشخصي</string>
     <string name="settings_title">الإعدادات</string>
     <string name="logout_button">تسجيل الخروج</string>
+    <string name="profile_language_arabic_only">العربية</string>
+    <string name="profile_default_user_name">مستخدم</string>
+    <string name="profile_account_type_public_user">عميل</string>
+    <string name="profile_update_error">فشل تحديث الملف الشخصي</string>
+
+    <!-- Profile Screen new extractions -->
+    <string name="profile_header_title">الملف الشخصي</string>
+    <string name="profile_org_label_user">المستخدم</string>
+    <string name="profile_org_label_pharmacy">الصيدلية</string>
+    <string name="profile_org_label_warehouse">المستودع</string>
+    <string name="profile_org_label_fallback">المنشأة</string>
+    <string name="profile_summary_account_type">نوع الحساب</string>
+    <string name="profile_summary_phone">رقم الهاتف</string>
+    <string name="profile_summary_email">البريد الإلكتروني</string>
+    <string name="badge_about">حول</string>
+    <string name="badge_notification_on">مفعل</string>
+    <string name="badge_notification_off">معطل</string>
+    <string name="badge_help_support">مساعدة</string>
+    <string name="badge_contact">تواصل</string>
+    <string name="badge_security">أمان</string>
+    <string name="badge_default">إعداد</string>
+    <string name="profile_language_subtitle_with_preview">اللغة الحالية: {language} - حالياً محددة للعربية فقط</string>
+    <string name="settings_group_general_title">الإعدادات العامة</string>
+    <string name="settings_group_general_subtitle">اللغة الحالية محددة للعربية فقط</string>
+    <string name="settings_group_security_title">إعدادات الأمان</string>
+    <string name="settings_group_security_subtitle">خصوصية كلمة المرور والوصول الآمن</string>
+    <string name="settings_group_support_title">المساعدة والدعم</string>
+    <string name="settings_group_support_subtitle">تواصل معنا للاستفسارات والدعم الفني</string>
+    <string name="settings_group_fallback_title">إعدادات أخرى</string>
+    <string name="settings_group_fallback_subtitle">إعدادات إضافية غير مصنفة</string>
+
+    <!-- Keywords for SettingItem type detection -->
+    <string name="keyword_notification">إشعار</string>
+    <string name="keyword_notification_plural">إشعارات</string>
+    <string name="keyword_language">لغة</string>
+    <string name="keyword_security_aman">أمان</string>
+    <string name="keyword_security_khulos">خصوص</string>
+    <string name="keyword_security_password">كلمة</string>
+    <string name="keyword_security_aman_alt">السلامة</string>
+    <string name="keyword_security_himayah">حماية</string>
+    <string name="keyword_security_sirya">سرية</string>
+    <string name="keyword_help_moaan">مساعدة</string>
+    <string name="keyword_help_daam">دعم</string>
+    <string name="keyword_contact">تواصل</string>
+    <string name="keyword_about">حول</string>
+
+    <!-- Setting Items -->
+    <string name="setting_item_notifications_title">الإشعارات</string>
+    <string name="setting_item_notifications_subtitle">تعديل إعدادات الإشعارات</string>
+    <string name="setting_item_language_title">اللغة</string>
+    <string name="setting_item_language_subtitle">العربية</string>
+    <string name="setting_item_about_title">حول التطبيق</string>
+    <string name="setting_item_about_subtitle">الإصدار، سياسة الخصوصية</string>
+    <string name="setting_item_security_title">الأمان والخصوصية</string>
+    <string name="setting_item_security_subtitle">تغيير كلمة المرور، المصادقة الثنائية</string>
+    <string name="setting_item_help_title">المساعدة والدعم</string>
+    <string name="setting_item_help_subtitle">الأسئلة الشائعة ومسارات الدعم المباشر</string>
+    <string name="setting_item_contact_title">التواصل معنا</string>
+    <string name="setting_item_contact_subtitle">الهاتف، البريد الإلكتروني، وواتساب</string>
+
+    <!-- Location Picker -->
+    <string name="location_picker_title">اختيار الموقع من الخريطة</string>
+    <string name="location_picker_selected_title">الموقع المحدد</string>
+    <string name="location_picker_confirm">تأكيد الموقع</string>
+    <string name="location_picker_cancel">إلغاء</string>
+    <string name="location_picker_change_location">تغيير الموقع على الخريطة</string>
+    <string name="location_picker_resolving_address">جاري تحديد العنوان...</string>
+    <string name="location_picker_detected_address">العنوان المكتشف</string>
+    <string name="location_picker_lat_lng_format">Lat: %.6f, Lng: %.6f</string>
+    <string name="location_picker_geocode_address">ترميز العنوان جغرافياً</string>
+
+    <!-- Edit Profile -->
+    <string name="edit_profile_title">تعديل الملف الشخصي</string>
+    <string name="edit_profile_save">حفظ التغييرات</string>
+    <string name="edit_profile_cancel">إلغاء</string>
+    <string name="edit_profile_success">تم تحديث الملف الشخصي بنجاح</string>
+    <string name="edit_profile_section_account_info">معلومات الحساب</string>
+    <string name="edit_profile_section_contact_info">معلومات الاتصال</string>
+    <string name="edit_profile_label_full_name">الاسم الكامل</string>
+    <string name="edit_profile_label_pharmacy_name">اسم الصيدلية</string>
+    <string name="edit_profile_label_warehouse_name">اسم المستودع</string>
+    <string name="edit_profile_label_phone">رقم الهاتف</string>
+    <string name="edit_profile_label_email">البريد الإلكتروني</string>
+    <string name="edit_profile_label_address">عنوان الصيدلية</string>
+    <string name="edit_profile_label_warehouse_location">موقع المستودع</string>
+    <string name="edit_profile_label_address_user">العنوان الشخصي</string>
+    <string name="edit_profile_role_pharmacy">صيدلي</string>
+    <string name="edit_profile_role_warehouse">مستودع</string>
+    <string name="edit_profile_role_user">مستخدم</string>
+    <string name="edit_profile_back">رجوع</string>
+    <string name="edit_profile_account_type">نوع الحساب</string>
 </resources>

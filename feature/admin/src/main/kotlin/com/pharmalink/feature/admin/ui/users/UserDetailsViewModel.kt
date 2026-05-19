@@ -29,7 +29,10 @@ class UserDetailsViewModel @Inject constructor(
     private val _state = MutableStateFlow(UserDetailsUiState())
     val state: StateFlow<UserDetailsUiState> = _state.asStateFlow()
 
-    private val _effect = MutableSharedFlow<UserDetailsEffect>()
+    private val _effect = MutableSharedFlow<UserDetailsEffect>(
+        replay = 0,
+        extraBufferCapacity = 1,
+    )
     val effect: SharedFlow<UserDetailsEffect> = _effect.asSharedFlow()
 
     init {
@@ -49,14 +52,10 @@ class UserDetailsViewModel @Inject constructor(
                 }
             }
             UserDetailsAction.OnDeactivateClicked -> {
-                viewModelScope.launch {
-                    _effect.emit(UserDetailsEffect.ShowMessage("تعطيل الحساب: قيد التطوير"))
-                }
+                // No backend RPC available — button is disabled in UI
             }
             UserDetailsAction.OnResetPasswordClicked -> {
-                viewModelScope.launch {
-                    _effect.emit(UserDetailsEffect.ShowMessage("إعادة تعيين كلمة المرور: قيد التطوير"))
-                }
+                // No backend RPC available — button is disabled in UI
             }
         }
     }
@@ -102,6 +101,8 @@ class UserDetailsViewModel @Inject constructor(
             else -> ""
         }
 
+        // Note: Secondary stats (totalOrders, totalRequests, lastLoginDate)
+        // are not included because endpoints are not available yet
         return UserDetailModel(
             id = id,
             fullName = fullName,
@@ -112,9 +113,6 @@ class UserDetailsViewModel @Inject constructor(
             facilityName = facilityName,
             isActive = isActive,
             createdAt = createdAt,
-            totalOrders = 0, // TODO: fetch real stats when orders/requests RPCs are added
-            totalRequests = 0, // TODO: fetch real stats when orders/requests RPCs are added
-            lastLoginDate = "--", // TODO: fetch real last login when endpoint is added
         )
     }
 }

@@ -1,17 +1,22 @@
 package com.pharmalink.feature.profile
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pharmalink.core.location.FacilityLocationService
 import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.mapper.toUserIdentity
 import com.pharmalink.domain.model.AccountType
+import com.pharmalink.domain.model.PharmacyProfile
+import com.pharmalink.feature.profile.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 sealed interface ProfileUpdateStatus {
@@ -25,8 +30,9 @@ sealed interface ProfileUpdateStatus {
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val pharmaRepository: PharmaRepository,
+    private val locationService: FacilityLocationService,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
@@ -34,6 +40,33 @@ class ProfileViewModel @Inject constructor(
     val updateStatus: StateFlow<ProfileUpdateStatus> = _updateStatus.asStateFlow()
 
     private var currentProfileId: String? = null
+
+    private fun buildSettingsOptions(): List<SettingItem> = listOf(
+        SettingItem(
+            context.getString(R.string.setting_item_notifications_title),
+            context.getString(R.string.setting_item_notifications_subtitle)
+        ),
+        SettingItem(
+            context.getString(R.string.setting_item_language_title),
+            context.getString(R.string.setting_item_language_subtitle)
+        ),
+        SettingItem(
+            context.getString(R.string.setting_item_about_title),
+            context.getString(R.string.setting_item_about_subtitle)
+        ),
+        SettingItem(
+            context.getString(R.string.setting_item_security_title),
+            context.getString(R.string.setting_item_security_subtitle)
+        ),
+        SettingItem(
+            context.getString(R.string.setting_item_help_title),
+            context.getString(R.string.setting_item_help_subtitle)
+        ),
+        SettingItem(
+            context.getString(R.string.setting_item_contact_title),
+            context.getString(R.string.setting_item_contact_subtitle)
+        )
+    )
 
     init {
         viewModelScope.launch {
@@ -51,11 +84,13 @@ class ProfileViewModel @Inject constructor(
                 }
                 val organizationName = userIdentity?.organizationName ?: organizationNameFallback
                 ProfileUiState(
-                    userName = profile.managerName.ifBlank { displayName.ifBlank { "مستخدم" } },
+                    userName = profile.managerName.ifBlank {
+                        displayName.ifBlank { context.getString(R.string.profile_default_user_name) }
+                    },
                     userEmail = profile.contactEmail.ifBlank { snapshot?.email.orEmpty() },
                     userPhone = profile.contactPhone.ifBlank { snapshot?.phoneNumber.orEmpty() },
                     accountType = if (snapshot?.accountType == AccountType.PUBLIC_USER) {
-                        "عميل"
+                        context.getString(R.string.profile_account_type_public_user)
                     } else {
                         snapshot?.accountType?.name?.replace('_', ' ').orEmpty()
                     },
@@ -66,6 +101,16 @@ class ProfileViewModel @Inject constructor(
                         profile.pharmacyName.ifBlank { organizationName }
                     },
                     pharmacyAddress = profile.addressLine,
+                    warehouseLatitude = profile.latitude,
+                    warehouseLongitude = profile.longitude,
+                    isUpdatingWarehouseLocation = _uiState.value.isUpdatingWarehouseLocation,
+                    warehouseLocationMessage = _uiState.value.warehouseLocationMessage,
+                    warehouseLocationMessageIsError = _uiState.value.warehouseLocationMessageIsError,
+                    warehouseLocationSettingsAction = _uiState.value.warehouseLocationSettingsAction,
+                    notificationsEnabled = profile.notificationsEnabled,
+                    isUpdatingNotifications = _uiState.value.isUpdatingNotifications,
+                    notificationsError = _uiState.value.notificationsError,
+                    settingsOptions = buildSettingsOptions()
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -84,7 +129,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _updateStatus.value = ProfileUpdateStatus.Loading
             
-            val updatedProfile = com.pharmalink.domain.model.PharmacyProfile(
+            val updatedProfile = PharmacyProfile(
                 id = profileId,
                 managerName = name,
                 pharmacyName = pharmacy,
@@ -98,7 +143,7 @@ class ProfileViewModel @Inject constructor(
                 licenseExpiryLabel = "",
                 operatingHoursLabel = "",
                 preferredLanguageLabel = "",
-                notificationsEnabled = true,
+                notificationsEnabled = _uiState.value.notificationsEnabled,
                 twoFactorEnabled = false,
                 linkedDevicesCount = 0,
                 totalOrders = 0,
@@ -111,12 +156,106 @@ class ProfileViewModel @Inject constructor(
                     _updateStatus.value = ProfileUpdateStatus.Success
                 }
                 .onFailure { e ->
-                    _updateStatus.value = ProfileUpdateStatus.Error(e.message ?: "فشل تحديث الملف الشخصي")
+                    _updateStatus.value = ProfileUpdateStatus.Error(
+                        e.message ?: context.getString(R.string.profile_update_error),
+                    )
                 }
         }
     }
 
+    fun updateWarehouseLocationFromCurrentGps() {
+        if (_uiState.value.accountTypeEnum != AccountType.WAREHOUSE) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isUpdatingWarehouseLocation = true,
+                warehouseLocationMessage = null,
+                warehouseLocationMessageIsError = false,
+                warehouseLocationSettingsAction = null,
+            )
+
+            locationService.getCurrentFacilityLocation()
+                .onSuccess { location ->
+                    pharmaRepository.updateMyWarehouseLocation(
+                        address = location.areaName,
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                    ).onSuccess {
+                        _uiState.value = _uiState.value.copy(
+                            pharmacyAddress = location.areaName,
+                            warehouseLatitude = location.latitude,
+                            warehouseLongitude = location.longitude,
+                            isUpdatingWarehouseLocation = false,
+                            warehouseLocationMessage = "تم تحديث موقع المستودع بنجاح",
+                            warehouseLocationMessageIsError = false,
+                            warehouseLocationSettingsAction = null,
+                        )
+                    }.onFailure { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isUpdatingWarehouseLocation = false,
+                            warehouseLocationMessage = error.message ?: context.getString(R.string.profile_update_error),
+                            warehouseLocationMessageIsError = true,
+                            warehouseLocationSettingsAction = null,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    val action = when (error.message) {
+                        "LOCATION_PERMISSION_DENIED" -> WarehouseLocationSettingsAction.APP_SETTINGS
+                        "LOCATION_DISABLED" -> WarehouseLocationSettingsAction.LOCATION_SETTINGS
+                        else -> null
+                    }
+                    val message = when (error.message) {
+                        "LOCATION_PERMISSION_DENIED" -> "يرجى السماح بالوصول إلى الموقع من إعدادات التطبيق"
+                        "LOCATION_DISABLED" -> "خدمات الموقع معطلة. يرجى تفعيل GPS من إعدادات الجهاز"
+                        "LOCATION_UNAVAILABLE" -> "تعذر تحديد الموقع الحالي. حاول مرة أخرى"
+                        else -> error.message ?: "تعذر تحديث موقع المستودع"
+                    }
+                    _uiState.value = _uiState.value.copy(
+                        isUpdatingWarehouseLocation = false,
+                        warehouseLocationMessage = message,
+                        warehouseLocationMessageIsError = true,
+                        warehouseLocationSettingsAction = action,
+                    )
+                }
+        }
+    }
+
+    fun onWarehouseLocationPermissionDenied(permanentlyDenied: Boolean) {
+        if (_uiState.value.accountTypeEnum != AccountType.WAREHOUSE) return
+
+        _uiState.value = _uiState.value.copy(
+            isUpdatingWarehouseLocation = false,
+            warehouseLocationMessage = if (permanentlyDenied) {
+                "يرجى السماح بالوصول إلى الموقع من إعدادات التطبيق"
+            } else {
+                "يرجى السماح بالوصول إلى الموقع لتحديث موقع المستودع"
+            },
+            warehouseLocationMessageIsError = true,
+            warehouseLocationSettingsAction = if (permanentlyDenied) {
+                WarehouseLocationSettingsAction.APP_SETTINGS
+            } else {
+                null
+            },
+        )
+    }
+
     fun resetUpdateStatus() {
         _updateStatus.value = ProfileUpdateStatus.Idle
+    }
+
+    fun updateNotifications(enabled: Boolean) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isUpdatingNotifications = true,
+                notificationsError = null,
+            )
+            val result = pharmaRepository.updateNotificationsPreference(enabled)
+            _uiState.value = _uiState.value.copy(
+                isUpdatingNotifications = false,
+                notificationsEnabled = if (result.isSuccess) enabled else _uiState.value.notificationsEnabled,
+                notificationsError = result.exceptionOrNull()?.message,
+            )
+        }
     }
 }

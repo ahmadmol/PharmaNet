@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Inventory2
@@ -23,23 +24,31 @@ import androidx.compose.material.icons.outlined.Notes
 import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -57,6 +66,8 @@ import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestStatus
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 @Composable
 fun RequestDetailsScreen(
@@ -115,6 +126,7 @@ fun RequestDetailsScreen(
                 actionErrorMessage = state.actionErrorMessage,
                 onPharmacySubmit = viewModel::submitRequest,
                 onPharmacyDelete = viewModel::deleteRequest,
+                onWarehouseAcceptPrice = viewModel::acceptRequest,
                 onWarehouseAction = viewModel::updateRequestStatus,
                 onDismissActionError = viewModel::clearActionError,
             )
@@ -131,6 +143,7 @@ private fun RequestDetailsContent(
     actionErrorMessage: String?,
     onPharmacySubmit: () -> Unit,
     onPharmacyDelete: () -> Unit,
+    onWarehouseAcceptPrice: (Long) -> Unit,
     onWarehouseAction: (RequestStatus) -> Unit,
     onDismissActionError: () -> Unit,
 ) {
@@ -144,6 +157,11 @@ private fun RequestDetailsContent(
         item {
             // Main Request Summary Card
             RequestSummaryCard(request = request)
+        }
+
+        item {
+            // Invoice Summary Card
+            InvoiceSummaryCard(request = request)
         }
         
         item {
@@ -171,6 +189,7 @@ private fun RequestDetailsContent(
                 requestStatus = request.status,
                 isActionInProgress = isActionInProgress,
                 actionErrorMessage = actionErrorMessage,
+                onWarehouseAcceptPrice = onWarehouseAcceptPrice,
                 onWarehouseAction = onWarehouseAction,
                 onDismissActionError = onDismissActionError,
             )
@@ -286,6 +305,7 @@ private fun WarehouseLifecycleActionsCard(
     requestStatus: RequestStatus,
     isActionInProgress: Boolean,
     actionErrorMessage: String?,
+    onWarehouseAcceptPrice: (Long) -> Unit,
     onWarehouseAction: (RequestStatus) -> Unit,
     onDismissActionError: () -> Unit,
 ) {
@@ -293,6 +313,38 @@ private fun WarehouseLifecycleActionsCard(
     val actions = warehouseActionsForStatus(requestStatus)
     if (actions.isEmpty()) return
     val d = MaterialTheme.dimens
+    var showAcceptPriceDialog by remember { mutableStateOf(false) }
+    var acceptPriceText by remember { mutableStateOf("") }
+    var acceptPriceError by remember { mutableStateOf<String?>(null) }
+
+    if (showAcceptPriceDialog) {
+        val invalidPriceMessage = stringResource(R.string.request_accept_price_error)
+        WarehouseAcceptPriceDialog(
+            priceText = acceptPriceText,
+            errorMessage = acceptPriceError,
+            isActionInProgress = isActionInProgress,
+            onPriceChange = {
+                acceptPriceText = it
+                acceptPriceError = null
+            },
+            onDismiss = {
+                if (!isActionInProgress) {
+                    showAcceptPriceDialog = false
+                    acceptPriceError = null
+                }
+            },
+            onConfirm = {
+                val cents = acceptPriceText.toPriceCentsOrNull()
+                if (cents == null) {
+                    acceptPriceError = invalidPriceMessage
+                } else {
+                    showAcceptPriceDialog = false
+                    acceptPriceError = null
+                    onWarehouseAcceptPrice(cents)
+                }
+            },
+        )
+    }
 
     Card(
         shape = MaterialTheme.shapes.large,
@@ -329,7 +381,13 @@ private fun WarehouseLifecycleActionsCard(
             actions.forEach { action ->
                 PharmaButton(
                     text = stringResource(action.labelRes),
-                    onClick = { onWarehouseAction(action.targetStatus) },
+                    onClick = {
+                        if (action.targetStatus == RequestStatus.ACCEPTED) {
+                            showAcceptPriceDialog = true
+                        } else {
+                            onWarehouseAction(action.targetStatus)
+                        }
+                    },
                     enabled = !isActionInProgress,
                     style = action.style,
                     modifier = Modifier.fillMaxWidth(),
@@ -352,6 +410,73 @@ private fun WarehouseLifecycleActionsCard(
             }
         }
     }
+}
+
+@Composable
+private fun WarehouseAcceptPriceDialog(
+    priceText: String,
+    errorMessage: String?,
+    isActionInProgress: Boolean,
+    onPriceChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.request_accept_price_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS)) {
+                OutlinedTextField(
+                    value = priceText,
+                    onValueChange = onPriceChange,
+                    enabled = !isActionInProgress,
+                    singleLine = true,
+                    label = { Text(text = stringResource(R.string.request_accept_price_label)) },
+                    supportingText = {
+                        Text(text = stringResource(R.string.request_accept_price_supporting))
+                    },
+                    isError = !errorMessage.isNullOrBlank(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (!errorMessage.isNullOrBlank()) {
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !isActionInProgress,
+            ) {
+                Text(text = stringResource(R.string.request_accept_price_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isActionInProgress,
+            ) {
+                Text(text = stringResource(R.string.request_accept_price_cancel))
+            }
+        },
+    )
+}
+
+private fun String.toPriceCentsOrNull(): Long? {
+    val normalized = trim()
+    if (!Regex("""\d+(\.\d{1,2})?""").matches(normalized)) return null
+    return runCatching {
+        BigDecimal(normalized)
+            .movePointRight(2)
+            .setScale(0, RoundingMode.HALF_UP)
+            .longValueExact()
+            .takeIf { it >= 0L }
+    }.getOrNull()
 }
 
 private data class WarehouseActionUi(
@@ -474,27 +599,28 @@ private fun RequestSummaryCard(request: Request) {
 
 @Composable
 private fun UrgencyBadge() {
-    AssistChip(
-        onClick = { },
-        label = {
-            Text(
-                text = stringResource(R.string.request_details_urgent_badge),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimary,
-            )
-        },
-        leadingIcon = {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = PremiumUrgent,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
             Icon(
                 imageVector = Icons.Outlined.Warning,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onPrimary,
             )
-        },
-        colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
-            containerColor = PremiumUrgent,
-        ),
-    )
+            Text(
+                text = stringResource(R.string.request_details_urgent_badge),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
+    }
 }
 
 @Composable
@@ -644,6 +770,96 @@ private fun InfoCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun InvoiceSummaryCard(request: Request) {
+    val d = MaterialTheme.dimens
+    val urgentServiceFee = if (request.priority == com.pharmalink.domain.model.RequestPriority.URGENT) 10000.0 else 0.0
+    val storedTotal = request.totalPrice.takeIf { it > 0.0 }
+    val itemsTotal = storedTotal
+        ?.minus(urgentServiceFee)
+        ?.coerceAtLeast(0.0)
+        ?: (request.quantity * 1000.0)
+    val grandTotal = storedTotal ?: (itemsTotal + urgentServiceFee)
+
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL)
+        ) {
+            Text(
+                text = stringResource(R.string.request_details_invoice_summary),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = d.spaceM)
+            )
+
+            InvoiceRow(
+                label = stringResource(R.string.request_details_items_total),
+                value = "${itemsTotal.toLong()} ل.س"
+            )
+
+            if (urgentServiceFee > 0) {
+                InvoiceRow(
+                    label = stringResource(R.string.request_details_urgent_service_fee),
+                    value = "${urgentServiceFee.toLong()} ل.س",
+                    isUrgent = true
+                )
+            }
+
+            Spacer(modifier = Modifier.height(d.spaceS))
+
+            // Separator
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+
+            Spacer(modifier = Modifier.height(d.spaceS))
+
+            InvoiceRow(
+                label = stringResource(R.string.request_details_grand_total),
+                value = "${grandTotal.toLong()} ل.س",
+                isGrandTotal = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun InvoiceRow(label: String, value: String, isUrgent: Boolean = false, isGrandTotal: Boolean = false) {
+    val d = MaterialTheme.dimens
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = d.spaceXS),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = if (isGrandTotal) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isGrandTotal) FontWeight.Bold else FontWeight.Normal,
+            color = if (isUrgent) PremiumUrgent else MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = value,
+            style = if (isGrandTotal) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isGrandTotal) FontWeight.Bold else FontWeight.SemiBold,
+            color = if (isUrgent) PremiumUrgent else MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 

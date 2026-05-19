@@ -2,16 +2,20 @@ package com.pharmalink.data.repository
 
 import android.util.Log
 import com.pharmalink.core.common.error.MissingPharmacyLinkageException
+import com.pharmalink.core.location.FacilityLocation
 import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.data.dto.AdminUserDto
 import com.pharmalink.data.dto.AuditLogDto
 import com.pharmalink.data.dto.CreatePharmacyRpcParams
+import com.pharmalink.data.dto.CreatePharmacyWithCoordinatesRpcParams
 import com.pharmalink.data.dto.CreateWarehouseRpcParams
+import com.pharmalink.data.dto.CreateWarehouseWithCoordinatesRpcParams
+import com.pharmalink.data.dto.FacilityDto
 import com.pharmalink.data.dto.GetAuditLogsRpcParams
+import com.pharmalink.data.dto.GetNearbyOrdersRpcParams
 import com.pharmalink.data.dto.InventoryItemDto
-import com.pharmalink.data.dto.PharmacyDto
+import com.pharmalink.data.dto.NearbyOrderDto
 import com.pharmalink.data.dto.UpdateUserProfileRpcParams
-import com.pharmalink.data.dto.WarehouseAdminDto
 import com.pharmalink.data.dto.toDomain
 import com.pharmalink.domain.mapper.toUserIdentity
 import com.pharmalink.domain.model.AccountType
@@ -34,30 +38,50 @@ import com.pharmalink.domain.model.Order as DomainOrder
 import com.pharmalink.domain.model.OrderStatus
 import com.pharmalink.domain.model.OrderType
 import com.pharmalink.domain.model.Pharmacy
+import com.pharmalink.domain.model.PharmacyCustomerOrder
 import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.PublicPharmacyAvailabilityStatus
 import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestPriority
 import com.pharmalink.domain.model.RequestStatus
+import com.pharmalink.domain.model.UserIdentity
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.domain.model.WarehouseShipment
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.rpc
+import io.github.jan.supabase.storage.storage
+import dagger.hilt.android.qualifiers.ApplicationContext
+import android.content.Context
+import android.net.Uri
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import io.github.jan.supabase.storage.upload
+import io.ktor.http.ContentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -70,9 +94,11 @@ private const val TAG = "SupabasePharmaRepo"
 @Singleton
 class SupabasePharmaRepository @Inject constructor(
     private val supabase: SupabaseClient,
-    private val realtime: SupabaseRealtimeDataSource,
     private val authRepository: AuthRepository,
+    @ApplicationContext private val context: Context,
 ) : PharmaRepository {
+    private val realtime = SupabaseRealtimeDataSource(supabase)
+    private val auth: Auth get() = supabase.auth
 
     override fun observeWarehouses(): Flow<List<Warehouse>> = flow {
         Log.d(TAG, "=== OBSERVE WAREHOUSES INITIALIZED ===")
@@ -91,9 +117,16 @@ class SupabasePharmaRepository @Inject constructor(
             }.decodeList<WarehouseDto>().firstOrNull()?.toDomain()?.getOrThrow()
         }
 
+    private suspend fun fetchPharmacies(): Result<List<Pharmacy>> = runCatching {
+        supabase.postgrest.from("pharmacies").select(columns = Columns.ALL)
+            .decodeList<FacilityDto>()
+            .map { it.toPharmacy() }
+    }
+
     private suspend fun fetchWarehouses(): Result<List<Warehouse>> = runCatching {
-        supabase.postgrest.from("warehouses").select(columns = Columns.ALL).decodeList<WarehouseDto>()
-            .map { it.toDomain().getOrThrow() }
+        supabase.postgrest.from("warehouses").select(columns = Columns.ALL)
+            .decodeList<FacilityDto>()
+            .map { it.toWarehouse() }
     }
 
     override suspend fun fetchFeaturedWarehouses(): Result<List<Warehouse>> = runCatching {
@@ -105,29 +138,42 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun fetchHomeStats(): Result<HomeStats> = runCatching {
         val pharmacyId = resolvePharmacyIdOrNull()
-        if (pharmacyId == null) {
-            Log.w(TAG, "fetchHomeStats fallback: non-PHARMACY or missing pharmacy linkage, returning defaults.")
-            return@runCatching defaultHomeStats()
-        }
-        val requestsCount = supabase.postgrest.from("requests").select(columns = Columns.raw("id")) {
+            ?: throw UnsupportedOperationException("Backend not confirmed")
+
+        val requestRows = supabase.postgrest.from("requests").select(columns = Columns.raw("id,created_at")) {
             filter { eq("pharmacy_id", pharmacyId) }
-        }.decodeList<RequestIdRow>().size
+        }.decodeList<HomeStatsRequestRow>()
+
+        val today = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate()
+        val requestsTodayCount = requestRows.count { row ->
+            row.createdAt
+                ?.let { isoStringToInstant(it).atZone(ZoneId.systemDefault()).toLocalDate() == today }
+                ?: false
+        }
 
         HomeStats(
-            requestsTodayCount = requestsCount,
-            requestsTodayTrend = "", // Empty trend until calculated
-            totalInventoryCount = null, // Unsupported until a verified backend contract exists
+            requestsTodayCount = requestsTodayCount,
+            requestsTodayTrend = "",
+            totalInventoryCount = null,
             totalInventoryUnit = null,
-            weeklySalesAmount = null, // Unsupported until a verified backend contract exists
+            weeklySalesAmount = null,
             weeklySalesTrend = null,
-            alertMessage = if (requestsCount > 10) "لديك عدد كبير من الطلبات المعلقة" else null
+            alertMessage = null,
         )
+    }.onFailure { error ->
+        Log.e(TAG, "fetchHomeStats failed", error)
     }
 
     override suspend fun fetchMedicines(): Result<List<Medicine>> = runCatching {
         supabase.postgrest.from("medicines").select(columns = Columns.ALL)
             .decodeList<MedicineDto>()
-            .map { it.toDomain().getOrThrow() }
+            .mapNotNull { it.toDomain().getOrNull() }
+    }
+
+    override suspend fun getPublicPharmacies(): Result<List<PublicPharmacyForMedicine>> = runCatching {
+        supabase.postgrest.rpc("get_public_pharmacies")
+            .decodeList<PublicPharmacyForMedicineDto>()
+            .map { it.toDomain() }
     }
 
     override suspend fun getPublicPharmaciesForMedicine(medicineId: String): Result<List<PublicPharmacyForMedicine>> = runCatching {
@@ -137,6 +183,50 @@ class SupabasePharmaRepository @Inject constructor(
             PublicPharmaciesForMedicineRpcParams(medicineId = medicineId),
         ).decodeList<PublicPharmacyForMedicineDto>()
             .map { it.toDomain() }
+    }
+
+    override suspend fun getCurrentPharmacyFacilityLocation(): Result<FacilityLocation?> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can read pharmacy facility location"
+        }
+        val pharmacyId = identity.organizationId
+            ?: throw IllegalStateException("PHARMACY missing organizationId")
+
+        val pharmacy = supabase.postgrest.from("pharmacies").select(columns = Columns.ALL) {
+            filter { eq("id", pharmacyId) }
+        }.decodeList<FacilityDto>().singleOrNull()
+            ?: throw IllegalStateException("Linked pharmacy not found")
+
+        val latitude = pharmacy.latitude ?: return@runCatching null
+        val longitude = pharmacy.longitude ?: return@runCatching null
+
+        FacilityLocation(
+            latitude = latitude,
+            longitude = longitude,
+            areaName = pharmacy.formattedAddress
+                ?: pharmacy.location
+                ?: pharmacy.name,
+        )
+    }
+
+    override suspend fun getNearbyOrders(lat: Double, lng: Double, radius: Double): Result<List<NearbyOrderDto>> = runCatching {
+        require(radius > 0.0) { "radius must be greater than zero" }
+        supabase.postgrest.rpc(
+            "get_nearby_orders",
+            GetNearbyOrdersRpcParams(
+                latitude = lat,
+                longitude = lng,
+                radiusKm = radius,
+            ),
+        ).decodeList<NearbyOrderDto>().map { dto ->
+            NearbyOrderDto(
+                id = dto.id?.takeIf { it.isNotBlank() },
+                userName = dto.userName?.takeIf { it.isNotBlank() } ?: "Unknown",
+                medicineName = dto.medicineName?.takeIf { it.isNotBlank() } ?: "Unknown medicine",
+                distanceKm = dto.distanceKm ?: 0.0,
+            )
+        }
     }
 
 
@@ -230,19 +320,15 @@ class SupabasePharmaRepository @Inject constructor(
     }
 
     override fun observeNotifications(): Flow<List<AppNotification>> = flow {
-        val initialNotifications = fetchNotifications().getOrThrow()
-        emit(initialNotifications)
-        try {
-            realtime.tableChanges("app_notifications").collect {
-                emit(fetchNotifications().getOrThrow())
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "observeNotifications realtime collect failed", e)
-            throw e
+        // Fetch initial state
+        val initial = fetchNotifications().getOrThrow()
+        emit(initial)
+
+        realtime.tableChanges("app_notifications").collect {
+            val latest = fetchNotifications().getOrThrow()
+            emit(latest)
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
     override fun observeProfile(): Flow<PharmacyProfile> =
         authRepository.observeUserSnapshot()
@@ -256,10 +342,7 @@ class SupabasePharmaRepository @Inject constructor(
                     // to avoid receiving ALL users' profile changes. Profile updates are rare enough
                     // that polling on user snapshot changes is acceptable.
                     runCatching {
-                        fetchProfile(snapshot.userId)
-                            .getOrThrow()
-                            .toDomain(snapshot.email)
-                            .getOrThrow()
+                        fetchProfileDomain(snapshot.userId, snapshot.email)
                     }.onFailure { error ->
                         Log.e(TAG, "observeProfile fallback: failed to fetch/decode profile for ${snapshot.userId}", error)
                     }.getOrElse {
@@ -268,28 +351,53 @@ class SupabasePharmaRepository @Inject constructor(
                 }
             }
 
-    override fun observeCompliance(): Flow<ComplianceOverview> =
-        authRepository.observeUserSnapshot()
-            .mapLatest { snapshot ->
-                ComplianceOverview(
-                    pharmacyId = snapshot?.pharmacyId.orEmpty(),
-                    licenseStatusLabel = if (snapshot?.pharmacyId.isNullOrBlank()) "غير متاح" else "متاح",
-                    licenseNumber = snapshot?.userId.orEmpty(),
-                    licenseExpiryLabel = "غير متاح",
-                    summaryLabel = "بيانات الامتثال التفصيلية غير متاحة حاليًا. يتم عرض ملخص آمن فقط لتجنب تعطل الشاشة.",
-                    alerts = emptyList(),
-                    documents = emptyList(),
-                    supplierItems = emptyList(),
-                )
-            }
+    override fun observeCompliance(): Flow<ComplianceOverview> = flow {
+        Log.w(TAG, "observeCompliance disabled: Backend not confirmed")
+    }
+
 
     override suspend fun updateProfile(profile: PharmacyProfile): Result<Unit> = runCatching {
+        val identity = resolveAccessContext()
+
+        if (identity.role == AccountType.WAREHOUSE) {
+            val updateDto = WarehouseProfileUpdateDto(
+                fullName = profile.managerName,
+                pharmacyName = profile.pharmacyName.takeIf { it.isNotBlank() },
+                phoneNumber = profile.contactPhone,
+            )
+
+            val updatedRows = supabase.postgrest.from("profiles").update(updateDto) {
+                select(Columns.ALL)
+                filter { eq("id", profile.id) }
+            }.decodeList<ProfileDetailsDto>()
+
+            when {
+                updatedRows.isEmpty() -> error("Profile update did not affect any row for profile ${profile.id}.")
+                updatedRows.size > 1 -> error("Profile update affected duplicate rows for profile ${profile.id}.")
+            }
+
+            val updatedRow = updatedRows.single()
+            require(updatedRow.id == profile.id) {
+                "Profile update returned row ${updatedRow.id} instead of profile ${profile.id}."
+            }
+            require(updatedRow.fullName == updateDto.fullName) {
+                "Profile update verification failed for full_name on profile ${profile.id}."
+            }
+            require(updatedRow.pharmacyName == updateDto.pharmacyName) {
+                "Profile update verification failed for pharmacy_name on profile ${profile.id}."
+            }
+            require(updatedRow.phoneNumber == updateDto.phoneNumber) {
+                "Profile update verification failed for phone_number on profile ${profile.id}."
+            }
+            return@runCatching
+        }
+
         val updateDto = ProfileUpdateDto(
             fullName = profile.managerName,
             pharmacyName = profile.pharmacyName.takeIf { it.isNotBlank() },
             pharmacyLocation = profile.addressLine.takeIf { profile.pharmacyName.isNotBlank() },
             defaultAddress = profile.addressLine.takeIf { it.isNotBlank() },
-            phoneNumber = profile.contactPhone
+            phoneNumber = profile.contactPhone,
         )
 
         val updatedRows = supabase.postgrest.from("profiles").update(updateDto) {
@@ -311,26 +419,114 @@ class SupabasePharmaRepository @Inject constructor(
         Log.e(TAG, "updateProfile failed", e)
     }.map { Unit }
 
+    override suspend fun updateMyWarehouseLocation(
+        address: String,
+        latitude: Double,
+        longitude: Double,
+    ): Result<Warehouse> = runCatching {
+        require(address.isNotBlank()) { "Warehouse address is required" }
+        require(latitude.isFinite() && latitude in -90.0..90.0) { "Invalid warehouse latitude" }
+        require(longitude.isFinite() && longitude in -180.0..180.0) { "Invalid warehouse longitude" }
+
+        supabase.postgrest.rpc(
+            "update_my_warehouse_location",
+            UpdateMyWarehouseLocationRpcParams(
+                address = address.trim(),
+                latitude = latitude,
+                longitude = longitude,
+            ),
+        ).decodeSingle<FacilityDto>().toWarehouse()
+    }.onFailure { e ->
+        Log.e(TAG, "updateMyWarehouseLocation failed", e)
+    }
+
     private suspend fun updateNotificationsReadState(
         read: Boolean,
         notificationId: String? = null,
     ): Result<Unit> = runCatching {
-        val pharmacyId = resolvePharmacyIdOrNull()
-        if (pharmacyId == null) {
-            Log.w(TAG, "updateNotificationsReadState no-op: non-PHARMACY or missing pharmacy linkage.")
-            return@runCatching Unit
-        }
-        if (notificationId != null) {
-            requireOwnedNotification(
-                pharmacyId = pharmacyId,
-                notificationId = notificationId,
-                actionName = "Marking notification as read",
-            )
-        }
-        supabase.postgrest.from("app_notifications").update(NotificationReadUpdateDto(read = read)) {
-            filter {
-                eq("pharmacy_id", pharmacyId)
-                notificationId?.let { eq("id", it) }
+        val identity = resolveAccessContext()
+        
+        when (identity.role) {
+            AccountType.ADMIN -> {
+                val adminUserId = resolveAdminNotificationUserId(identity.userId)
+                // ADMIN updates their own notifications
+                if (notificationId != null) {
+                    // Verify ownership before updating
+                    val rows = supabase.postgrest.from("app_notifications").select(columns = Columns.raw("id")) {
+                        filter {
+                            eq("user_id", adminUserId)
+                            eq("id", notificationId)
+                        }
+                    }.decodeList<NotificationRowIdDto>()
+                    
+                    when {
+                        rows.isEmpty() -> error("Marking notification as read failed because notification $notificationId was not found for admin user $adminUserId.")
+                        rows.size > 1 -> error("Marking notification as read failed because notification $notificationId matched duplicate rows for admin user $adminUserId.")
+                    }
+                }
+                
+                supabase.postgrest.from("app_notifications").update(NotificationReadUpdateDto(read = read)) {
+                    filter {
+                        eq("user_id", adminUserId)
+                        notificationId?.let { eq("id", it) }
+                    }
+                }
+            }
+            AccountType.PHARMACY -> {
+                val pharmacyId = resolvePharmacyId()
+                if (notificationId != null) {
+                    requireOwnedNotification(
+                        pharmacyId = pharmacyId,
+                        notificationId = notificationId,
+                        actionName = "Marking notification as read",
+                    )
+                }
+                supabase.postgrest.from("app_notifications").update(NotificationReadUpdateDto(read = read)) {
+                    filter {
+                        eq("pharmacy_id", pharmacyId)
+                        notificationId?.let { eq("id", it) }
+                    }
+                }
+            }
+            AccountType.WAREHOUSE -> {
+                if (notificationId != null) {
+                    val rows = supabase.postgrest.from("app_notifications").select(columns = Columns.raw("id")) {
+                        filter {
+                            eq("user_id", identity.userId)
+                            eq("id", notificationId)
+                        }
+                    }.decodeList<NotificationRowIdDto>()
+                    when {
+                        rows.isEmpty() -> error("Marking notification as read failed because notification $notificationId was not found for warehouse user ${identity.userId}.")
+                        rows.size > 1 -> error("Marking notification as read failed because notification $notificationId matched duplicate rows for warehouse user ${identity.userId}.")
+                    }
+                }
+                supabase.postgrest.from("app_notifications").update(NotificationReadUpdateDto(read = read)) {
+                    filter {
+                        eq("user_id", identity.userId)
+                        notificationId?.let { eq("id", it) }
+                    }
+                }
+            }
+            AccountType.PUBLIC_USER -> {
+                if (notificationId != null) {
+                    val rows = supabase.postgrest.from("app_notifications").select(columns = Columns.raw("id")) {
+                        filter {
+                            eq("user_id", identity.userId)
+                            eq("id", notificationId)
+                        }
+                    }.decodeList<NotificationRowIdDto>()
+                    when {
+                        rows.isEmpty() -> error("Marking notification as read failed because notification $notificationId was not found for public user ${identity.userId}.")
+                        rows.size > 1 -> error("Marking notification as read failed because notification $notificationId matched duplicate rows for public user ${identity.userId}.")
+                    }
+                }
+                supabase.postgrest.from("app_notifications").update(NotificationReadUpdateDto(read = read)) {
+                    filter {
+                        eq("user_id", identity.userId)
+                        notificationId?.let { eq("id", it) }
+                    }
+                }
             }
         }
     }.map { Unit }
@@ -449,16 +645,63 @@ class SupabasePharmaRepository @Inject constructor(
     }
 
     private suspend fun fetchNotifications(): Result<List<AppNotification>> = runCatching {
-        val pharmacyId = resolvePharmacyIdOrNull()
-        if (pharmacyId == null) {
-            Log.w(TAG, "fetchNotifications fallback: non-PHARMACY or missing pharmacy linkage, returning empty list.")
-            return@runCatching emptyList()
+        val identity = resolveAccessContext()
+        
+        when (identity.role) {
+            AccountType.ADMIN -> {
+                val adminUserId = resolveAdminNotificationUserId(identity.userId)
+                Log.d(TAG, "fetchNotifications ADMIN: snapshotUserId=${identity.userId}, sessionUserId=$adminUserId")
+                supabase.postgrest.from("app_notifications").select(columns = Columns.ALL) {
+                    filter { eq("user_id", adminUserId) }
+                }
+                    .decodeList<AppNotificationDto>()
+                    .mapNotNull { dto ->
+                        dto.toDomain().getOrElse { error ->
+                            Log.w(TAG, "Skipping notification ${dto.id} due to decode failure: ${error.message}")
+                            null
+                        }
+                    }
+            }
+            AccountType.PHARMACY -> {
+                val pharmacyId = resolvePharmacyId()
+                supabase.postgrest.from("app_notifications").select(columns = Columns.ALL) {
+                    filter { eq("pharmacy_id", pharmacyId) }
+                }
+                    .decodeList<AppNotificationDto>()
+                    .mapNotNull { dto ->
+                        dto.toDomain().getOrElse { error ->
+                            Log.w(TAG, "Skipping notification ${dto.id} due to decode failure: ${error.message}")
+                            null
+                        }
+                    }
+            }
+            AccountType.WAREHOUSE -> {
+                Log.d(TAG, "fetchNotifications WAREHOUSE: userId=${identity.userId}")
+                supabase.postgrest.from("app_notifications").select(columns = Columns.ALL) {
+                    filter { eq("user_id", identity.userId) }
+                }
+                    .decodeList<AppNotificationDto>()
+                    .mapNotNull { dto ->
+                        dto.toDomain().getOrElse { error ->
+                            Log.w(TAG, "Skipping notification ${dto.id} due to decode failure: ${error.message}")
+                            null
+                        }
+                    }
+            }
+            AccountType.PUBLIC_USER -> {
+                Log.d(TAG, "fetchNotifications PUBLIC_USER: userId=${identity.userId}")
+                supabase.postgrest.from("app_notifications").select(columns = Columns.ALL) {
+                    filter { eq("user_id", identity.userId) }
+                }
+                    .decodeList<AppNotificationDto>()
+                    .mapNotNull { dto ->
+                        dto.toDomain().getOrElse { error ->
+                            Log.w(TAG, "Skipping notification ${dto.id} due to decode failure: ${error.message}")
+                            null
+                        }
+                    }
+            }
         }
-        supabase.postgrest.from("app_notifications").select(columns = Columns.ALL) {
-            filter { eq("pharmacy_id", pharmacyId) }
-        }
-            .decodeList<AppNotificationDto>()
-            .map { it.toDomain().getOrThrow() }
     }
 
     private suspend fun fetchProfilePharmacyRow(userId: String): Result<ProfilePharmacyDto> = runCatching {
@@ -483,6 +726,33 @@ class SupabasePharmaRepository @Inject constructor(
             userId = userId,
             rowLabel = "Profile",
         )
+    }
+
+    private suspend fun fetchProfileDomain(userId: String, contactEmail: String): PharmacyProfile {
+        val profile = fetchProfile(userId).getOrThrow()
+        val warehouseLocation = if (
+            profile.accountType == AccountType.WAREHOUSE.name &&
+            !profile.warehouseId.isNullOrBlank()
+        ) {
+            fetchWarehouseLocation(profile.warehouseId).getOrThrow()
+        } else {
+            null
+        }
+        return profile.toDomain(contactEmail, warehouseLocation).getOrThrow()
+    }
+
+    private suspend fun fetchWarehouseLocation(warehouseId: String): Result<WarehouseLocationDto> = runCatching {
+        val rows = supabase.postgrest.from("warehouses").select(
+            columns = Columns.raw("id,name,formatted_address,latitude,longitude"),
+        ) {
+            filter { eq("id", warehouseId) }
+        }.decodeList<WarehouseLocationDto>()
+
+        when {
+            rows.isEmpty() -> error("Warehouse location not found for warehouse $warehouseId.")
+            rows.size > 1 -> error("Duplicate warehouse location rows for warehouse $warehouseId.")
+        }
+        rows.single()
     }
 
     override suspend fun getOrder(orderId: String): Result<DomainOrder?> =
@@ -574,7 +844,8 @@ class SupabasePharmaRepository @Inject constructor(
         }
 
 
-    override suspend fun getWarehouseShipments(warehouseId: String): Result<List<WarehouseShipment>> = Result.success(emptyList())
+    override suspend fun getWarehouseShipments(warehouseId: String): Result<List<WarehouseShipment>> =
+        Result.failure(UnsupportedOperationException("Backend not confirmed"))
 
     override suspend fun createRequest(request: Request): Result<Request> =
         runCatching {
@@ -608,9 +879,12 @@ class SupabasePharmaRepository @Inject constructor(
             val reqInsert = RequestInsertDto(
                 pharmacyId = pharmacyId,
                 warehouseId = request.warehouseId,
+                medicineId = request.medicineId?.takeIf { it.isNotBlank() }
+                    ?: error("medicineId is required for B2B pharmacy requests."),
                 medicineName = request.medicineName.trim(),
                 quantity = request.quantity,
                 unit = request.unit,
+                totalPrice = request.totalPrice,
                 medicineSubtitle = request.medicineSubtitle,
                 priority = request.priority.name,
                 warehouseName = request.warehouseName,
@@ -623,7 +897,7 @@ class SupabasePharmaRepository @Inject constructor(
                 select(Columns.ALL)
             }.decodeSingle<RequestDto>()
 
-            Log.d(TAG, "✅ REQUEST INSERT SUCCESS!")
+            Log.d(TAG, "أ¢إ“â€¦ REQUEST INSERT SUCCESS!")
             Log.d(TAG, "Returned request ID: ${insertedRequest.id}")
             Log.d(TAG, "Returned request status: ${insertedRequest.status}")
             Log.d(TAG, "Returned request warehouse ID: ${insertedRequest.warehouseId}")
@@ -631,7 +905,7 @@ class SupabasePharmaRepository @Inject constructor(
             Log.d(TAG, "Returned request supplier: ${insertedRequest.supplierName}")
 
             val domainRequest = insertedRequest.toDomain().getOrThrow()
-            Log.d(TAG, "✅ CREATE REQUEST FLOW COMPLETED")
+            Log.d(TAG, "أ¢إ“â€¦ CREATE REQUEST FLOW COMPLETED")
             Log.d(TAG, "Final domain request ID: ${domainRequest.id}")
             Log.d(TAG, "Final domain request status: ${domainRequest.status}")
 
@@ -682,6 +956,35 @@ class SupabasePharmaRepository @Inject constructor(
             ?: error("No user snapshot available")
         userSnapshot.toUserIdentity()
     }.getOrThrow()
+
+    private fun resolveAdminNotificationUserId(snapshotUserId: String): String {
+        val sessionUserId = auth.currentUserOrNull()?.id
+        if (sessionUserId != null && sessionUserId != snapshotUserId) {
+            Log.w(
+                TAG,
+                "Admin notification userId mismatch: snapshot=$snapshotUserId, session=$sessionUserId. Using session user id.",
+            )
+        }
+        return sessionUserId ?: snapshotUserId
+    }
+
+    private fun readUploadFile(
+        uri: Uri,
+        allowedMimeTypes: Map<String, String>,
+    ): UploadFile {
+        val mimeType = context.contentResolver.getType(uri)
+            ?: inferMimeTypeFromUri(uri)
+            ?: throw IllegalArgumentException("Could not determine file type for URI: $uri")
+        val extension = allowedMimeTypes[mimeType]
+            ?: throw IllegalArgumentException("Unsupported upload file type: $mimeType")
+        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: throw IllegalArgumentException("Could not read URI: $uri")
+        return UploadFile(
+            bytes = bytes,
+            extension = extension,
+            contentType = ContentType.parse(mimeType),
+        )
+    }
 
     private fun verifyUpdatedProfileRow(
         updatedRow: ProfileDetailsDto,
@@ -784,10 +1087,10 @@ class SupabasePharmaRepository @Inject constructor(
                 filter { eq("id", requestId) }
             }.decodeSingle<RequestDto>()
 
-            Log.d(TAG, "✅ REQUEST UPDATE SUCCESS")
+            Log.d(TAG, "أ¢إ“â€¦ REQUEST UPDATE SUCCESS")
             updatedRequest.toDomain().getOrThrow()
         }.onFailure { exception ->
-            Log.e(TAG, "❌ UPDATE REQUEST FAILED", exception)
+            Log.e(TAG, "أ¢â€Œإ’ UPDATE REQUEST FAILED", exception)
         }
 
     override suspend fun deleteRequest(requestId: String): Result<Unit> =
@@ -810,32 +1113,163 @@ class SupabasePharmaRepository @Inject constructor(
         }.map { Unit }
 
     override suspend fun submitRequest(requestId: String): Result<Unit> =
-        runCatching {
-            val ownedRequest = getOwnedRequestForPharmacy(
+        submitPharmacyRequest(requestId).map { Unit }
+
+    override suspend fun submitPharmacyRequest(requestId: String): Result<Request> =
+        callB2bRequestRpc(
+            functionName = "submit_pharmacy_request",
+            params = B2bRequestIdRpcParams(requestId = requestId),
+        ).onSuccess { submittedRequest ->
+            sendWarehouseNotificationForSubmittedRequest(submittedRequest)
+        }
+
+    override suspend fun warehouseAcceptB2bRequest(
+        requestId: String,
+        totalPriceCents: Long,
+        note: String?,
+    ): Result<Request> =
+        callB2bRequestRpc(
+            functionName = "warehouse_accept_b2b_request",
+            params = WarehouseAcceptB2bRpcParams(
                 requestId = requestId,
-                actionName = "Submitting request",
+                totalPriceCents = totalPriceCents,
+                note = note,
+            ),
+        )
+
+    override suspend fun warehouseRejectB2bRequest(
+        requestId: String,
+        reason: String?,
+    ): Result<Request> =
+        callB2bRequestRpc(
+            functionName = "warehouse_reject_b2b_request",
+            params = WarehouseRejectB2bRpcParams(
+                requestId = requestId,
+                rejectionReason = reason,
+            ),
+        )
+
+    override suspend fun warehouseStartB2bFulfillment(requestId: String): Result<Request> =
+        callB2bRequestRpc(
+            functionName = "warehouse_start_b2b_fulfillment",
+            params = B2bRequestIdRpcParams(requestId = requestId),
+        )
+
+    override suspend fun warehouseMarkB2bDelivered(
+        requestId: String,
+        deliveryNote: String?, // deliveryNote is no longer used by the RPC, but keeping for interface compatibility
+    ): Result<Request> =
+        callB2bRequestRpc(
+            functionName = "warehouse_mark_b2b_delivered",
+            params = WarehouseMarkB2bDeliveredRpcParams(
+                requestId = requestId,
+                deliveryNote = deliveryNote,
+            ),
+        ).onSuccess { deliveredRequest ->
+            // After successful delivery, send a notification to the pharmacy
+            sendAppNotification(
+                recipientPharmacyId = deliveredRequest.pharmacyId,
+                title = "طھظ… طھط³ظ„ظٹظ… ط§ظ„ط·ظ„ط¨",
+                content = "ظ‚ط§ظ… ط§ظ„ظ…ط³طھظˆط¯ط¹ ط¨طھط³ظ„ظٹظ… ط·ظ„ط¨ظƒ ط¨ظ†ط¬ط§ط­. طھظ… طھط­ط¯ظٹط« ط³ط¬ظ„ط§طھ ط§ظ„طھظˆط±ظٹط¯.",
+                type = NotificationType.ORDER_UPDATE,
+                destination = NotificationDestination.REQUEST,
+                destinationArgs = mapOf("requestId" to deliveredRequest.id)
+            )
+        }
+
+    private suspend fun sendAppNotification(
+        recipientPharmacyId: String,
+        title: String,
+        content: String,
+        type: NotificationType,
+        destination: NotificationDestination,
+        destinationArgs: Map<String, String> = emptyMap()
+    ): Result<Unit> = runCatching<Unit> {
+        // Find the user ID associated with the pharmacy
+        val pharmacyUserId = supabase.postgrest.from("profiles").select(columns = Columns.raw("id")) {
+            filter { eq("pharmacy_id", recipientPharmacyId) }
+        }.decodeSingle<UserIdDto>().id
+
+        supabase.postgrest.from("app_notifications").insert(
+            AppNotificationInsertDto(
+                userId = pharmacyUserId,
+                pharmacyId = recipientPharmacyId,
+                title = title,
+                body = content,
+                type = type.name,
+                category = NotificationCategory.ORDERS.name,
+                read = false,
+                destination = destination.name,
+                destinationId = destinationArgs.notificationDestinationId()
+            )
+        )
+        Unit
+        Log.d(TAG, "Notification sent for request $recipientPharmacyId: $title")
+    }.onFailure { e ->
+        Log.e(TAG, "Failed to send notification to pharmacy $recipientPharmacyId: ${e.message}", e)
+    }
+
+    private suspend fun sendWarehouseNotificationForSubmittedRequest(
+        submittedRequest: Request,
+    ) {
+        val warehouseId = submittedRequest.warehouseId?.takeIf { it.isNotBlank() } ?: run {
+            Log.w(TAG, "Skipping warehouse notification for request ${submittedRequest.id}: warehouseId is missing.")
+            return
+        }
+
+        runCatching {
+            val warehouseUserRows = supabase.postgrest.from("profiles").select(columns = Columns.raw("id")) {
+                filter {
+                    eq("warehouse_id", warehouseId)
+                    eq("account_type", AccountType.WAREHOUSE.name)
+                    eq("is_active", true)
+                }
+            }.decodeList<UserIdDto>()
+
+            val warehouseUserId = requireSingleProfileRow(
+                rows = warehouseUserRows,
+                userId = warehouseId,
+                rowLabel = "Active warehouse profile",
+            ).id
+
+            supabase.postgrest.from("app_notifications").insert(
+                AppNotificationInsertDto(
+                    userId = warehouseUserId,
+                    pharmacyId = submittedRequest.pharmacyId,
+                    title = "ط·ظ„ط¨ ط¬ط¯ظٹط¯ ظ…ظ† طµظٹط¯ظ„ظٹط©",
+                    body = "طھظ… ط§ط³طھظ„ط§ظ… ط·ظ„ط¨ ط¬ط¯ظٹط¯ ظˆظٹط­طھط§ط¬ ظ…ط±ط§ط¬ط¹طھظƒ.",
+                    type = NotificationType.ORDER_UPDATE.name,
+                    category = NotificationCategory.REQUESTS.name,
+                    read = false,
+                    destination = NotificationDestination.REQUEST.name,
+                    destinationId = submittedRequest.id,
+                ),
             )
 
-            require(
-                com.pharmalink.domain.model.RequestTransitions.canTransition(
-                    ownedRequest.status,
-                    RequestStatus.PENDING,
-                    AccountType.PHARMACY,
-                )
-            ) {
-                "Invalid status transition: ${ownedRequest.status} -> ${RequestStatus.PENDING} for role ${AccountType.PHARMACY}"
-            }
+            Log.d(TAG, "Warehouse notification created for request ${submittedRequest.id} -> user $warehouseUserId")
+        }.onFailure { error ->
+            Log.e(
+                TAG,
+                "Failed to create warehouse notification for request ${submittedRequest.id} (warehouseId=$warehouseId): ${error.message}",
+                error,
+            )
+        }
+    }
 
-            supabase.postgrest.from("requests").update(
-                RequestUpdateDto(status = RequestStatus.PENDING.name),
-            ) {
-                select(Columns.ALL)
-                filter {
-                    eq("id", requestId)
-                    eq("pharmacy_id", ownedRequest.pharmacyId)
-                }
-            }.decodeSingle<RequestDto>()
-        }.map { Unit }
+
+    private suspend inline fun <reified T : Any> callB2bRequestRpc(
+        functionName: String,
+        params: T,
+    ): Result<Request> =
+        runCatching {
+            supabase.postgrest.rpc(functionName, params)
+                .decodeSingle<B2bRequestRpcResponse>()
+                .request
+                .toDomain()
+                .getOrThrow()
+        }.onFailure { error ->
+            Log.e(TAG, "B2B RPC $functionName failed", error)
+        }
 
     override suspend fun markNotificationRead(notificationId: String): Result<Unit> =
         updateNotificationsReadState(
@@ -848,41 +1282,122 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun deleteNotification(notificationId: String): Result<Unit> =
         runCatching {
-            val pharmacyId = resolvePharmacyIdOrNull()
-            if (pharmacyId == null) {
-                Log.w(TAG, "deleteNotification no-op: non-PHARMACY or missing pharmacy linkage.")
-                return@runCatching Unit
-            }
-            requireOwnedNotification(
-                pharmacyId = pharmacyId,
-                notificationId = notificationId,
-                actionName = "Deleting notification",
-            )
-            supabase.postgrest.from("app_notifications").delete {
-                filter {
-                    eq("id", notificationId)
-                    eq("pharmacy_id", pharmacyId)
+            val identity = resolveAccessContext()
+            
+            when (identity.role) {
+                AccountType.PHARMACY -> {
+                    val pharmacyId = resolvePharmacyId()
+                    requireOwnedNotification(
+                        pharmacyId = pharmacyId,
+                        notificationId = notificationId,
+                        actionName = "Deleting notification",
+                    )
+                    supabase.postgrest.from("app_notifications").delete {
+                        filter {
+                            eq("id", notificationId)
+                            eq("pharmacy_id", pharmacyId)
+                        }
+                    }
+                }
+                AccountType.ADMIN -> {
+                    val adminUserId = resolveAdminNotificationUserId(identity.userId)
+                    // ADMIN users: delete by user_id
+                    supabase.postgrest.from("app_notifications").delete {
+                        filter {
+                            eq("id", notificationId)
+                            eq("user_id", adminUserId)
+                        }
+                    }
+                }
+                AccountType.WAREHOUSE -> {
+                    supabase.postgrest.from("app_notifications").delete {
+                        filter {
+                            eq("id", notificationId)
+                            eq("user_id", identity.userId)
+                        }
+                    }
+                }
+                AccountType.PUBLIC_USER -> {
+                    supabase.postgrest.from("app_notifications").delete {
+                        filter {
+                            eq("id", notificationId)
+                            eq("user_id", identity.userId)
+                        }
+                    }
+                }
+                else -> {
+                    Log.w(TAG, "deleteNotification no-op: unsupported account type ${identity.role}.")
+                    return@runCatching Unit
                 }
             }
         }.map { Unit }
 
     override suspend fun deleteAllNotifications(): Result<Unit> =
         runCatching {
-            val pharmacyId = resolvePharmacyIdOrNull()
-            if (pharmacyId == null) {
-                Log.w(TAG, "deleteAllNotifications no-op: non-PHARMACY or missing pharmacy linkage.")
-                return@runCatching Unit
-            }
-            supabase.postgrest.from("app_notifications").delete {
-                filter { eq("pharmacy_id", pharmacyId) }
+            val identity = resolveAccessContext()
+            
+            when (identity.role) {
+                AccountType.PHARMACY -> {
+                    val pharmacyId = resolvePharmacyId()
+                    supabase.postgrest.from("app_notifications").delete {
+                        filter { eq("pharmacy_id", pharmacyId) }
+                    }
+                }
+                AccountType.ADMIN -> {
+                    val adminUserId = resolveAdminNotificationUserId(identity.userId)
+                    // ADMIN users: delete all by user_id
+                    supabase.postgrest.from("app_notifications").delete {
+                        filter { eq("user_id", adminUserId) }
+                    }
+                }
+                AccountType.WAREHOUSE -> {
+                    supabase.postgrest.from("app_notifications").delete {
+                        filter { eq("user_id", identity.userId) }
+                    }
+                }
+                AccountType.PUBLIC_USER -> {
+                    supabase.postgrest.from("app_notifications").delete {
+                        filter { eq("user_id", identity.userId) }
+                    }
+                }
+                else -> {
+                    Log.w(TAG, "deleteAllNotifications no-op: unsupported account type ${identity.role}.")
+                    return@runCatching Unit
+                }
             }
         }.map { Unit }
 
     override suspend fun updateNotificationsPreference(enabled: Boolean): Result<Unit> =
-        unsupportedFeatureFailure(
-            featureName = "Updating notification preferences",
-            reason = "No visible profile column or dedicated table proves where notification preference changes should be persisted.",
-        )
+        runCatching {
+            val identity = resolveAccessContext()
+            val userId = identity.userId
+            supabase.postgrest.from("profiles").update(
+                ProfileNotificationsPreferenceUpdateDto(notificationsEnabled = enabled),
+            ) {
+                filter { eq("id", userId) }
+            }
+        }.map { Unit }
+
+    override suspend fun submitSupportRequest(
+        subject: String,
+        message: String,
+        category: String?,
+    ): Result<Unit> = runCatching {
+        val identity = authRepository.observeUserSnapshot().firstOrNull()?.toUserIdentity()
+            ?: error("طھط¹ط°ط± طھط­ط¯ظٹط¯ ظ‡ظˆظٹط© ط§ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ط­ط§ظ„ظٹط©.")
+        check(identity.role != AccountType.ADMIN) {
+            "Support requests are intended for non-admin accounts."
+        }
+
+        supabase.postgrest.rpc(
+            "submit_support_request",
+            SubmitSupportRequestRpcParams(
+                subject = subject,
+                message = message,
+                category = category,
+            ),
+        ).decodeAs<String>()
+    }.map { Unit }
 
     override suspend fun getDeliveryTracking(orderId: String): Result<DeliveryTracking> =
         unsupportedFeatureFailure(
@@ -926,8 +1441,11 @@ class SupabasePharmaRepository @Inject constructor(
         requestScope: CustomerRequestScope,
         fulfillmentType: FulfillmentType,
         deliveryAddress: String?,
+        deliveryLatitude: Double?,
+        deliveryLongitude: Double?,
         deliveryPhone: String?,
         notes: String?,
+        prescriptionUrl: String?,
     ): Result<DomainOrder> = runCatching {
         // 1. Role validation: PUBLIC_USER only
         val identity = resolveAccessContext()
@@ -954,10 +1472,17 @@ class SupabasePharmaRepository @Inject constructor(
             ?: throw IllegalStateException("PUBLIC_USER missing userId")
         
         // 3. Validate fulfillment requirements
-        if (fulfillmentType == FulfillmentType.DELIVERY) {
+        val requiresLocation = fulfillmentType == FulfillmentType.DELIVERY ||
+            requestScope == CustomerRequestScope.ALL_PHARMACIES
+        if (requiresLocation) {
             require(!deliveryAddress.isNullOrBlank()) {
-                "Delivery address required for DELIVERY fulfillment"
+                "Delivery address required for DELIVERY fulfillment or ALL_PHARMACIES requests"
             }
+            require(deliveryLatitude != null && deliveryLongitude != null) {
+                "Delivery latitude and longitude required for DELIVERY fulfillment or ALL_PHARMACIES requests"
+            }
+        }
+        if (fulfillmentType == FulfillmentType.DELIVERY) {
             require(!deliveryPhone.isNullOrBlank()) {
                 "Delivery phone required for DELIVERY fulfillment"
             }
@@ -976,17 +1501,125 @@ class SupabasePharmaRepository @Inject constructor(
             requestScope = requestScope.name,
             fulfillmentType = fulfillmentType.name,
             deliveryAddress = deliveryAddress,
+            deliveryLatitude = deliveryLatitude,
+            deliveryLongitude = deliveryLongitude,
             deliveryPhone = deliveryPhone,
             notes = notes,
+            prescriptionUrl = prescriptionUrl,
         )
         
         // 5. Insert order (starts PENDING, totalPriceCents = null)
-        val result = supabase.postgrest.from("orders").insert(createOrderDto) {
-            select(Columns.ALL)
-        }.decodeSingle<OrderDto>()
+        val result = try {
+            supabase.postgrest.from("orders").insert(createOrderDto) {
+                select(Columns.ALL)
+            }.decodeSingle<OrderDto>()
+        } catch (error: Throwable) {
+            deleteUploadedPrescriptionIfOwned(
+                prescriptionUrl = prescriptionUrl,
+                userId = customerId,
+                cause = error,
+            )
+            throw error
+        }
         
         result.toOrderDomain().getOrThrow()
     }
+
+    override suspend fun uploadPrescription(uri: android.net.Uri): Result<String> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PUBLIC_USER) {
+            "Only PUBLIC_USER can upload prescriptions"
+        }
+        val sessionUserId = auth.currentUserOrNull()?.id
+            ?: throw UnauthorizedException("unauthorized: no authenticated Supabase user")
+        require(sessionUserId == identity.userId) {
+            "Authenticated user does not match access context"
+        }
+
+        val bucket = supabase.storage.from("prescriptions")
+        val uploadFile = readUploadFile(
+            uri = uri,
+            allowedMimeTypes = prescriptionUploadMimeTypes,
+        )
+        val fileName = "${sessionUserId}_${System.currentTimeMillis()}_${UUID.randomUUID()}.${uploadFile.extension}"
+
+        bucket.upload(fileName, uploadFile.bytes) {
+            contentType = uploadFile.contentType
+            upsert = false
+        }
+
+        bucket.publicUrl(fileName)
+    }
+
+    override suspend fun uploadMedicineImage(uri: android.net.Uri): Result<String> = runCatching {
+        val identity = resolveAccessContext()
+        val ownerPath = when (identity.role) {
+            AccountType.WAREHOUSE -> {
+                val ownWarehouseId = identity.organizationId
+                    ?: throw UnauthorizedException("unauthorized: WAREHOUSE user missing organizationId")
+                "warehouse/$ownWarehouseId"
+            }
+            AccountType.ADMIN -> "admin/${identity.userId}"
+            else -> throw UnauthorizedException("Only ADMIN or WAREHOUSE can upload medicine images")
+        }
+        val sessionUserId = auth.currentUserOrNull()?.id
+            ?: throw UnauthorizedException("unauthorized: no authenticated Supabase user")
+        require(sessionUserId == identity.userId) {
+            "Authenticated user does not match access context"
+        }
+
+        val bucket = supabase.storage.from("medicines")
+        val uploadFile = readUploadFile(
+            uri = uri,
+            allowedMimeTypes = medicineUploadMimeTypes,
+        )
+        val fileName = "$ownerPath/medicine_${UUID.randomUUID()}.${uploadFile.extension}"
+
+        bucket.upload(fileName, uploadFile.bytes) {
+            contentType = uploadFile.contentType
+            upsert = false
+        }
+
+        bucket.publicUrl(fileName)
+    }
+
+    override suspend fun addMedicine(medicine: Medicine, warehouseId: String): Result<Unit> = runCatching {
+        val identity = resolveAccessContext()
+        val targetWarehouseId = when (identity.role) {
+            AccountType.ADMIN -> warehouseId
+            AccountType.WAREHOUSE -> {
+                val ownWarehouseId = identity.organizationId
+                    ?: throw UnauthorizedException("unauthorized: WAREHOUSE user missing organizationId")
+                require(warehouseId == ownWarehouseId) {
+                    "WAREHOUSE users can only add medicines to their own warehouse"
+                }
+                ownWarehouseId
+            }
+            else -> throw UnauthorizedException("Only ADMIN or WAREHOUSE can add medicines")
+        }
+
+        val dto = MedicineDto(
+            id = "", // Supabase will generate this
+            name = medicine.name,
+            brand = medicine.brand,
+            strength = medicine.strength,
+            price = medicine.price,
+            stockQuantity = medicine.stockQuantity,
+            imageUrl = medicine.imageUrl,
+            warehouseId = targetWarehouseId
+        )
+        
+        try {
+            supabase.postgrest.from("medicines").insert(dto)
+        } catch (error: Throwable) {
+            deleteUploadedMedicineImageIfOwned(
+                imageUrl = medicine.imageUrl,
+                identity = identity,
+                cause = error,
+            )
+            throw error
+        }
+    }.map { Unit }
 
     override suspend fun cancelCustomerOrder(orderId: String): Result<Unit> = runCatching {
         val identity = resolveAccessContext()
@@ -995,6 +1628,28 @@ class SupabasePharmaRepository @Inject constructor(
         }
         callOrderRpc(
             functionName = "cancel_customer_order",
+            params = OrderIdRpcParams(orderId),
+        )
+    }.map { }
+
+    override suspend fun acceptCustomerOrderPrice(orderId: String): Result<Unit> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PUBLIC_USER) {
+            "Only PUBLIC_USER can accept order prices"
+        }
+        callOrderRpc(
+            functionName = "customer_accept_order_price",
+            params = OrderIdRpcParams(orderId),
+        )
+    }.map { }
+
+    override suspend fun rejectCustomerOrderPrice(orderId: String): Result<Unit> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PUBLIC_USER) {
+            "Only PUBLIC_USER can reject order prices"
+        }
+        callOrderRpc(
+            functionName = "customer_reject_order_price",
             params = OrderIdRpcParams(orderId),
         )
     }.map { }
@@ -1038,6 +1693,12 @@ class SupabasePharmaRepository @Inject constructor(
                 totalPriceCents = totalPriceCents,
             ),
         )
+    }.onSuccess { order ->
+        sendCustomerOrderNotification(
+            order = order,
+            title = "طھظ… طھط£ظƒظٹط¯ ط·ظ„ط¨ظƒ",
+            content = "ظ‚ط§ظ…طھ ط§ظ„طµظٹط¯ظ„ظٹط© ط¨طھط£ظƒظٹط¯ ط·ظ„ط¨ظƒ ظ…ط¹ طھط³ط¹ظٹط±طھظ‡.",
+        )
     }
 
     override suspend fun rejectOrder(orderId: String): Result<DomainOrder> = runCatching {
@@ -1071,6 +1732,12 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "reject_customer_order",
             params = OrderIdRpcParams(orderId),
         )
+    }.onSuccess { order ->
+        sendCustomerOrderNotification(
+            order = order,
+            title = "طھظ… ط±ظپط¶ ط§ظ„ط·ظ„ط¨",
+            content = "ظ‚ط§ظ…طھ ط§ظ„طµظٹط¯ظ„ظٹط© ط¨ط±ظپط¶ ط·ظ„ط¨ظƒ.",
+        )
     }
 
     override suspend fun markOrderReadyForPickup(orderId: String): Result<DomainOrder> = runCatching {
@@ -1099,15 +1766,21 @@ class SupabasePharmaRepository @Inject constructor(
             "Can only mark PICKUP orders as ready. Current type: ${order.fulfillmentType}"
         }
         
-        // 3. Validate status transition (CONFIRMED -> READY_FOR_PICKUP)
-        require(order.status == OrderStatus.CONFIRMED) {
-            "Can only mark CONFIRMED orders as ready. Current status: ${order.status}"
+        // 3. Validate status transition (CONFIRMED/IN_PROGRESS -> READY_FOR_PICKUP)
+        require(order.status == OrderStatus.CONFIRMED || order.status == OrderStatus.IN_PROGRESS) {
+            "Can only mark CONFIRMED or IN_PROGRESS orders as ready. Current status: ${order.status}"
         }
         
         // 4. Transition through validated RPC.
         callOrderRpc(
             functionName = "mark_customer_order_ready_for_pickup",
             params = OrderIdRpcParams(orderId),
+        )
+    }.onSuccess { order ->
+        sendCustomerOrderNotification(
+            order = order,
+            title = "ط·ظ„ط¨ظƒ ط¬ط§ظ‡ط² ظ„ظ„ط§ط³طھظ„ط§ظ…",
+            content = "ط£طµط¨ط­ ط·ظ„ط¨ظƒ ط¬ط§ظ‡ط²ظ‹ط§ ظ„ظ„ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„طµظٹط¯ظ„ظٹط©.",
         )
     }
 
@@ -1137,15 +1810,21 @@ class SupabasePharmaRepository @Inject constructor(
             "Can only mark DELIVERY orders as out for delivery. Current type: ${order.fulfillmentType}"
         }
         
-        // 3. Validate status transition (CONFIRMED -> OUT_FOR_DELIVERY)
-        require(order.status == OrderStatus.CONFIRMED) {
-            "Can only mark CONFIRMED orders as out for delivery. Current status: ${order.status}"
+        // 3. Validate status transition (CONFIRMED/IN_PROGRESS -> OUT_FOR_DELIVERY)
+        require(order.status == OrderStatus.CONFIRMED || order.status == OrderStatus.IN_PROGRESS) {
+            "Can only mark CONFIRMED or IN_PROGRESS orders as out for delivery. Current status: ${order.status}"
         }
         
         // 4. Transition through validated RPC.
         callOrderRpc(
             functionName = "mark_customer_order_out_for_delivery",
             params = OrderIdRpcParams(orderId),
+        )
+    }.onSuccess { order ->
+        sendCustomerOrderNotification(
+            order = order,
+            title = "ط·ظ„ط¨ظƒ ط®ط±ط¬ ظ„ظ„طھظˆطµظٹظ„",
+            content = "ط·ظ„ط¨ظƒ ط§ظ„ط¢ظ† ظپظٹ ط§ظ„ط·ط±ظٹظ‚ ط¥ظ„ظٹظƒ.",
         )
     }
 
@@ -1180,6 +1859,42 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "mark_customer_order_delivered",
             params = OrderIdRpcParams(orderId),
         )
+    }.onSuccess { order ->
+        sendCustomerOrderNotification(
+            order = order,
+            title = "طھظ… طھط³ظ„ظٹظ… ط§ظ„ط·ظ„ط¨",
+            content = "طھظ… طھط³ظ„ظٹظ… ط·ظ„ط¨ظƒ ط¨ظ†ط¬ط§ط­.",
+        )
+    }
+
+    private suspend fun sendCustomerOrderNotification(
+        order: DomainOrder,
+        title: String,
+        content: String,
+    ) {
+        val customerId = order.customerId?.takeIf { it.isNotBlank() } ?: run {
+            Log.w(TAG, "Skipping customer notification for order ${order.id}: customerId is missing.")
+            return
+        }
+
+        runCatching {
+            supabase.postgrest.from("app_notifications").insert(
+                AppNotificationInsertDto(
+                    userId = customerId,
+                    pharmacyId = order.pharmacyId,
+                    title = title,
+                    body = content,
+                    type = NotificationType.ORDER_UPDATE.name,
+                    category = NotificationCategory.ORDERS.name,
+                    read = false,
+                    destination = NotificationDestination.ORDER.name,
+                    destinationId = order.id,
+                ),
+            )
+            Log.d(TAG, "Customer notification created for order ${order.id} -> user $customerId")
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to create customer notification for order ${order.id}: ${error.message}", error)
+        }
     }
 
     private suspend inline fun <reified T : Any> callOrderRpc(
@@ -1217,6 +1932,194 @@ class SupabasePharmaRepository @Inject constructor(
         rows.map { it.toOrderDomain().getOrThrow() }
     }
 
+    override suspend fun getPharmacyCustomerOrders(): Result<List<PharmacyCustomerOrder>> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can view pharmacy customer orders"
+        }
+        require(!identity.organizationId.isNullOrBlank()) {
+            "PHARMACY missing organizationId"
+        }
+
+        supabase.postgrest.rpc("get_pharmacy_customer_orders")
+            .decodeList<PharmacyCustomerOrderDto>()
+            .map { it.toDomain().getOrThrow() }
+    }
+
+    override suspend fun getPharmacyCustomerOrderDetail(orderId: String): Result<PharmacyCustomerOrder> = runCatching {
+        require(orderId.isNotBlank()) { "orderId must not be blank" }
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can view pharmacy customer order details"
+        }
+        require(!identity.organizationId.isNullOrBlank()) {
+            "PHARMACY missing organizationId"
+        }
+
+        supabase.postgrest.rpc(
+            "get_pharmacy_customer_order_detail",
+            PharmacyCustomerOrderDetailRpcParams(orderId),
+        ).decodeSingle<PharmacyCustomerOrderDto>()
+            .toDomain()
+            .getOrThrow()
+    }
+
+    override suspend fun claimNearbyCustomerOrder(orderId: String, radiusKm: Double): Result<Unit> = runCatching {
+        require(orderId.isNotBlank()) { "orderId must not be blank" }
+        require(radiusKm > 0.0) { "radiusKm must be greater than zero" }
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.PHARMACY) {
+            "Only PHARMACY can claim nearby customer orders"
+        }
+        require(!identity.organizationId.isNullOrBlank()) {
+            "PHARMACY missing organizationId"
+        }
+
+        callOrderRpc(
+            functionName = "claim_nearby_customer_order",
+            params = ClaimNearbyCustomerOrderRpcParams(
+                orderId = orderId,
+                radiusKm = radiusKm,
+            ),
+        )
+    }.map { Unit }
+
+    override suspend fun confirmCustomerOrder(orderId: String, totalPriceCents: Long): Result<Unit> = runCatching {
+        require(totalPriceCents >= 0) { "Total price must be >= 0" }
+        callOrderRpc(
+            functionName = "confirm_customer_order",
+            params = ConfirmCustomerOrderRpcParams(
+                orderId = orderId,
+                totalPriceCents = totalPriceCents,
+            ),
+        )
+    }.map { Unit }
+
+    override suspend fun rejectCustomerOrder(orderId: String): Result<Unit> =
+        callPharmacyCustomerOrderAction(
+            functionName = "reject_customer_order",
+            orderId = orderId,
+        )
+
+    override suspend fun markCustomerOrderReadyForPickup(orderId: String): Result<Unit> =
+        callPharmacyCustomerOrderAction(
+            functionName = "mark_customer_order_ready_for_pickup",
+            orderId = orderId,
+        )
+
+    override suspend fun markCustomerOrderOutForDelivery(orderId: String): Result<Unit> =
+        callPharmacyCustomerOrderAction(
+            functionName = "mark_customer_order_out_for_delivery",
+            orderId = orderId,
+        )
+
+    override suspend fun markCustomerOrderDelivered(orderId: String): Result<Unit> =
+        callPharmacyCustomerOrderAction(
+            functionName = "mark_customer_order_delivered",
+            orderId = orderId,
+        )
+
+    private suspend fun callPharmacyCustomerOrderAction(
+        functionName: String,
+        orderId: String,
+    ): Result<Unit> = runCatching {
+        require(orderId.isNotBlank()) { "orderId must not be blank" }
+        callOrderRpc(
+            functionName = functionName,
+            params = OrderIdRpcParams(orderId),
+        )
+    }.map { Unit }
+
+    private suspend fun deleteUploadedPrescriptionIfOwned(
+        prescriptionUrl: String?,
+        userId: String,
+        cause: Throwable,
+    ) {
+        val path = extractOwnedPrescriptionStoragePath(
+            prescriptionUrl = prescriptionUrl,
+            userId = userId,
+        ) ?: return
+
+        runCatching {
+            supabase.storage.from("prescriptions").delete(path)
+        }.onFailure { cleanupError ->
+            Log.w(
+                TAG,
+                "Failed to clean up uploaded prescription after customer order creation failed: ${cleanupError.message}. Original failure: ${cause.message}",
+                cleanupError,
+            )
+        }
+    }
+
+    private fun extractOwnedPrescriptionStoragePath(
+        prescriptionUrl: String?,
+        userId: String,
+    ): String? {
+        if (prescriptionUrl.isNullOrBlank() || userId.isBlank()) return null
+        val marker = "/storage/v1/object/public/prescriptions/"
+        val rawPath = prescriptionUrl.substringAfter(marker, missingDelimiterValue = "")
+            .substringBefore('?')
+            .takeIf { it.isNotBlank() }
+            ?: return null
+        val decodedPath = runCatching {
+            java.net.URLDecoder.decode(rawPath, Charsets.UTF_8.name())
+        }.getOrDefault(rawPath)
+
+        return decodedPath.takeIf { path ->
+            path.startsWith("${userId}_") &&
+                !path.contains("..") &&
+                !path.startsWith("/") &&
+                !path.startsWith("\\")
+        }
+    }
+
+    private suspend fun deleteUploadedMedicineImageIfOwned(
+        imageUrl: String?,
+        identity: UserIdentity,
+        cause: Throwable,
+    ) {
+        val path = extractOwnedMedicineImageStoragePath(
+            imageUrl = imageUrl,
+            identity = identity,
+        ) ?: return
+
+        runCatching {
+            supabase.storage.from("medicines").delete(path)
+        }.onFailure { cleanupError ->
+            Log.w(
+                TAG,
+                "Failed to clean up uploaded medicine image after addMedicine failed: ${cleanupError.message}. Original failure: ${cause.message}",
+                cleanupError,
+            )
+        }
+    }
+
+    private fun extractOwnedMedicineImageStoragePath(
+        imageUrl: String?,
+        identity: UserIdentity,
+    ): String? {
+        if (imageUrl.isNullOrBlank() || identity.role != AccountType.WAREHOUSE) return null
+        val warehouseId = identity.organizationId?.takeIf { it.isNotBlank() } ?: return null
+        val marker = "/storage/v1/object/public/medicines/"
+        val rawPath = imageUrl.substringAfter(marker, missingDelimiterValue = "")
+            .substringBefore('?')
+            .takeIf { it.isNotBlank() }
+            ?: return null
+        val decodedPath = runCatching {
+            java.net.URLDecoder.decode(rawPath, Charsets.UTF_8.name())
+        }.getOrDefault(rawPath)
+
+        return decodedPath.takeIf { path ->
+            path.startsWith("warehouse/$warehouseId/") &&
+                !path.contains("..") &&
+                !path.startsWith("/") &&
+                !path.startsWith("\\")
+        }
+    }
+
+    private fun Map<String, String>.notificationDestinationId(): String? =
+        this["requestId"] ?: this["orderId"] ?: values.firstOrNull()
+
     override suspend fun adminGetAllUsers(): Result<List<AdminUser>> = runCatching {
         val identity = resolveAccessContext()
         require(identity.role == AccountType.ADMIN) { "Admin access required" }
@@ -1225,6 +2128,7 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun adminUpdateUserProfile(
         targetUserId: String,
+        fullName: String?,
         accountType: AccountType,
         pharmacyId: String?,
         warehouseId: String?,
@@ -1236,6 +2140,7 @@ class SupabasePharmaRepository @Inject constructor(
             "admin_update_user_profile",
             UpdateUserProfileRpcParams(
                 targetUserId = targetUserId,
+                fullName = fullName,
                 accountType = accountType.name,
                 pharmacyId = pharmacyId,
                 warehouseId = warehouseId,
@@ -1249,8 +2154,7 @@ class SupabasePharmaRepository @Inject constructor(
     override suspend fun adminGetAllPharmacies(): Result<List<Pharmacy>> = runCatching {
         val identity = resolveAccessContext()
         require(identity.role == AccountType.ADMIN) { "Admin access required" }
-        supabase.postgrest.from("pharmacies").select(columns = Columns.ALL).decodeList<PharmacyDto>()
-            .map { it.toDomain() }
+        fetchPharmacies().getOrThrow()
     }
 
     override suspend fun adminCreatePharmacy(
@@ -1269,14 +2173,13 @@ class SupabasePharmaRepository @Inject constructor(
                 contactNumber = contactNumber,
                 licenseNumber = licenseNumber,
             ),
-        ).decodeSingle<PharmacyDto>().toDomain()
+        ).decodeSingle<FacilityDto>().toPharmacy()
     }
 
     override suspend fun adminGetAllWarehouses(): Result<List<Warehouse>> = runCatching {
         val identity = resolveAccessContext()
         require(identity.role == AccountType.ADMIN) { "Admin access required" }
-        supabase.postgrest.from("warehouses").select(columns = Columns.ALL).decodeList<WarehouseAdminDto>()
-            .map { it.toDomain() }
+        fetchWarehouses().getOrThrow()
     }
 
     override suspend fun adminCreateWarehouse(
@@ -1293,7 +2196,7 @@ class SupabasePharmaRepository @Inject constructor(
                 location = location,
                 contactNumber = contactNumber,
             ),
-        ).decodeSingle<WarehouseAdminDto>().toDomain()
+        ).decodeSingle<FacilityDto>().toWarehouse()
     }
 
     override suspend fun createFacility(request: CreateFacilityRequest): Result<Unit> = runCatching {
@@ -1301,22 +2204,20 @@ class SupabasePharmaRepository @Inject constructor(
         require(identity.role == AccountType.ADMIN) { "Admin access required" }
         val lat = request.latitude ?: error("coordinates required")
         val lng = request.longitude ?: error("coordinates required")
-        val locationWithGeo = buildString {
-            append(request.address.trim())
-            append("\n||geo:")
-            append(lat)
-            append(",")
-            append(lng)
-            append("||")
-        }
+        val locationLabel = request.address.trim()
         when (request.type) {
             FacilityType.PHARMACY -> {
-                val pharmacy = adminCreatePharmacy(
-                    name = request.name.trim(),
-                    location = locationWithGeo,
-                    contactNumber = request.phone.trim(),
-                    licenseNumber = request.licenseNumber.trim(),
-                ).getOrThrow()
+                val pharmacy = supabase.postgrest.rpc(
+                    "admin_create_pharmacy",
+                    CreatePharmacyWithCoordinatesRpcParams(
+                        name = request.name.trim(),
+                        location = locationLabel,
+                        contactNumber = request.phone.trim(),
+                        licenseNumber = request.licenseNumber.trim(),
+                        latitude = lat,
+                        longitude = lng,
+                    ),
+                ).decodeSingle<FacilityDto>().toPharmacy()
                 if (!request.isActive) {
                     supabase.postgrest.from("pharmacies").update(FacilityActiveUpdateDto(isActive = false)) {
                         filter { eq("id", pharmacy.id) }
@@ -1324,11 +2225,16 @@ class SupabasePharmaRepository @Inject constructor(
                 }
             }
             FacilityType.WAREHOUSE -> {
-                val warehouse = adminCreateWarehouse(
-                    name = request.name.trim(),
-                    location = locationWithGeo,
-                    contactNumber = request.phone.trim(),
-                ).getOrThrow()
+                val warehouse = supabase.postgrest.rpc(
+                    "admin_create_warehouse",
+                    CreateWarehouseWithCoordinatesRpcParams(
+                        name = request.name.trim(),
+                        location = locationLabel,
+                        contactNumber = request.phone.trim(),
+                        latitude = lat,
+                        longitude = lng,
+                    ),
+                ).decodeSingle<FacilityDto>().toWarehouse()
                 if (!request.isActive) {
                     supabase.postgrest.from("warehouses").update(FacilityActiveUpdateDto(isActive = false)) {
                         filter { eq("id", warehouse.id) }
@@ -1350,17 +2256,10 @@ class SupabasePharmaRepository @Inject constructor(
     override suspend fun getAuditLogById(logId: String): Result<AuditLog> = runCatching {
         val identity = resolveAccessContext()
         require(identity.role == AccountType.ADMIN) { "Admin access required" }
-        val dto = runCatching {
-            supabase.postgrest.rpc(
-                "admin_get_audit_log_detail",
-                buildJsonObject { put("p_log_id", logId) },
-            ).decodeSingle<AuditLogDto>()
-        }.getOrElse {
-            supabase.postgrest.from("audit_logs").select(columns = Columns.ALL) {
-                filter { eq("id", logId) }
-            }.decodeSingle<AuditLogDto>()
-        }
-        dto.toDomain()
+        supabase.postgrest.rpc(
+            "admin_get_audit_log_detail",
+            buildJsonObject { put("p_log_id", logId) },
+        ).decodeSingle<AuditLogDto>().toDomain()
     }
 
     private suspend fun getOwnedRequestForPharmacy(
@@ -1393,16 +2292,6 @@ class SupabasePharmaRepository @Inject constructor(
         }
     }
 
-    private fun defaultHomeStats(): HomeStats = HomeStats(
-        requestsTodayCount = 0,
-        requestsTodayTrend = "",
-        totalInventoryCount = null,
-        totalInventoryUnit = null,
-        weeklySalesAmount = null,
-        weeklySalesTrend = null,
-        alertMessage = null,
-    )
-
     private fun placeholderProfile(): PharmacyProfile = PharmacyProfile(
         id = "local",
         pharmacyName = "",
@@ -1427,68 +2316,150 @@ class SupabasePharmaRepository @Inject constructor(
 
     override suspend fun getWarehouseInventory(warehouseId: String): Result<List<com.pharmalink.domain.model.InventoryItem>> = runCatching {
         val identity = resolveAccessContext()
-        require(identity.role == AccountType.ADMIN) { "Admin access required" }
-
-        // Try fetching from warehouse_inventory table first
-        val inventoryResult = runCatching<List<com.pharmalink.domain.model.InventoryItem>> {
-            supabase.postgrest.from("warehouse_inventory").select(Columns.ALL) {
-                filter { eq("warehouse_id", warehouseId) }
-            }.decodeList<com.pharmalink.data.dto.InventoryItemDto>()
-                .map { dto -> dto.toDomain() }
-        }
-
-        // If warehouse_inventory table doesn't exist, fall back to medicines table
-        inventoryResult.getOrElse {
-            Log.d(TAG, "warehouse_inventory table not found, falling back to medicines table")
-            
-            // Fetch all medicines and map them to inventory items for this warehouse
-            val medicines = supabase.postgrest.from("medicines").select(Columns.ALL)
-                .decodeList<MedicineDto>()
-            
-            // Map medicines to inventory items with default values
-            medicines.map { medicine ->
-                com.pharmalink.domain.model.InventoryItem(
-                    id = "${warehouseId}_${medicine.id}",
-                    medicineId = medicine.id,
-                    medicineName = medicine.name,
-                    medicineImageUrl = medicine.imageUrl,
-                    warehouseId = warehouseId,
-                    quantity = 0, // Default quantity until real inventory system is implemented
-                    unit = "علبة",
-                    stockStatus = com.pharmalink.domain.model.StockStatus.IN_STOCK,
-                    lastUpdated = java.time.Instant.now(),
-                )
+        val targetWarehouseId = when (identity.role) {
+            AccountType.ADMIN -> warehouseId
+            AccountType.WAREHOUSE -> {
+                val ownWarehouseId = identity.organizationId
+                    ?: throw UnauthorizedException("unauthorized: WAREHOUSE user missing organizationId")
+                require(warehouseId == ownWarehouseId) {
+                    "WAREHOUSE users can only read their own warehouse inventory"
+                }
+                ownWarehouseId
             }
+            else -> throw UnauthorizedException("Only ADMIN or WAREHOUSE can read warehouse inventory")
         }
+
+        supabase.postgrest.from("warehouse_inventory").select(Columns.ALL) {
+            filter { eq("warehouse_id", targetWarehouseId) }
+        }.decodeList<com.pharmalink.data.dto.InventoryItemDto>()
+            .map { dto -> dto.toDomain() }
     }
 
     override suspend fun adminGetDashboardStats(): Result<com.pharmalink.domain.model.AdminDashboardStats> = runCatching {
         val identity = resolveAccessContext()
         require(identity.role == AccountType.ADMIN) { "Admin access required" }
 
-        // Use parallel async calls for efficiency
-        coroutineScope {
-            val usersDeferred = async { adminGetAllUsers().getOrElse { emptyList() } }
-            val pharmaciesDeferred = async { adminGetAllPharmacies().getOrElse { emptyList() } }
-            val warehousesDeferred = async { adminGetAllWarehouses().getOrElse { emptyList() } }
+        // Call the new RPC
+        val response = supabase.postgrest.rpc("admin_get_dashboard_stats")
+            .decodeAs<AdminDashboardStatsDto>()
 
-            val users = usersDeferred.await()
-            val pharmacies = pharmaciesDeferred.await()
-            val warehouses = warehousesDeferred.await()
+        com.pharmalink.domain.model.AdminDashboardStats(
+            totalUsers = response.totalUsers ?: 0,
+            totalPharmacies = response.totalPharmacies ?: 0,
+            totalWarehouses = response.totalWarehouses ?: 0,
+            totalOrders = response.totalOrders ?: 0,
+            b2cOrdersCount = response.b2cOrdersCount ?: 0,
+            b2bOrdersCount = response.b2bOrdersCount ?: 0,
+            urgentOrdersCount = response.urgentOrdersCount ?: 0,
+            pendingOrdersCount = response.pendingOrdersCount ?: 0,
+            confirmedOrdersCount = response.confirmedOrdersCount ?: 0,
+            deliveredOrdersCount = response.deliveredOrdersCount ?: 0,
+            activePharmacies = response.activePharmacies ?: 0,
+            activeWarehouses = response.activeWarehouses ?: 0,
+        )
+    }
 
-            com.pharmalink.domain.model.AdminDashboardStats(
-                totalUsers = users.size,
-                totalPharmacies = pharmacies.size,
-                totalWarehouses = warehouses.size,
-                totalOrders = 0, // TODO: fetch real stats when orders endpoint is added
-                pendingOrdersCount = 0, // TODO: fetch real stats when orders endpoint is added
-                activePharmacies = pharmacies.count { it.isActive },
-                activeWarehouses = warehouses.size, // All warehouses are considered active (domain model doesn't have isActive)
-            )
+    override suspend fun adminGetAllOrders(
+        orderType: String?,
+        status: String?,
+        isUrgent: Boolean?,
+        search: String?,
+        limit: Int,
+        offset: Int
+    ): Result<List<com.pharmalink.domain.model.AdminOrder>> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.ADMIN) { "Admin access required" }
+
+        // Build parameters
+        val params = buildJsonObject {
+            orderType?.let { put("p_order_type", it) }
+            status?.let { put("p_status", it) }
+            isUrgent?.let { put("p_is_urgent", it) }
+            search?.takeIf { it.isNotBlank() }?.let { put("p_search", it) }
+            put("p_limit", limit)
+            put("p_offset", offset)
         }
+
+        // Call RPC
+        val response = supabase.postgrest.rpc("admin_get_all_orders", params)
+            .decodeList<AdminOrderDto>()
+
+        response.map { it.toDomain() }
+    }
+
+    override suspend fun adminGetOrderDetail(orderId: String): Result<com.pharmalink.domain.model.AdminOrder?> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.ADMIN) { "Admin access required" }
+
+        // Build parameters
+        val params = buildJsonObject {
+            put("p_order_id", orderId)
+        }
+
+        // Call RPC
+        val response = supabase.postgrest.rpc("admin_get_order_detail", params)
+            .decodeList<AdminOrderDto>()
+
+        response.firstOrNull()?.toDomain()
+    }
+
+    override suspend fun adminGetPendingRequests(limit: Int): Result<List<com.pharmalink.domain.model.PendingRequest>> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.ADMIN) { "Admin access required" }
+
+        val params = buildJsonObject {
+            put("p_limit", limit)
+        }
+
+        val response = supabase.postgrest.rpc("admin_get_pending_requests", params)
+            .decodeList<PendingRequestDto>()
+
+        response.map { it.toDomain() }
+    }
+
+    override suspend fun adminGetRecentActivities(limit: Int): Result<List<com.pharmalink.domain.model.RecentActivity>> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.ADMIN) { "Admin access required" }
+
+        val params = buildJsonObject {
+            put("p_limit", limit)
+        }
+
+        val response = supabase.postgrest.rpc("admin_get_recent_activities", params)
+            .decodeList<RecentActivityDto>()
+
+        response.map { it.toDomain() }
+    }
+
+    override suspend fun adminGetSystemHealth(): Result<com.pharmalink.domain.model.SystemHealth> = runCatching {
+        val identity = resolveAccessContext()
+        require(identity.role == AccountType.ADMIN) { "Admin access required" }
+
+        val response = supabase.postgrest.rpc("admin_get_system_health")
+            .decodeAs<SystemHealthDto>()
+
+        response.toDomain()
     }
 
 }
+
+@Serializable
+private data class UserIdDto(
+    val id: String
+)
+
+@Serializable
+private data class AppNotificationInsertDto(
+    @SerialName("user_id") val userId: String,
+    @SerialName("pharmacy_id") val pharmacyId: String?,
+    val title: String,
+    val body: String,
+    val type: String,
+    val category: String,
+    val read: Boolean,
+    val destination: String? = null,
+    @SerialName("destination_id") val destinationId: String? = null,
+)
 
 @Serializable
 private data class FacilityActiveUpdateDto(
@@ -1497,6 +2468,12 @@ private data class FacilityActiveUpdateDto(
 
 @Serializable
 private data class RequestIdRow(val id: String)
+
+@Serializable
+private data class HomeStatsRequestRow(
+    val id: String,
+    @SerialName("created_at") val createdAt: String? = null,
+)
 
 @Serializable
 private data class WarehouseDto(
@@ -1553,10 +2530,14 @@ private data class WarehouseDto(
 private data class MedicineDto(
     val id: String,
     val name: String,
-    val brand: String,
-    val strength: String,
-    val price: Double,
-    @SerialName("image_url") val imageUrl: String? = null
+    val brand: String? = null,
+    val strength: String? = null,
+    val price: Double? = null,
+    val description: String? = null,
+    val specs: String? = null,
+    @SerialName("stock_quantity") val stockQuantity: Int? = null,
+    @SerialName("image_url") val imageUrl: String? = null,
+    @SerialName("warehouse_id") val warehouseId: String? = null
 ) {
     fun toDomain(): Result<Medicine> = runCatching {
         if (id.isBlank()) {
@@ -1568,9 +2549,10 @@ private data class MedicineDto(
         Medicine(
             id = id,
             name = name,
-            brand = brand,
-            strength = strength,
-            price = price,
+            brand = brand.orEmpty(),
+            strength = strength.orEmpty(),
+            price = price ?: 0.0,
+            stockQuantity = stockQuantity ?: 0,
             imageUrl = imageUrl
         )
     }
@@ -1699,8 +2681,11 @@ private data class CreateOrderDto(
     @SerialName("request_scope") val requestScope: String,
     @SerialName("fulfillment_type") val fulfillmentType: String,
     @SerialName("delivery_address") val deliveryAddress: String? = null,
+    @SerialName("delivery_latitude") val deliveryLatitude: Double? = null,
+    @SerialName("delivery_longitude") val deliveryLongitude: Double? = null,
     @SerialName("delivery_phone") val deliveryPhone: String? = null,
     val notes: String? = null,
+    @SerialName("prescription_url") val prescriptionUrl: String? = null,
     val status: String = "PENDING",
     val currency: String = "SAR",
 )
@@ -1717,14 +2702,74 @@ private data class ConfirmCustomerOrderRpcParams(
 )
 
 @Serializable
+private data class PharmacyCustomerOrderDetailRpcParams(
+    @SerialName("p_order_id") val orderId: String,
+)
+
+@Serializable
+private data class ClaimNearbyCustomerOrderRpcParams(
+    @SerialName("p_order_id") val orderId: String,
+    @SerialName("p_radius_km") val radiusKm: Double,
+)
+
+@Serializable
+private data class PharmacyCustomerOrderDto(
+    val id: String,
+    @SerialName("customer_id") val customerId: String? = null,
+    @SerialName("customer_name") val customerName: String? = null,
+    @SerialName("medicine_id") val medicineId: String,
+    @SerialName("medicine_name") val medicineName: String,
+    val quantity: Int,
+    val unit: String,
+    val status: String,
+    @SerialName("fulfillment_type") val fulfillmentType: String,
+    @SerialName("delivery_address") val deliveryAddress: String? = null,
+    @SerialName("delivery_phone") val deliveryPhone: String? = null,
+    @SerialName("prescription_url") val prescriptionUrl: String? = null,
+    val notes: String? = null,
+    @SerialName("total_price_cents") val totalPriceCents: Long? = null,
+    val currency: String = "SAR",
+    val urgency: String = "URGENT",
+    @SerialName("request_scope") val requestScope: String = "SPECIFIC_PHARMACY",
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("updated_at") val updatedAt: String,
+) {
+    fun toDomain(): Result<PharmacyCustomerOrder> = runCatching {
+        PharmacyCustomerOrder(
+            id = id,
+            customerId = customerId,
+            customerName = customerName?.takeIf { it.isNotBlank() },
+            medicineId = medicineId,
+            medicineName = medicineName,
+            quantity = quantity,
+            unit = unit,
+            status = status.toOrderStatus(),
+            fulfillmentType = fulfillmentType.toFulfillmentType(),
+            deliveryAddress = deliveryAddress,
+            deliveryPhone = deliveryPhone,
+            prescriptionUrl = prescriptionUrl,
+            notes = notes,
+            totalPriceCents = totalPriceCents,
+            currency = currency,
+            urgency = runCatching { CustomerRequestUrgency.valueOf(urgency) }.getOrDefault(CustomerRequestUrgency.URGENT),
+            requestScope = runCatching { CustomerRequestScope.valueOf(requestScope) }.getOrDefault(CustomerRequestScope.SPECIFIC_PHARMACY),
+            createdAt = isoStringToInstant(createdAt),
+            updatedAt = isoStringToInstant(updatedAt),
+        )
+    }
+}
+
+@Serializable
 private data class RequestDto(
     val id: String,
     @SerialName("pharmacy_id") val pharmacyId: String,
+    @SerialName("medicine_id") val medicineId: String? = null,
     @SerialName("medicine_name") val medicineName: String,
     @SerialName("medicine_subtitle") val medicineSubtitle: String = "",
     val quantity: Int = 0,
     val unit: String = "",
     val notes: String = "",
+    @SerialName("total_price") val totalPrice: Double = 0.0,
     @SerialName("storage_notes") val storageNotes: String = "",
     val priority: String,
     val status: String,
@@ -1735,6 +2780,7 @@ private data class RequestDto(
     @SerialName("updated_at") val updatedAt: String? = null,
     @SerialName("eta_label") val etaLabel: String = "",
     @SerialName("related_order_id") val relatedOrderId: String? = null,
+    @SerialName("rejection_reason") val rejectionReason: String? = null,
     @SerialName("attachment_url") val attachmentUrl: String? = null,
     @SerialName("medicine_image_url") val medicineImageUrl: String? = null,
 ) {
@@ -1748,12 +2794,14 @@ private data class RequestDto(
         Request(
             id = id,
             pharmacyId = pharmacyId,
+            medicineId = medicineId,
             medicineName = medicineName,
             medicineSubtitle = medicineSubtitle,
             quantity = quantity,
             unit = unit,
             notes = notes,
             storageNotes = storageNotes,
+            totalPrice = totalPrice,
             priority = priorityEnum,
             status = statusEnum,
             warehouseId = warehouseId,
@@ -1763,6 +2811,7 @@ private data class RequestDto(
             updatedAtLabel = updatedAtLabel,
             etaLabel = etaLabel,
             relatedOrderId = relatedOrderId,
+            rejectionReason = rejectionReason,
             attachmentUrl = attachmentUrl,
             medicineImageUrl = medicineImageUrl,
         )
@@ -1774,13 +2823,14 @@ private data class AppNotificationDto(
     val id: String,
     val title: String,
     val body: String,
-    val type: String,
-    val category: String,
+    // Fields below do not exist in Supabase schema - using safe defaults
+    val type: String = "INFO",  // Default to INFO (most generic NotificationType)
+    val category: String = "ORDERS",  // Default to ORDERS (most common NotificationCategory)
     @SerialName("created_at") val createdAt: String? = null,
     val read: Boolean = false,
-    @SerialName("requires_action") val requiresAction: Boolean = false,
-    val destination: String? = null,
-    @SerialName("destination_id") val destinationId: String? = null,
+    @SerialName("requires_action") val requiresAction: Boolean = false,  // Does not exist in Supabase
+    val destination: String? = null,  // Does not exist in Supabase
+    @SerialName("destination_id") val destinationId: String? = null,  // Does not exist in Supabase
 ) {
     fun toDomain(): Result<AppNotification> = runCatching {
         AppNotification(
@@ -1814,23 +2864,60 @@ private data class ProfilePharmacyDto(
 )
 
 @Serializable
+private data class ProfileIdDto(
+    val id: String,
+)
+
+@Serializable
+private data class SubmitSupportRequestRpcParams(
+    @SerialName("p_subject") val subject: String,
+    @SerialName("p_message") val message: String,
+    @SerialName("p_category") val category: String? = null,
+)
+
+@Serializable
+private data class SupportNotificationInsertDto(
+    @SerialName("user_id") val userId: String,
+    val title: String,
+    val body: String,
+    val read: Boolean = false,
+    @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
 private data class ProfileDetailsDto(
     val id: String,
     @SerialName("pharmacy_id") val pharmacyId: String? = null,
+    @SerialName("warehouse_id") val warehouseId: String? = null,
+    @SerialName("account_type") val accountType: String? = null,
     @SerialName("full_name") val fullName: String? = null,
     @SerialName("pharmacy_name") val pharmacyName: String? = null,
+    @SerialName("warehouse_name") val warehouseName: String? = null,
     @SerialName("pharmacy_location") val pharmacyLocation: String? = null,
     @SerialName("default_address") val defaultAddress: String? = null,
     @SerialName("phone_number") val phoneNumber: String? = null,
+    @SerialName("notifications_enabled") val notificationsEnabled: Boolean? = null,
 ) {
-    fun toDomain(contactEmail: String): Result<PharmacyProfile> = runCatching {
+    fun toDomain(
+        contactEmail: String,
+        warehouseLocation: WarehouseLocationDto? = null,
+    ): Result<PharmacyProfile> = runCatching {
+        val isWarehouse = accountType == AccountType.WAREHOUSE.name
         PharmacyProfile(
             id = id,
-            pharmacyName = pharmacyName.orEmpty(),
+            pharmacyName = if (isWarehouse) {
+                warehouseLocation?.name ?: warehouseName.orEmpty()
+            } else {
+                pharmacyName.orEmpty()
+            },
             city = "",
             district = "",
             managerName = fullName.orEmpty(),
-            addressLine = defaultAddress ?: pharmacyLocation.orEmpty(),
+            addressLine = if (isWarehouse) {
+                warehouseLocation?.formattedAddress.orEmpty()
+            } else {
+                defaultAddress ?: pharmacyLocation.orEmpty()
+            },
             contactPhone = phoneNumber.orEmpty(),
             contactEmail = contactEmail,
             licenseStatusLabel = "",
@@ -1838,15 +2925,26 @@ private data class ProfileDetailsDto(
             licenseExpiryLabel = "",
             operatingHoursLabel = "",
             preferredLanguageLabel = "",
-            notificationsEnabled = true,
+            notificationsEnabled = notificationsEnabled ?: true,
             twoFactorEnabled = false,
             linkedDevicesCount = 0,
             totalOrders = 0,
             completedOrders = 0,
             activeOrders = 0,
+            latitude = if (isWarehouse) warehouseLocation?.latitude else null,
+            longitude = if (isWarehouse) warehouseLocation?.longitude else null,
         )
     }
 }
+
+@Serializable
+private data class WarehouseLocationDto(
+    val id: String,
+    val name: String? = null,
+    @SerialName("formatted_address") val formattedAddress: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+)
 
 @Serializable
 private data class ProfileUpdateDto(
@@ -1858,12 +2956,33 @@ private data class ProfileUpdateDto(
 )
 
 @Serializable
+private data class WarehouseProfileUpdateDto(
+    @SerialName("full_name") val fullName: String? = null,
+    @SerialName("pharmacy_name") val pharmacyName: String? = null,
+    @SerialName("phone_number") val phoneNumber: String? = null,
+)
+
+@Serializable
+private data class UpdateMyWarehouseLocationRpcParams(
+    @SerialName("p_address") val address: String,
+    @SerialName("p_lat") val latitude: Double,
+    @SerialName("p_lng") val longitude: Double,
+)
+
+@Serializable
+private data class ProfileNotificationsPreferenceUpdateDto(
+    @SerialName("notifications_enabled") val notificationsEnabled: Boolean,
+)
+
+@Serializable
 private data class RequestInsertDto(
     @SerialName("pharmacy_id") val pharmacyId: String,
     @SerialName("warehouse_id") val warehouseId: String,
+    @SerialName("medicine_id") val medicineId: String,
     @SerialName("medicine_name") val medicineName: String,
     val quantity: Int,
     val unit: String,
+    @SerialName("total_price") val totalPrice: Double,
     @SerialName("medicine_subtitle") val medicineSubtitle: String = "",
     val priority: String,
     @SerialName("warehouse_name") val warehouseName: String = "",
@@ -1877,15 +2996,79 @@ private data class RequestUpdateDto(
     @SerialName("warehouse_id") val warehouseId: String? = null,
     @SerialName("warehouse_name") val warehouseName: String? = null,
     val notes: String? = null,
+    @SerialName("rejection_reason") val rejectionReason: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
+)
+
+@Serializable
+private data class B2bRequestRpcResponse(
+    val request: RequestDto,
+    val order: OrderDto? = null,
+)
+
+@Serializable
+private data class B2bRequestIdRpcParams(
+    @SerialName("p_request_id") val requestId: String,
+)
+
+@Serializable
+private data class WarehouseAcceptB2bRpcParams(
+    @SerialName("p_request_id") val requestId: String,
+    @SerialName("p_total_price_cents") val totalPriceCents: Long,
+    @SerialName("p_note") val note: String? = null,
+)
+
+@Serializable
+private data class WarehouseRejectB2bRpcParams(
+    @SerialName("p_request_id") val requestId: String,
+    @SerialName("p_rejection_reason") val rejectionReason: String? = null,
+)
+
+@Serializable
+private data class WarehouseMarkB2bDeliveredRpcParams(
+    @SerialName("p_request_id") val requestId: String,
+    @SerialName("p_delivery_note") val deliveryNote: String? = null,
 )
 
 private val isoDisplayFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault())
 
+private val prescriptionUploadMimeTypes = mapOf(
+    "image/jpeg" to "jpg",
+    "image/png" to "png",
+    "image/webp" to "webp",
+    "application/pdf" to "pdf",
+)
+
+private val medicineUploadMimeTypes = mapOf(
+    "image/jpeg" to "jpg",
+    "image/png" to "png",
+    "image/webp" to "webp",
+)
+
+private data class UploadFile(
+    val bytes: ByteArray,
+    val extension: String,
+    val contentType: ContentType,
+)
+
 private class UnauthorizedException(
     message: String,
 ) : IllegalStateException(message)
+
+private fun inferMimeTypeFromUri(uri: Uri): String? {
+    val extension = uri.lastPathSegment
+        ?.substringAfterLast('.', missingDelimiterValue = "")
+        ?.lowercase()
+        ?.takeIf { it.isNotBlank() }
+    return when (extension) {
+        "jpg", "jpeg" -> "image/jpeg"
+        "png" -> "image/png"
+        "webp" -> "image/webp"
+        "pdf" -> "application/pdf"
+        else -> null
+    }
+}
 
 private fun isoStringToDisplayLabel(iso: String?): String {
     if (iso.isNullOrBlank()) return ""
@@ -1905,16 +3088,138 @@ private fun String.toRequestPriority(): RequestPriority = RequestPriority.valueO
 
 private fun String.toRequestStatus(): RequestStatus = RequestStatus.valueOf(this)
 
-private fun String.toNotificationType(): NotificationType = NotificationType.valueOf(this)
+private fun String.toNotificationType(): NotificationType =
+    runCatching { NotificationType.valueOf(trim().uppercase()) }
+        .getOrDefault(NotificationType.INFO)
 
-private fun String.toNotificationCategory(): NotificationCategory = NotificationCategory.valueOf(this)
+private fun String.toNotificationCategory(): NotificationCategory =
+    runCatching { NotificationCategory.valueOf(trim().uppercase()) }
+        .getOrDefault(NotificationCategory.ORDERS)
 
 private fun String.toNotificationDestination(): NotificationDestination? =
-    runCatching { NotificationDestination.valueOf(this) }.getOrNull()
+    runCatching { NotificationDestination.valueOf(trim().uppercase()) }.getOrNull()
 
 private fun isoStringToInstant(iso: String?): java.time.Instant {
     return iso?.let {
         runCatching { java.time.Instant.parse(it) }.getOrNull()
     } ?: java.time.Instant.now()
+}
+
+
+@Serializable
+private data class AdminDashboardStatsDto(
+    @SerialName("totalUsers") val totalUsers: Int?,
+    @SerialName("totalPharmacies") val totalPharmacies: Int?,
+    @SerialName("totalWarehouses") val totalWarehouses: Int?,
+    @SerialName("totalOrders") val totalOrders: Int?,
+    @SerialName("b2cOrdersCount") val b2cOrdersCount: Int?,
+    @SerialName("b2bOrdersCount") val b2bOrdersCount: Int?,
+    @SerialName("urgentOrdersCount") val urgentOrdersCount: Int?,
+    @SerialName("pendingOrdersCount") val pendingOrdersCount: Int?,
+    @SerialName("confirmedOrdersCount") val confirmedOrdersCount: Int?,
+    @SerialName("deliveredOrdersCount") val deliveredOrdersCount: Int?,
+    @SerialName("activePharmacies") val activePharmacies: Int?,
+    @SerialName("activeWarehouses") val activeWarehouses: Int?,
+)
+
+@Serializable
+private data class AdminOrderDto(
+    val id: String,
+    @SerialName("order_type") val orderType: String,
+    val status: String,
+    @SerialName("medicine_name") val medicineName: String,
+    val quantity: Int,
+    val unit: String,
+    @SerialName("pharmacy_id") val pharmacyId: String?,
+    @SerialName("pharmacy_name") val pharmacyName: String?,
+    @SerialName("warehouse_id") val warehouseId: String?,
+    @SerialName("warehouse_name") val warehouseName: String?,
+    @SerialName("customer_id") val customerId: String?,
+    @SerialName("customer_name") val customerName: String?,
+    @SerialName("is_urgent") val isUrgent: Boolean,
+    @SerialName("total_price_cents") val totalPriceCents: Long?,
+    val currency: String,
+    @SerialName("fulfillment_type") val fulfillmentType: String,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("updated_at") val updatedAt: String,
+    @SerialName("confirmed_at") val confirmedAt: String?,
+    @SerialName("fulfilled_at") val fulfilledAt: String?,
+) {
+    fun toDomain(): com.pharmalink.domain.model.AdminOrder {
+        return com.pharmalink.domain.model.AdminOrder(
+            id = id,
+            orderType = orderType,
+            status = status.toOrderStatus(),
+            medicineName = medicineName,
+            quantity = quantity,
+            unit = unit,
+            pharmacyId = pharmacyId,
+            pharmacyName = pharmacyName,
+            warehouseId = warehouseId,
+            warehouseName = warehouseName,
+            customerId = customerId,
+            customerName = customerName,
+            isUrgent = isUrgent,
+            totalPriceCents = totalPriceCents,
+            currency = currency,
+            fulfillmentType = fulfillmentType.toFulfillmentType(),
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+            confirmedAt = confirmedAt,
+            fulfilledAt = fulfilledAt,
+        )
+    }
+}
+
+@Serializable
+private data class PendingRequestDto(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val timestamp: String,
+    @SerialName("request_type") val requestType: String,
+) {
+    fun toDomain(): com.pharmalink.domain.model.PendingRequest {
+        return com.pharmalink.domain.model.PendingRequest(
+            id = id,
+            title = title,
+            subtitle = subtitle,
+            timestamp = timestamp,
+            requestType = requestType,
+        )
+    }
+}
+
+@Serializable
+private data class RecentActivityDto(
+    val id: String,
+    val action: String,
+    @SerialName("user_name") val userName: String,
+    val timestamp: String,
+    val status: String,
+) {
+    fun toDomain(): com.pharmalink.domain.model.RecentActivity {
+        return com.pharmalink.domain.model.RecentActivity(
+            id = id,
+            action = action,
+            userName = userName,
+            timestamp = timestamp,
+            status = status,
+        )
+    }
+}
+
+@Serializable
+private data class SystemHealthDto(
+    @SerialName("healthPercent") val healthPercent: Int,
+    @SerialName("healthStatus") val healthStatus: String,
+    // Note: activeConnections removed - not available in schema
+) {
+    fun toDomain(): com.pharmalink.domain.model.SystemHealth {
+        return com.pharmalink.domain.model.SystemHealth(
+            healthPercent = healthPercent,
+            healthStatus = healthStatus,
+        )
+    }
 }
 

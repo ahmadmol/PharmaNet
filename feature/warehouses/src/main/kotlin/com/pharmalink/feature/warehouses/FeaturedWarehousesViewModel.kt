@@ -103,9 +103,9 @@ class FeaturedWarehousesViewModel @Inject constructor(
             normalized.contains("same") ||
                 normalized.contains("hour") ||
                 normalized.contains("fast") ||
-                normalized.contains("سريع") ||
-                normalized.contains("نفس اليوم") ||
-                normalized.contains("ساعة") -> FeaturedDeliveryType.FAST
+                normalized.contains(context.getString(R.string.delivery_keyword_fast)) ||
+                normalized.contains(context.getString(R.string.delivery_keyword_same_day)) ||
+                normalized.contains(context.getString(R.string.delivery_keyword_hour_sa)) -> FeaturedDeliveryType.FAST
 
             normalized.isBlank() -> FeaturedDeliveryType.FLEXIBLE
             else -> FeaturedDeliveryType.STANDARD

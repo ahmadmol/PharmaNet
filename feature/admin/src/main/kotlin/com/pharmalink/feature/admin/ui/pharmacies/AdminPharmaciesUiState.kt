@@ -31,7 +31,6 @@ data class PharmacyItemModel(
     val name: String = "",
     val location: String = "",
     val isActive: Boolean = false,
-    val employeeCount: Int = 0,
     val createdAt: String = "",
 )
 
@@ -51,6 +50,7 @@ sealed interface AdminPharmaciesAction {
 
 sealed interface AdminPharmaciesEffect {
     data class ShowMessage(val message: String) : AdminPharmaciesEffect
+    data object ShowAdminMenu : AdminPharmaciesEffect
     data class NavigateToPharmacyDetail(val pharmacyId: String) : AdminPharmaciesEffect
     data class NavigateToBranchManagement(val pharmacyId: String) : AdminPharmaciesEffect
     data object NavigateToCoverageMap : AdminPharmaciesEffect

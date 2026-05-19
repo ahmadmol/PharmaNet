@@ -64,10 +64,9 @@ class HomeViewModel @Inject constructor(
             val statsResult = statsDeferred.await()
             val warehousesResult = warehousesDeferred.await()
             
-            if (statsResult.isFailure) {
-                _uiState.value = HomeUiState.Error(statsResult.exceptionOrNull()?.message ?: "فشل تحميل إحصائيات الصفحة الرئيسية")
-            } else if (warehousesResult.isFailure) {
-                _uiState.value = HomeUiState.Error(warehousesResult.exceptionOrNull()?.message ?: "فشل تحميل المستودعات المميزة")
+            if (statsResult.isFailure || warehousesResult.isFailure) {
+                val error = statsResult.exceptionOrNull() ?: warehousesResult.exceptionOrNull()
+                _uiState.value = HomeUiState.Error(error?.message ?: "فشل تحميل بيانات الصفحة الرئيسية")
             } else {
                 val stats = statsResult.getOrThrow()
                 val warehouses = warehousesResult.getOrThrow()

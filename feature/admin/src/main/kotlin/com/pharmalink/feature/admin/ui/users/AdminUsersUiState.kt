@@ -15,6 +15,13 @@ data class AdminUsersUiState(
     val totalUsers: Int = 0,
     val activeUsers: Int = 0,
     val monthlyGrowth: Float = 0f,
+    // Edit sheet state — persistent, driven by user action
+    val isEditSheetVisible: Boolean = false,
+    val editSheetUserId: String = "",
+    val editSheetFullName: String = "",
+    val editSheetAccountType: String = "",   // stored as String to avoid domain model in UiState
+    val editSheetFacilityId: String = "",
+    val editSheetIsActive: Boolean = true,
 )
 
 enum class UserFilterStatus {
@@ -61,12 +68,6 @@ sealed interface AdminUsersAction {
 
 sealed interface AdminUsersEffect {
     data class ShowMessage(val message: String) : AdminUsersEffect
-    data class ShowEditUserSheet(
-        val userId: String,
-        val fullName: String?,
-        val accountType: AccountType,
-        val facilityId: String?,
-        val isActive: Boolean,
-    ) : AdminUsersEffect
+    data object ShowAdminMenu : AdminUsersEffect
     data class ShowDeleteConfirmation(val userId: String, val userName: String?) : AdminUsersEffect
 }

@@ -77,9 +77,9 @@ fun ChangePasswordScreen(
                 horizontalAlignment = Alignment.Start,
             ) {
                 Column(horizontalAlignment = Alignment.Start) {
-                    Text("الأمان أولا", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black, color = PharmaBlue500)
+                    Text("أمان الحساب", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black, color = PharmaBlue500)
                     Text(
-                        "حدّث كلمة المرور بانتظام للحفاظ على بيانات الصيدلية والمخزون.",
+                        "قم بتحديث كلمة المرور الخاصة بك لحماية حسابك ومعلوماتك الحساسة.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Start,
@@ -122,7 +122,7 @@ fun ChangePasswordScreen(
                             enabled = !uiState.isLoading,
                             contentPadding = PaddingValues(vertical = MaterialTheme.dimens.spaceM),
                         ) {
-                            Text(if (uiState.isLoading) "جار الحفظ..." else "حفظ التغيير", fontWeight = FontWeight.Bold)
+                            Text(if (uiState.isLoading) "جارٍ الحفظ..." else "حفظ التغييرات", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -139,7 +139,7 @@ fun ChangePasswordScreen(
                     ) {
                         Icon(Icons.Outlined.EnhancedEncryption, contentDescription = null)
                         Text(
-                            "سيتم التحقق من كلمة المرور الحالية قبل تحديثها في Supabase.",
+                            "يتم تحديث كلمة المرور الجديدة بشكل آمن عبر المصادقة في Supabase.",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                         )
@@ -189,7 +189,7 @@ private fun PasswordRules(next: String, confirmMatches: Boolean) {
         "على الأقل 8 أحرف" to (next.length >= 8),
         "حرف كبير واحد" to next.any { it.isUpperCase() },
         "رقم واحد على الأقل" to next.any { it.isDigit() },
-        "تأكيد مطابق" to confirmMatches,
+        "كلمتا المرور متطابقتان" to confirmMatches,
     )
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -202,7 +202,7 @@ private fun PasswordRules(next: String, confirmMatches: Boolean) {
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Info, contentDescription = null, tint = PharmaBlue500, modifier = Modifier.size(18.dp))
-                Text("متطلبات كلمة المرور القوية", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = PharmaBlue500)
+                Text("متطلبات كلمة المرور", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = PharmaBlue500)
             }
             rules.forEach { (title, ok) ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

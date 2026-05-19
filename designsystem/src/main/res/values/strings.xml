@@ -4,7 +4,7 @@
     <string name="home_current_orders">الطلبات الحالية</string>
     <string name="home_stock_shortages">نقص المخزون</string>
     <string name="home_critical_stock_alert">تنبيه: يوجد نقص حاد في المخزون!</string>
-    <string name="home_recent_activity">آخر النشاطات</string>
+    <string name="home_recent_activity">أحدث الأنشطة</string>
     <string name="home_featured_warehouses">المستودعات المميزة</string>
 
     <!-- Stitch Quick Actions -->
@@ -19,7 +19,7 @@
     <string name="no_warehouses">لا توجد مستودعات</string>
     <string name="no_warehouses_desc">حاول تغيير الفلاتر أو التحقق من اتصال الإنترنت</string>
     <string name="promo_title">عرض خاص: خصم 20% على التوريد الذكي!</string>
-    <string name="promo_desc">اشترك الآن واحصل على توصيل مجاني لأول طلب</string>
+    <string name="promo_desc">استفد من خصومات حصرية على منتجات مختارة لفترة محدودة فقط</string>
     <string name="back">رجوع</string>
     <string name="search">بحث</string>
     <!-- Stitch Create Order Screen -->
@@ -28,7 +28,7 @@
     <string name="create_order_title">إنشاء طلب جديد</string>
     <string name="save_as_draft">حفظ كمسودة</string>
     <string name="send_order">إرسال الطلب</string>
-    <string name="shipping_info_banner">سيتم تأكيد تفاصيل الشحن والتوصيل بعد مراجعة الطلب.</string>
+    <string name="shipping_info_banner">سيتم تحديد معلومات الشحن والتوصيل بعد تأكيد الطلب.</string>
     <string name="dosage_concentration_placeholder">العيار / التركيز</string>
     <string name="additional_notes_placeholder">ملاحظات إضافية</string>
     <string name="upload_prescription_label">ارفع صورة الوصفة هنا</string>
@@ -36,7 +36,7 @@
     <string name="urgency_urgent">عاجل</string>
 
     <!-- Stitch Orders Screen -->
-    <string name="orders_title">طلباتي</string>
+    <string name="orders_title">الطلبات</string>
     <string name="orders_completed_tab">المكتملة</string>
     <string name="orders_shipping_tab">قيد الشحن</string>
     <string name="orders_review_tab">قيد المراجعة</string>
@@ -48,7 +48,7 @@
     <string name="order_status_received">تم الاستلام</string>
     <string name="order_status_shipping">قيد الشحن</string>
     <string name="order_status_delivered">تم التوصيل</string>
-    <string name="empty_state_no_orders">لا توجد طلبات لعرضها حاليًا.</string>
+    <string name="empty_state_no_orders">لا توجد لديك طلبات حالياً.</string>
     <string name="empty_state_create_order">ابدأ بإنشاء طلب جديد.</string>
 
 

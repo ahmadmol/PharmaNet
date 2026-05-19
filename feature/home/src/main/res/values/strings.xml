@@ -1,14 +1,14 @@
 <resources>
-    <string name="search_placeholder">ابحث عن دواء، مستودع أو طلب...</string>
+    <string name="search_placeholder">ابحث عن دواء...</string>
     <string name="quick_actions_title">إجراءات سريعة</string>
-    <string name="recent_activity_title">آخر النشاطات</string>
+    <string name="recent_activity_title">نشاط حديث</string>
     <string name="featured_warehouses_title">المستودعات المميزة</string>
     <string name="featured_warehouses_action">استكشف</string>
 
     <string name="home_stitch_title">مرحباً بك في Stitch</string>
-    <string name="home_stitch_subtitle">نظام إدارة الصيدليات المتقدم</string>
+    <string name="home_stitch_subtitle">منصة الصيدلية المتكاملة</string>
     <string name="home_alerts_title">التنبيهات</string>
-    <string name="home_search_placeholder">ابحث عن دواء، مستودع أو طلب...</string>
+    <string name="home_search_placeholder">ابحث عن دواء...</string>
     <string name="home_kpi_active">الطلبات النشطة</string>
     <string name="home_kpi_urgent">الطلبات العاجلة</string>
     <string name="home_kpi_completed">الطلبات المكتملة</string>
@@ -33,19 +33,19 @@
     <string name="home_priority_urgent_chip">عاجل</string>
     <string name="home_section_notifications">الإشعارات</string>
     <string name="home_section_activity_stitch">نشاط Stitch</string>
-    <string name="home_go_orders">عرض الطلبات</string>
+    <string name="home_go_orders">كل الطلبات</string>
 
     <string name="medicine_search_title">البحث عن دواء</string>
     <string name="medicine_search_back">رجوع</string>
     <string name="medicine_search_placeholder">ابحث عن دواء...</string>
-    <string name="medicine_search_helper_text">ابحث عن دواء ثم اختر صيدلية لإرسال الطلب</string>
+    <string name="medicine_search_helper_text">ابحث بالاسم عن الأدوية المتوفرة</string>
     <string name="medicine_search_safe_hint">سيتم تأكيد السعر والتوفر من الصيدلية</string>
     <string name="medicine_search_select_action">اختيار الدواء</string>
     <string name="medicine_search_load_error">تعذر تحميل قائمة الأدوية</string>
-    <string name="medicine_search_error_title">حدث خطأ أثناء تحميل الأدوية</string>
+    <string name="medicine_search_error_title">حدث خطأ أثناء البحث</string>
     <string name="medicine_search_empty_initial_title">ابدأ بالبحث عن الدواء</string>
-    <string name="medicine_search_empty_initial_body">ستظهر هنا الأدوية المتاحة بعد التحميل</string>
-    <string name="medicine_search_empty_results_title">لا توجد نتائج مطابقة</string>
+    <string name="medicine_search_empty_initial_body">اكتب اسم الدواء للبحث في المستودعات</string>
+    <string name="medicine_search_empty_results_title">لا توجد نتائج</string>
     <string name="medicine_search_empty_results_body">جرّب اسماً مختلفاً أو قلّل كلمات البحث</string>
     <string name="medicine_search_retry">إعادة المحاولة</string>
 </resources>

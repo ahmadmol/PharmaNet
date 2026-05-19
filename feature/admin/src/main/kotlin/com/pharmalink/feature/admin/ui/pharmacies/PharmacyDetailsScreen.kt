@@ -40,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pharmalink.designsystem.theme.PharmaWarning
+import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -125,7 +127,7 @@ private fun PharmacyDetailsContent(
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -223,30 +225,8 @@ private fun SuccessContent(
             HeaderCard(pharmacy = pharmacy)
         }
 
-        // Statistics Cards
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-            ) {
-                StatCard(
-                    title = stringResource(R.string.pharmacy_details_total_orders),
-                    value = pharmacy.totalOrders.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-                
-                StatCard(
-                    title = stringResource(R.string.pharmacy_details_total_customers),
-                    value = pharmacy.totalCustomers.toString(),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-
-        // Rating Card
-        item {
-            RatingCard(rating = pharmacy.averageRating)
-        }
+        // Note: Secondary statistics (orders, customers, rating, employees) hidden
+        // because endpoints are not available yet. Showing only primary pharmacy data.
 
         // Pharmacy Information
         item {
@@ -269,7 +249,7 @@ private fun HeaderCard(
 
     PharmaCard(
         modifier = modifier.fillMaxWidth(),
-        containerColor = Color(0xFF10B981).copy(alpha = 0.15f),
+        containerColor = StatusActive.copy(alpha = 0.15f),
         elevationDp = 2f,
     ) {
         Row(
@@ -282,13 +262,13 @@ private fun HeaderCard(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(MaterialTheme.shapes.medium)
-                    .background(Color(0xFF10B981)),
+                    .background(StatusActive),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.LocalPharmacy,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(36.dp),
                 )
             }
@@ -314,7 +294,7 @@ private fun HeaderCard(
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = if (pharmacy.isActive) {
-                        Color(0xFF10B981).copy(alpha = 0.15f)
+                        StatusActive.copy(alpha = 0.15f)
                     } else {
                         MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
                     },
@@ -324,7 +304,7 @@ private fun HeaderCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = if (pharmacy.isActive) {
-                            Color(0xFF10B981)
+                            StatusActive
                         } else {
                             MaterialTheme.colorScheme.error
                         },
@@ -402,7 +382,7 @@ private fun RatingCard(
                     Icon(
                         imageVector = Icons.Default.Star,
                         contentDescription = null,
-                        tint = Color(0xFFFBBF24),
+                        tint = PharmaWarning,
                         modifier = Modifier.size(24.dp),
                     )
                     Text(
@@ -464,11 +444,7 @@ private fun InfoCard(
                 value = pharmacy.licenseNumber,
             )
 
-            InfoRow(
-                icon = Icons.Outlined.People,
-                label = stringResource(R.string.pharmacy_details_employees),
-                value = stringResource(R.string.pharmacy_details_employee_count, pharmacy.totalEmployees),
-            )
+            // Note: totalEmployees removed - endpoint not available yet
 
             InfoRow(
                 icon = Icons.Outlined.Badge,
@@ -543,18 +519,21 @@ private fun ActionsCard(
             PharmaButton(
                 text = stringResource(R.string.pharmacy_details_manage_branch),
                 onClick = { onAction(PharmacyDetailsAction.OnManageBranchClicked) },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             PharmaButton(
                 text = stringResource(R.string.pharmacy_details_view_orders),
                 onClick = { onAction(PharmacyDetailsAction.OnViewOrdersClicked) },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             PharmaButton(
                 text = stringResource(R.string.pharmacy_details_edit),
                 onClick = { onAction(PharmacyDetailsAction.OnEditClicked) },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -575,10 +554,7 @@ private fun PreviewPharmacyDetailsScreen() {
                     licenseNumber = "PH-2024-001",
                     isActive = true,
                     createdAt = "2024-01-15",
-                    totalEmployees = 12,
-                    totalOrders = 342,
-                    totalCustomers = 156,
-                    averageRating = 4.7f,
+                    // Secondary stats removed
                 ),
             ),
             onAction = {},

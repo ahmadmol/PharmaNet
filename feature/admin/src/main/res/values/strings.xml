@@ -73,6 +73,7 @@
     <string name="admin_users_edit_button">تعديل</string>
     <string name="admin_users_delete_button">حذف</string>
     <string name="admin_users_empty">لا يوجد مستخدمون</string>
+    <string name="admin_users_empty_subtitle">لم يتم العثور على أي مستخدمين مسجلين</string>
     <string name="admin_users_error">خطأ في تحميل المستخدمين</string>
     <string name="admin_users_retry">إعادة المحاولة</string>
     
@@ -85,6 +86,7 @@
     <string name="admin_warehouses_inventory_count">%1$d صنف</string>
     <string name="admin_warehouses_manage_inventory">إدارة المخزون</string>
     <string name="admin_warehouses_empty">لا توجد مستودعات</string>
+    <string name="admin_warehouses_empty_subtitle">لم يتم العثور على أي مستودعات مسجلة</string>
     <string name="admin_warehouses_error">خطأ في تحميل المستودعات</string>
     <string name="admin_warehouses_retry">إعادة المحاولة</string>
     
@@ -96,6 +98,7 @@
     <string name="admin_pharmacies_coverage_map_title">خريطة التغطية الجغرافية</string>
     <string name="admin_pharmacies_coverage_map_subtitle">اضغط لعرض توزيع الصيدليات على الخريطة</string>
     <string name="admin_pharmacies_empty">لا توجد صيدليات</string>
+    <string name="admin_pharmacies_empty_subtitle">لم يتم العثور على أي صيدليات مسجلة</string>
     <string name="admin_pharmacies_error">خطأ في تحميل الصيدليات</string>
     <string name="admin_pharmacies_retry">إعادة المحاولة</string>
     
@@ -213,4 +216,33 @@
     <string name="warehouse_inventory_error">خطأ في تحميل المخزون</string>
     <string name="warehouse_inventory_empty">لا توجد أدوية في المخزون</string>
     <string name="warehouse_inventory_empty_subtitle">ابدأ بإضافة أدوية إلى المخزون</string>
+
+    <!-- Additional Admin UI Strings -->
+    <string name="admin_actions_sheet_title">إدارة الحساب</string>
+    <string name="admin_action_users">المستخدمون</string>
+    <string name="admin_action_pharmacies">الصيدليات</string>
+    <string name="admin_action_warehouses">المستودعات</string>
+    <string name="admin_action_orders">الطلبات</string>
+    <string name="admin_action_audit_log">سجل التدقيق</string>
+    <string name="admin_action_notifications">الإشعارات</string>
+    <string name="admin_action_profile">الملف الشخصي</string>
+    <string name="admin_profile_cd">الملف الشخصي</string>
+    <string name="admin_filter_all">الكل</string>
+    <string name="admin_filter_active">نشط</string>
+    <string name="admin_filter_inactive">غير نشط</string>
+    <string name="admin_sort_name">الاسم</string>
+    <string name="admin_sort_date_joined">تاريخ الانضمام</string>
+    <string name="admin_sort_account_type">نوع الحساب</string>
+    <string name="edit_user_facility_id_label_warehouse">معرف المستودع (Warehouse ID)</string>
+    <string name="admin_dashboard_orders_breakdown_title">ملخص الطلبات</string>
+    <string name="admin_dashboard_orders_b2c">طلبات العملاء (B2C)</string>
+    <string name="admin_dashboard_orders_b2b">طلبات الأعمال (B2B)</string>
+    <string name="admin_dashboard_orders_urgent">طلبات عاجلة</string>
+    <string name="admin_dashboard_orders_pending">طلبات معلقة</string>
+    <string name="admin_dashboard_orders_confirmed">طلبات مؤكدة</string>
+    <string name="admin_dashboard_orders_delivered">طلبات مسلمة</string>
+    <string name="admin_dashboard_active_connections_unavailable">الاتصالات النشطة: غير متاح</string>
+    <string name="admin_dashboard_default_admin_name">مدير النظام</string>
+    <string name="admin_dashboard_loading_failed_message">فشل تحميل لوحة التحكم</string>
+    <string name="admin_dashboard_refresh_failed_message">فشل تحديث البيانات</string>
 </resources>

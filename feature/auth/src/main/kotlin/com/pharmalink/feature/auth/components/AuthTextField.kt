@@ -36,11 +36,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.feature.auth.R
 
 /**
  * Auth TextField Component
@@ -59,6 +61,7 @@ fun AuthTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     isError: Boolean = false,
     errorMessage: String? = null,
+    readOnly: Boolean = false,
 ) {
     val d = MaterialTheme.dimens
     var isPasswordVisible by remember { mutableStateOf(false) }
@@ -67,6 +70,7 @@ fun AuthTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            readOnly = readOnly,
             label = { 
                 Text(
                     text = label,
@@ -96,7 +100,11 @@ fun AuthTextField(
                             } else {
                                 Icons.Outlined.VisibilityOff
                             },
-                            contentDescription = if (isPasswordVisible) "إخفاء كلمة المرور" else "إظهار كلمة المرور",
+                            contentDescription = if (isPasswordVisible) {
+                                stringResource(R.string.auth_password_hide_full)
+                            } else {
+                                stringResource(R.string.auth_password_show_full)
+                            },
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp),
                         )
@@ -148,7 +156,7 @@ fun AuthTextField(
 fun EmailTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "البريد الإلكتروني",
+    label: String? = null,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -156,7 +164,7 @@ fun EmailTextField(
     AuthTextField(
         value = value,
         onValueChange = onValueChange,
-        label = label,
+        label = label ?: stringResource(R.string.auth_email_label),
         leadingIcon = Icons.Outlined.Email,
         keyboardType = KeyboardType.Email,
         isError = isError,
@@ -169,7 +177,7 @@ fun EmailTextField(
 fun PasswordTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "كلمة المرور",
+    label: String? = null,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -177,7 +185,7 @@ fun PasswordTextField(
     AuthTextField(
         value = value,
         onValueChange = onValueChange,
-        label = label,
+        label = label ?: stringResource(R.string.auth_password_label),
         leadingIcon = Icons.Outlined.Lock,
         isPassword = true,
         keyboardType = KeyboardType.Password,
@@ -191,7 +199,7 @@ fun PasswordTextField(
 fun NameTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "الاسم الكامل",
+    label: String? = null,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -199,7 +207,7 @@ fun NameTextField(
     AuthTextField(
         value = value,
         onValueChange = onValueChange,
-        label = label,
+        label = label ?: stringResource(R.string.auth_full_name_label),
         leadingIcon = Icons.Outlined.Person,
         keyboardType = KeyboardType.Text,
         isError = isError,
@@ -212,7 +220,7 @@ fun NameTextField(
 fun PharmacyTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "اسم الصيدلية",
+    label: String? = null,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -220,7 +228,7 @@ fun PharmacyTextField(
     AuthTextField(
         value = value,
         onValueChange = onValueChange,
-        label = label,
+        label = label ?: stringResource(R.string.auth_pharmacy_name_label),
         leadingIcon = Icons.Outlined.Store,
         keyboardType = KeyboardType.Text,
         isError = isError,
@@ -233,7 +241,7 @@ fun PharmacyTextField(
 fun PhoneTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "رقم الهاتف",
+    label: String? = null,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -241,7 +249,7 @@ fun PhoneTextField(
     AuthTextField(
         value = value,
         onValueChange = onValueChange,
-        label = label,
+        label = label ?: stringResource(R.string.auth_phone_label),
         leadingIcon = Icons.Outlined.Phone,
         keyboardType = KeyboardType.Phone,
         isError = isError,
@@ -254,20 +262,22 @@ fun PhoneTextField(
 fun LocationTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "الموقع",
+    label: String? = null,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
+    readOnly: Boolean = false,
 ) {
     AuthTextField(
         value = value,
         onValueChange = onValueChange,
-        label = label,
+        label = label ?: stringResource(R.string.auth_location_label),
         leadingIcon = Icons.Outlined.Place,
         keyboardType = KeyboardType.Text,
         isError = isError,
         errorMessage = errorMessage,
         modifier = modifier,
+        readOnly = readOnly,
     )
 }
 
@@ -275,7 +285,7 @@ fun LocationTextField(
 fun WarehouseNameTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "اسم المستودع / المورد",
+    label: String? = null,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -283,7 +293,7 @@ fun WarehouseNameTextField(
     AuthTextField(
         value = value,
         onValueChange = onValueChange,
-        label = label,
+        label = label ?: stringResource(R.string.auth_warehouse_name_label),
         leadingIcon = Icons.Outlined.Inventory,
         keyboardType = KeyboardType.Text,
         isError = isError,

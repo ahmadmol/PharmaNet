@@ -46,12 +46,12 @@ fun OrderStatusBadge(
     ) {
         Text(
             text = when (status) {
-                OrderStatus.PENDING -> "قيد الانتظار"
-                OrderStatus.CONFIRMED -> "موافق عليه"
+                OrderStatus.PENDING -> "قيد المراجعة"
+                OrderStatus.CONFIRMED -> "تم التأكيد"
                 OrderStatus.IN_PROGRESS -> "قيد التجهيز"
                 OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"
                 OrderStatus.OUT_FOR_DELIVERY -> "قيد التوصيل"
-                OrderStatus.DELIVERED -> "تم التسليم"
+                OrderStatus.DELIVERED -> "تم التوصيل"
                 OrderStatus.REJECTED -> "مرفوض"
                 OrderStatus.CANCELLED -> "ملغي"
             },

@@ -61,6 +61,8 @@ fun CustomerOrderDetailScreen(
         onCancelClick = viewModel::showCancelDialog,
         onDismissCancelDialog = viewModel::dismissCancelDialog,
         onConfirmCancelDialog = viewModel::confirmCancelOrder,
+        onAcceptPriceClick = viewModel::acceptPrice,
+        onRejectPriceClick = viewModel::rejectPrice,
     )
 }
 
@@ -73,6 +75,8 @@ private fun CustomerOrderDetailContent(
     onCancelClick: () -> Unit,
     onDismissCancelDialog: () -> Unit,
     onConfirmCancelDialog: () -> Unit,
+    onAcceptPriceClick: () -> Unit,
+    onRejectPriceClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
@@ -139,9 +143,37 @@ private fun CustomerOrderDetailContent(
                         item {
                             PricingCard(order = order)
                         }
+                        
+                        // Price Acceptance Card - shown when pharmacy has confirmed with price
+                        if (order.status == com.pharmalink.domain.model.OrderStatus.CONFIRMED && order.totalPriceLabel != null) {
+                            item {
+                                PriceAcceptanceCard(
+                                    order = order,
+                                    onAcceptClick = onAcceptPriceClick,
+                                    onRejectClick = onRejectPriceClick,
+                                    isActionInProgress = uiState.isAcceptingPrice || uiState.isRejectingPrice,
+                                )
+                            }
+                        }
+                        
                         order.notes?.let {
                             item {
                                 NotesCard(notes = it)
+                            }
+                        }
+                        if (!uiState.actionSuccessMessage.isNullOrBlank()) {
+                            item {
+                                Surface(
+                                    shape = MaterialTheme.shapes.large,
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                ) {
+                                    Text(
+                                        text = uiState.actionSuccessMessage,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.padding(d.spaceL),
+                                    )
+                                }
                             }
                         }
                         if (!uiState.actionErrorMessage.isNullOrBlank()) {
@@ -278,37 +310,37 @@ private fun OrderSummaryCard(
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             SectionTitle(text = stringResource(R.string.customer_order_summary_section_title))
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = stringResource(R.string.customer_order_detail_order_id_label),
                 value = order.id,
             )
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = stringResource(R.string.customer_order_success_medicine_label),
                 value = order.medicineName,
             )
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = stringResource(R.string.customer_order_detail_quantity_label),
                 value = stringResource(R.string.customer_order_quantity_value, order.quantity, order.unit),
             )
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = stringResource(R.string.customer_order_success_pharmacy_label),
                 value = order.pharmacyName,
             )
             order.pharmacyLocation?.let { location ->
-                OrderInfoRow(
+                DetailOrderInfoRow(
                     label = stringResource(R.string.customer_order_pharmacy_location_label),
                     value = location,
                 )
             }
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = stringResource(R.string.customer_order_request_type_title),
                 value = order.urgencyLabel,
             )
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = stringResource(R.string.customer_order_request_scope_title),
                 value = order.requestScopeLabel,
             )
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = stringResource(R.string.customer_order_detail_status_label),
                 value = order.statusLabel,
             )
@@ -339,19 +371,19 @@ private fun FulfillmentCard(
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             SectionTitle(text = stringResource(R.string.customer_order_fulfillment_section_title))
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = stringResource(R.string.customer_order_detail_fulfillment_label),
                 value = order.fulfillmentLabel,
             )
             if (order.fulfillmentType == FulfillmentType.DELIVERY) {
                 order.deliveryAddress?.let { address ->
-                    OrderInfoRow(
+                    DetailOrderInfoRow(
                         label = stringResource(R.string.customer_order_detail_address_label),
                         value = address,
                     )
                 }
                 order.deliveryPhone?.let { phone ->
-                    OrderInfoRow(
+                    DetailOrderInfoRow(
                         label = stringResource(R.string.customer_order_detail_phone_label),
                         value = phone,
                     )
@@ -379,7 +411,7 @@ private fun PricingCard(
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             SectionTitle(text = stringResource(R.string.customer_order_pricing_section_title))
-            OrderInfoRow(
+            DetailOrderInfoRow(
                 label = if (order.totalPriceLabel == null) {
                     stringResource(R.string.customer_order_pending_price_label)
                 } else {
@@ -429,4 +461,137 @@ private fun SectionTitle(
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface,
     )
+}
+
+@Composable
+private fun PriceAcceptanceCard(
+    order: CustomerOrderDetailUi,
+    onAcceptClick: () -> Unit,
+    onRejectClick: () -> Unit,
+    isActionInProgress: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shadowElevation = d.cardElevation,
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Text(
+                text = stringResource(R.string.customer_order_price_acceptance_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            
+            Text(
+                text = stringResource(R.string.customer_order_price_acceptance_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            
+            // Display the confirmed price prominently
+            order.totalPriceLabel?.let { price ->
+                Text(
+                    text = price,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(vertical = d.spaceS),
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+            ) {
+                // Reject button (Red)
+                PharmaButton(
+                    text = stringResource(R.string.customer_order_reject_price_action),
+                    onClick = onRejectClick,
+                    enabled = !isActionInProgress,
+                    style = PharmaButtonStyle.Outlined,
+                    modifier = Modifier.weight(1f),
+                )
+                
+                // Accept button (Green)
+                PharmaButton(
+                    text = stringResource(R.string.customer_order_accept_price_action),
+                    onClick = onAcceptClick,
+                    enabled = !isActionInProgress,
+                    style = PharmaButtonStyle.Filled,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            
+            if (isActionInProgress) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(top = d.spaceS),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailOrderInfoRow(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+@Composable
+private fun ErrorState(
+    message: String,
+    onRetryClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(d.spaceL),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        )
+        PharmaButton(
+            text = stringResource(R.string.order_retry_loading),
+            onClick = onRetryClick,
+            modifier = Modifier.padding(top = d.spaceL),
+        )
+    }
 }

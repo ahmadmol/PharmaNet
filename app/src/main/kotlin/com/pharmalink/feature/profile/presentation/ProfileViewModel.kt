@@ -52,7 +52,11 @@ class ProfileViewModel @Inject constructor(
                         ProfileContent(
                             profile = profile,
                             compliance = compliance,
-                            unreadNotifications = notifications.count { !it.read },
+                            unreadNotifications = if (profile.notificationsEnabled) {
+                                notifications.count { !it.read }
+                            } else {
+                                0
+                            },
                             complianceAlertsCount = compliance.alerts.size,
                             documentsNeedingAttentionCount = compliance.documents.count { document ->
                                 document.status != ComplianceDocumentStatus.VALID

@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
@@ -39,6 +40,9 @@ import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Request
 import com.pharmalink.feature.request.R
 import com.pharmalink.domain.model.RequestStatus
+import com.pharmalink.domain.model.RequestPriority
+import androidx.compose.material.icons.filled.FlashOn
+import com.pharmalink.designsystem.theme.PremiumUrgent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -308,12 +312,31 @@ private fun RequestItemCard(
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "${request.quantity} ${request.unit}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${request.quantity} ${request.unit}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (request.priority == RequestPriority.URGENT) {
+                        Spacer(modifier = Modifier.width(MaterialTheme.dimens.spaceS))
+                        Icon(
+                            imageVector = Icons.Filled.FlashOn,
+                            contentDescription = stringResource(R.string.request_priority_urgent),
+                            tint = PremiumUrgent,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = stringResource(R.string.request_priority_urgent),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = PremiumUrgent,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
                 
                 Text(
                     text = statusLabel(request.status),

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pharmalink.data.repository.PharmaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -43,7 +44,7 @@ class AdminDashboardViewModel @Inject constructor(
             }
             AdminDashboardAction.OnGenerateReportClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(AdminDashboardEffect.ShowMessage("إنشاء التقرير: قيد التطوير"))
+                    _effect.emit(AdminDashboardEffect.NavigateToReports)
                 }
             }
             AdminDashboardAction.OnNotificationsClicked -> {
@@ -53,7 +54,12 @@ class AdminDashboardViewModel @Inject constructor(
             }
             AdminDashboardAction.OnMenuClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(AdminDashboardEffect.ShowMessage("القائمة: قيد التطوير"))
+                    _effect.emit(AdminDashboardEffect.ShowAdminMenu)
+                }
+            }
+            AdminDashboardAction.OnProfileClicked -> {
+                viewModelScope.launch {
+                    _effect.emit(AdminDashboardEffect.NavigateToProfile)
                 }
             }
             AdminDashboardAction.OnUsersCardClicked -> {
@@ -73,17 +79,19 @@ class AdminDashboardViewModel @Inject constructor(
             }
             AdminDashboardAction.OnOrdersCardClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(AdminDashboardEffect.ShowMessage("الطلبات: قيد التطوير"))
+                    _effect.emit(AdminDashboardEffect.NavigateToOrders)
                 }
             }
             is AdminDashboardAction.OnPendingRequestClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(AdminDashboardEffect.ShowMessage("تفاصيل الطلب: قيد التطوير"))
+                    // Navigate to order detail for ORDER type requests
+                    _effect.emit(AdminDashboardEffect.NavigateToOrderDetail(action.requestId))
                 }
             }
             AdminDashboardAction.OnViewAllRequestsClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(AdminDashboardEffect.ShowMessage("جميع الطلبات: قيد التطوير"))
+                    // Navigate to orders screen with pending filter
+                    _effect.emit(AdminDashboardEffect.NavigateToOrders)
                 }
             }
             AdminDashboardAction.OnViewAllActivitiesClicked -> {
@@ -100,19 +108,69 @@ class AdminDashboardViewModel @Inject constructor(
 
             pharmaRepository.adminGetDashboardStats()
                 .onSuccess { stats ->
+                    // Load additional data in parallel
+                    val pendingRequestsDeferred = async { pharmaRepository.adminGetPendingRequests(5) }
+                    val recentActivitiesDeferred = async { pharmaRepository.adminGetRecentActivities(5) }
+                    val systemHealthDeferred = async { pharmaRepository.adminGetSystemHealth() }
+
+                    val pendingRequestsResult = pendingRequestsDeferred.await()
+                    val recentActivitiesResult = recentActivitiesDeferred.await()
+                    val systemHealthResult = systemHealthDeferred.await()
+
+                    // Map domain models to UI models
+                    val pendingRequests = pendingRequestsResult.getOrNull()?.map { req ->
+                        PendingRequestModel(
+                            id = req.id,
+                            title = req.title,
+                            subtitle = req.subtitle,
+                            timestamp = req.timestamp,
+                            type = when (req.requestType) {
+                                "ORDER" -> RequestType.ORDER
+                                "FACILITY" -> RequestType.FACILITY
+                                "USER" -> RequestType.USER
+                                else -> RequestType.ORDER
+                            },
+                        )
+                    } ?: emptyList()
+
+                    val recentActivities = recentActivitiesResult.getOrNull()?.map { activity ->
+                        ActivityModel(
+                            id = activity.id,
+                            action = activity.action,
+                            user = activity.userName,
+                            timestamp = activity.timestamp,
+                            status = when (activity.status) {
+                                "SUCCESS" -> ActivityStatus.SUCCESS
+                                "FAILED" -> ActivityStatus.FAILED
+                                "PENDING" -> ActivityStatus.PENDING
+                                else -> ActivityStatus.SUCCESS
+                            },
+                        )
+                    } ?: emptyList()
+
+                    val systemHealth = systemHealthResult.getOrNull()
+
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            adminName = "مدير النظام",
+                            adminName = "",  // resolved in Screen via stringResource
                             totalUsers = stats.totalUsers,
                             totalPharmacies = stats.totalPharmacies,
                             totalWarehouses = stats.totalWarehouses,
                             totalOrders = stats.totalOrders,
-                            pendingRequests = emptyList(), // TODO: fetch real pending requests when endpoint is added
-                            recentActivities = emptyList(), // TODO: fetch real activities when endpoint is added
-                            systemHealthPercent = 0, // TODO: fetch real system health when endpoint is added
-                            systemHealthStatus = "--",
-                            activeConnections = 0, // TODO: fetch real connections when endpoint is added
+                            b2cOrdersCount = stats.b2cOrdersCount,
+                            b2bOrdersCount = stats.b2bOrdersCount,
+                            urgentOrdersCount = stats.urgentOrdersCount,
+                            pendingOrdersCount = stats.pendingOrdersCount,
+                            confirmedOrdersCount = stats.confirmedOrdersCount,
+                            deliveredOrdersCount = stats.deliveredOrdersCount,
+                            activePharmacies = stats.activePharmacies,
+                            activeWarehouses = stats.activeWarehouses,
+                            pendingRequests = pendingRequests,
+                            recentActivities = recentActivities,
+                            systemHealthPercent = systemHealth?.healthPercent ?: 0,
+                            systemHealthStatus = systemHealth?.healthStatus ?: "--",
+                            // Note: activeConnections removed - not available in current schema
                         )
                     }
                 }
@@ -120,7 +178,7 @@ class AdminDashboardViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل بيانات لوحة التحكم",
+                            contentError = e.message.orEmpty(),
                         )
                     }
                 }
@@ -133,6 +191,48 @@ class AdminDashboardViewModel @Inject constructor(
 
             pharmaRepository.adminGetDashboardStats()
                 .onSuccess { stats ->
+                    // Load additional data in parallel
+                    val pendingRequestsDeferred = async { pharmaRepository.adminGetPendingRequests(5) }
+                    val recentActivitiesDeferred = async { pharmaRepository.adminGetRecentActivities(5) }
+                    val systemHealthDeferred = async { pharmaRepository.adminGetSystemHealth() }
+
+                    val pendingRequestsResult = pendingRequestsDeferred.await()
+                    val recentActivitiesResult = recentActivitiesDeferred.await()
+                    val systemHealthResult = systemHealthDeferred.await()
+
+                    // Map domain models to UI models
+                    val pendingRequests = pendingRequestsResult.getOrNull()?.map { req ->
+                        PendingRequestModel(
+                            id = req.id,
+                            title = req.title,
+                            subtitle = req.subtitle,
+                            timestamp = req.timestamp,
+                            type = when (req.requestType) {
+                                "ORDER" -> RequestType.ORDER
+                                "FACILITY" -> RequestType.FACILITY
+                                "USER" -> RequestType.USER
+                                else -> RequestType.ORDER
+                            },
+                        )
+                    } ?: emptyList()
+
+                    val recentActivities = recentActivitiesResult.getOrNull()?.map { activity ->
+                        ActivityModel(
+                            id = activity.id,
+                            action = activity.action,
+                            user = activity.userName,
+                            timestamp = activity.timestamp,
+                            status = when (activity.status) {
+                                "SUCCESS" -> ActivityStatus.SUCCESS
+                                "FAILED" -> ActivityStatus.FAILED
+                                "PENDING" -> ActivityStatus.PENDING
+                                else -> ActivityStatus.SUCCESS
+                            },
+                        )
+                    } ?: emptyList()
+
+                    val systemHealth = systemHealthResult.getOrNull()
+
                     _state.update {
                         it.copy(
                             isRefreshing = false,
@@ -140,16 +240,27 @@ class AdminDashboardViewModel @Inject constructor(
                             totalPharmacies = stats.totalPharmacies,
                             totalWarehouses = stats.totalWarehouses,
                             totalOrders = stats.totalOrders,
-                            pendingRequests = emptyList(), // TODO: fetch real pending requests when endpoint is added
-                            recentActivities = emptyList(), // TODO: fetch real activities when endpoint is added
-                            systemHealthPercent = 0, // TODO: fetch real system health when endpoint is added
-                            activeConnections = 0, // TODO: fetch real connections when endpoint is added
+                            b2cOrdersCount = stats.b2cOrdersCount,
+                            b2bOrdersCount = stats.b2bOrdersCount,
+                            urgentOrdersCount = stats.urgentOrdersCount,
+                            pendingOrdersCount = stats.pendingOrdersCount,
+                            confirmedOrdersCount = stats.confirmedOrdersCount,
+                            deliveredOrdersCount = stats.deliveredOrdersCount,
+                            activePharmacies = stats.activePharmacies,
+                            activeWarehouses = stats.activeWarehouses,
+                            pendingRequests = pendingRequests,
+                            recentActivities = recentActivities,
+                            systemHealthPercent = systemHealth?.healthPercent ?: 0,
+                            systemHealthStatus = systemHealth?.healthStatus ?: "--",
+                            // Note: activeConnections removed - not available in current schema
                         )
                     }
                 }
                 .onFailure {
                     _state.update { it.copy(isRefreshing = false) }
-                    _effect.emit(AdminDashboardEffect.ShowMessage("فشل تحديث البيانات"))
+                    _effect.emit(
+                        AdminDashboardEffect.ShowMessage("فشل تحديث لوحة التحكم"),
+                    )
                 }
         }
     }

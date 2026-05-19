@@ -1,0 +1,1789 @@
+0000	70 61 63 6b 61 67 65 20  63 6f 6d 2e 70 68 61 72   package com.phar
+0010	6d 61 6c 69 6e 6b 2e 66  65 61 74 75 72 65 2e 70   malink.feature.p
+0020	72 6f 66 69 6c 65 0a 0a  69 6d 70 6f 72 74 20 61   rofile..import a
+0030	6e 64 72 6f 69 64 78 2e  63 6f 6d 70 6f 73 65 2e   ndroidx.compose.
+0040	66 6f 75 6e 64 61 74 69  6f 6e 2e 42 6f 72 64 65   foundation.Borde
+0050	72 53 74 72 6f 6b 65 0a  69 6d 70 6f 72 74 20 61   rStroke.import a
+0060	6e 64 72 6f 69 64 78 2e  63 6f 6d 70 6f 73 65 2e   ndroidx.compose.
+0070	66 6f 75 6e 64 61 74 69  6f 6e 2e 62 61 63 6b 67   foundation.backg
+0080	72 6f 75 6e 64 0a 69 6d  70 6f 72 74 20 61 6e 64   round.import and
+0090	72 6f 69 64 78 2e 63 6f  6d 70 6f 73 65 2e 66 6f   roidx.compose.fo
+00a0	75 6e 64 61 74 69 6f 6e  2e 63 6c 69 63 6b 61 62   undation.clickab
+00b0	6c 65 0a 69 6d 70 6f 72  74 20 61 6e 64 72 6f 69   le.import androi
+00c0	64 78 2e 63 6f 6d 70 6f  73 65 2e 66 6f 75 6e 64   dx.compose.found
+00d0	61 74 69 6f 6e 2e 69 6e  74 65 72 61 63 74 69 6f   ation.interactio
+00e0	6e 2e 4d 75 74 61 62 6c  65 49 6e 74 65 72 61 63   n.MutableInterac
+00f0	74 69 6f 6e 53 6f 75 72  63 65 0a 69 6d 70 6f 72   tionSource.impor
+0100	74 20 61 6e 64 72 6f 69  64 78 2e 63 6f 6d 70 6f   t androidx.compo
+0110	73 65 2e 66 6f 75 6e 64  61 74 69 6f 6e 2e 6c 61   se.foundation.la
+0120	79 6f 75 74 2e 41 72 72  61 6e 67 65 6d 65 6e 74   yout.Arrangement
+0130	0a 69 6d 70 6f 72 74 20  61 6e 64 72 6f 69 64 78   .import androidx
+0140	2e 63 6f 6d 70 6f 73 65  2e 66 6f 75 6e 64 61 74   .compose.foundat
+0150	69 6f 6e 2e 6c 61 79 6f  75 74 2e 42 6f 78 0a 69   ion.layout.Box.i
+0160	6d 70 6f 72 74 20 61 6e  64 72 6f 69 64 78 2e 63   mport androidx.c
+0170	6f 6d 70 6f 73 65 2e 66  6f 75 6e 64 61 74 69 6f   ompose.foundatio
+0180	6e 2e 6c 61 79 6f 75 74  2e 43 6f 6c 75 6d 6e 0a   n.layout.Column.
+0190	69 6d 70 6f 72 74 20 61  6e 64 72 6f 69 64 78 2e   import androidx.
+01a0	63 6f 6d 70 6f 73 65 2e  66 6f 75 6e 64 61 74 69   compose.foundati
+01b0	6f 6e 2e 6c 61 79 6f 75  74 2e 50 61 64 64 69 6e   on.layout.Paddin
+01c0	67 56 61 6c 75 65 73 0a  69 6d 70 6f 72 74 20 61   gValues.import a
+01d0	6e 64 72 6f 69 64 78 2e  63 6f 6d 70 6f 73 65 2e   ndroidx.compose.
+01e0	66 6f 75 6e 64 61 74 69  6f 6e 2e 6c 61 79 6f 75   foundation.layou
+01f0	74 2e 52 6f 77 0a 69 6d  70 6f 72 74 20 61 6e 64   t.Row.import and
+0200	72 6f 69 64 78 2e 63 6f  6d 70 6f 73 65 2e 66 6f   roidx.compose.fo
+0210	75 6e 64 61 74 69 6f 6e  2e 6c 61 79 6f 75 74 2e   undation.layout.
+0220	53 70 61 63 65 72 0a 69  6d 70 6f 72 74 20 61 6e   Spacer.import an
+0230	64 72 6f 69 64 78 2e 63  6f 6d 70 6f 73 65 2e 66   droidx.compose.f
+0240	6f 75 6e 64 61 74 69 6f  6e 2e 6c 61 79 6f 75 74   oundation.layout
+0250	2e 66 69 6c 6c 4d 61 78  53 69 7a 65 0a 69 6d 70   .fillMaxSize.imp
+0260	6f 72 74 20 61 6e 64 72  6f 69 64 78 2e 63 6f 6d   ort androidx.com
+0270	70 6f 73 65 2e 66 6f 75  6e 64 61 74 69 6f 6e 2e   pose.foundation.
+0280	6c 61 79 6f 75 74 2e 66  69 6c 6c 4d 61 78 57 69   layout.fillMaxWi
+0290	64 74 68 0a 69 6d 70 6f  72 74 20 61 6e 64 72 6f   dth.import andro
+02a0	69 64 78 2e 63 6f 6d 70  6f 73 65 2e 66 6f 75 6e   idx.compose.foun
+02b0	64 61 74 69 6f 6e 2e 6c  61 79 6f 75 74 2e 68 65   dation.layout.he
+02c0	69 67 68 74 0a 69 6d 70  6f 72 74 20 61 6e 64 72   ight.import andr
+02d0	6f 69 64 78 2e 63 6f 6d  70 6f 73 65 2e 66 6f 75   oidx.compose.fou
+02e0	6e 64 61 74 69 6f 6e 2e  6c 61 79 6f 75 74 2e 70   ndation.layout.p
+02f0	61 64 64 69 6e 67 0a 69  6d 70 6f 72 74 20 61 6e   adding.import an
+0300	64 72 6f 69 64 78 2e 63  6f 6d 70 6f 73 65 2e 66   droidx.compose.f
+0310	6f 75 6e 64 61 74 69 6f  6e 2e 6c 61 79 6f 75 74   oundation.layout
+0320	2e 73 69 7a 65 0a 69 6d  70 6f 72 74 20 61 6e 64   .size.import and
+0330	72 6f 69 64 78 2e 63 6f  6d 70 6f 73 65 2e 66 6f   roidx.compose.fo
+0340	75 6e 64 61 74 69 6f 6e  2e 6c 61 7a 79 2e 4c 61   undation.lazy.La
+0350	7a 79 43 6f 6c 75 6d 6e  0a 69 6d 70 6f 72 74 20   zyColumn.import 
+0360	61 6e 64 72 6f 69 64 78  2e 63 6f 6d 70 6f 73 65   androidx.compose
+0370	2e 66 6f 75 6e 64 61 74  69 6f 6e 2e 6c 61 7a 79   .foundation.lazy
+0380	2e 69 74 65 6d 73 0a 69  6d 70 6f 72 74 20 61 6e   .items.import an
+0390	64 72 6f 69 64 78 2e 63  6f 6d 70 6f 73 65 2e 66   droidx.compose.f
+03a0	6f 75 6e 64 61 74 69 6f  6e 2e 73 68 61 70 65 2e   oundation.shape.
+03b0	43 69 72 63 6c 65 53 68  61 70 65 0a 69 6d 70 6f   CircleShape.impo
+03c0	72 74 20 61 6e 64 72 6f  69 64 78 2e 63 6f 6d 70   rt androidx.comp
+03d0	6f 73 65 2e 66 6f 75 6e  64 61 74 69 6f 6e 2e 73   ose.foundation.s
+03e0	68 61 70 65 2e 52 6f 75  6e 64 65 64 43 6f 72 6e   hape.RoundedCorn
+03f0	65 72 53 68 61 70 65 0a  69 6d 70 6f 72 74 20 61   erShape.import a
+0400	6e 64 72 6f 69 64 78 2e  63 6f 6d 70 6f 73 65 2e   ndroidx.compose.
+0410	6d 61 74 65 72 69 61 6c  2e 69 63 6f 6e 73 2e 49   material.icons.I
+0420	63 6f 6e 73 0a 69 6d 70  6f 72 74 20 61 6e 64 72   cons.import andr
+0430	6f 69 64 78 2e 63 6f 6d  70 6f 73 65 2e 6d 61 74   oidx.compose.mat
+0440	65 72 69 61 6c 2e 69 63  6f 6e 73 2e 61 75 74 6f   erial.icons.auto
+0450	6d 69 72 72 6f 72 65 64  2e 6f 75 74 6c 69 6e 65   mirrored.outline
+0460	64 2e 4b 65 79 62 6f 61  72 64 41 72 72 6f 77 4c   d.KeyboardArrowL
+0470	65 66 74 0a 69 6d 70 6f  72 74 20 61 6e 64 72 6f   eft.import andro
+0480	69 64 78 2e 63 6f 6d 70  6f 73 65 2e 6d 61 74 65   idx.compose.mate
+0490	72 69 61 6c 2e 69 63 6f  6e 73 2e 66 69 6c 6c 65   rial.icons.fille
+04a0	64 2e 50 65 72 73 6f 6e  0a 69 6d 70 6f 72 74 20   d.Person.import 
+04b0	61 6e 64 72 6f 69 64 78  2e 63 6f 6d 70 6f 73 65   androidx.compose
+04c0	2e 6d 61 74 65 72 69 61  6c 2e 69 63 6f 6e 73 2e   .material.icons.
+04d0	6f 75 74 6c 69 6e 65 64  2e 45 64 69 74 0a 69 6d   outlined.Edit.im
+04e0	70 6f 72 74 20 61 6e 64  72 6f 69 64 78 2e 63 6f   port androidx.co
+04f0	6d 70 6f 73 65 2e 6d 61  74 65 72 69 61 6c 2e 69   mpose.material.i
+0500	63 6f 6e 73 2e 6f 75 74  6c 69 6e 65 64 2e 48 65   cons.outlined.He
+0510	6c 70 4f 75 74 6c 69 6e  65 0a 69 6d 70 6f 72 74   lpOutline.import
+0520	20 61 6e 64 72 6f 69 64  78 2e 63 6f 6d 70 6f 73    androidx.compos
+0530	65 2e 6d 61 74 65 72 69  61 6c 2e 69 63 6f 6e 73   e.material.icons
+0540	2e 6f 75 74 6c 69 6e 65  64 2e 49 6e 66 6f 0a 69   .outlined.Info.i
+0550	6d 70 6f 72 74 20 61 6e  64 72 6f 69 64 78 2e 63   mport androidx.c
+0560	6f 6d 70 6f 73 65 2e 6d  61 74 65 72 69 61 6c 2e   ompose.material.
+0570	69 63 6f 6e 73 2e 6f 75  74 6c 69 6e 65 64 2e 4c   icons.outlined.L
+0580	61 6e 67 75 61 67 65 0a  69 6d 70 6f 72 74 20 61   anguage.import a
+0590	6e 64 72 6f 69 64 78 2e  63 6f 6d 70 6f 73 65 2e   ndroidx.compose.
+05a0	6d 61 74 65 72 69 61 6c  2e 69 63 6f 6e 73 2e 6f   material.icons.o
+05b0	75 74 6c 69 6e 65 64 2e  4c 6f 63 61 74 69 6f 6e   utlined.Location
+05c0	4f 6e 0a 69 6d 70 6f 72  74 20 61 6e 64 72 6f 69   On.import androi
+05d0	64 78 2e 63 6f 6d 70 6f  73 65 2e 6d 61 74 65 72   dx.compose.mater
+05e0	69 61 6c 2e 69 63 6f 6e  73 2e 6f 75 74 6c 69 6e   ial.icons.outlin
+05f0	65 64 2e 4c 6f 63 6b 0a  69 6d 70 6f 72 74 20 61   ed.Lock.import a
+0600	6e 64 72 6f 69 64 78 2e  63 6f 6d 70 6f 73 65 2e   ndroidx.compose.
+0610	6d 61 74 65 72 69 61 6c  2e 69 63 6f 6e 73 2e 6f   material.icons.o
+0620	75 74 6c 69 6e 65 64 2e  4c 6f 67 6f 75 74 0a 69   utlined.Logout.i
+0630	6d 70 6f 72 74 20 61 6e  64 72 6f 69 64 78 2e 63   mport androidx.c
+0640	6f 6d 70 6f 73 65 2e 6d  61 74 65 72 69 61 6c 2e   ompose.material.
+0650	69 63 6f 6e 73 2e 6f 75  74 6c 69 6e 65 64 2e 4e   icons.outlined.N
+0660	6f 74 69 66 69 63 61 74  69 6f 6e 73 0a 69 6d 70   otifications.imp
+0670	6f 72 74 20 61 6e 64 72  6f 69 64 78 2e 63 6f 6d   ort androidx.com
+0680	70 6f 73 65 2e 6d 61 74  65 72 69 61 6c 2e 69 63   pose.material.ic
+0690	6f 6e 73 2e 6f 75 74 6c  69 6e 65 64 2e 50 68 6f   ons.outlined.Pho
+06a0	6e 65 0a 69 6d 70 6f 72  74 20 61 6e 64 72 6f 69   ne.import androi
+06b0	64 78 2e 63 6f 6d 70 6f  73 65 2e 6d 61 74 65 72   dx.compose.mater
+06c0	69 61 6c 2e 69 63 6f 6e  73 2e 6f 75 74 6c 69 6e   ial.icons.outlin
+06d0	65 64 2e 53 65 74 74 69  6e 67 73 0a 69 6d 70 6f   ed.Settings.impo
+06e0	72 74 20 61 6e 64 72 6f  69 64 78 2e 63 6f 6d 70   rt androidx.comp
+06f0	6f 73 65 2e 6d 61 74 65  72 69 61 6c 2e 69 63 6f   ose.material.ico
+0700	6e 73 2e 6f 75 74 6c 69  6e 65 64 2e 53 74 6f 72   ns.outlined.Stor
+0710	65 0a 69 6d 70 6f 72 74  20 61 6e 64 72 6f 69 64   e.import android
+0720	78 2e 63 6f 6d 70 6f 73  65 2e 6d 61 74 65 72 69   x.compose.materi
+0730	61 6c 33 2e 49 63 6f 6e  0a 69 6d 70 6f 72 74 20   al3.Icon.import 
+0740	61 6e 64 72 6f 69 64 78  2e 63 6f 6d 70 6f 73 65   androidx.compose
+0750	2e 6d 61 74 65 72 69 61  6c 33 2e 4d 61 74 65 72   .material3.Mater
+0760	69 61 6c 54 68 65 6d 65  0a 69 6d 70 6f 72 74 20   ialTheme.import 
+0770	61 6e 64 72 6f 69 64 78  2e 63 6f 6d 70 6f 73 65   androidx.compose
+0780	2e 6d 61 74 65 72 69 61  6c 33 2e 53 75 72 66 61   .material3.Surfa
+0790	63 65 0a 69 6d 70 6f 72  74 20 61 6e 64 72 6f 69   ce.import androi
+07a0	64 78 2e 63 6f 6d 70 6f  73 65 2e 6d 61 74 65 72   dx.compose.mater
+07b0	69 61 6c 33 2e 54 65 78  74 0a 69 6d 70 6f 72 74   ial3.Text.import
+07c0	20 61 6e 64 72 6f 69 64  78 2e 63 6f 6d 70 6f 73    androidx.compos
+07d0	65 2e 6d 61 74 65 72 69  61 6c 33 2e 72 69 70 70   e.material3.ripp
+07e0	6c 65 0a 69 6d 70 6f 72  74 20 61 6e 64 72 6f 69   le.import androi
+07f0	64 78 2e 63 6f 6d 70 6f  73 65 2e 72 75 6e 74 69   dx.compose.runti
+0800	6d 65 2e 43 6f 6d 70 6f  73 61 62 6c 65 0a 69 6d   me.Composable.im
+0810	70 6f 72 74 20 61 6e 64  72 6f 69 64 78 2e 63 6f   port androidx.co
+0820	6d 70 6f 73 65 2e 72 75  6e 74 69 6d 65 2e 43 6f   mpose.runtime.Co
+0830	6d 70 6f 73 69 74 69 6f  6e 4c 6f 63 61 6c 50 72   mpositionLocalPr
+0840	6f 76 69 64 65 72 0a 69  6d 70 6f 72 74 20 61 6e   ovider.import an
+0850	64 72 6f 69 64 78 2e 63  6f 6d 70 6f 73 65 2e 72   droidx.compose.r
+0860	75 6e 74 69 6d 65 2e 63  6f 6c 6c 65 63 74 41 73   untime.collectAs
+0870	53 74 61 74 65 0a 69 6d  70 6f 72 74 20 61 6e 64   State.import and
+0880	72 6f 69 64 78 2e 63 6f  6d 70 6f 73 65 2e 72 75   roidx.compose.ru
+0890	6e 74 69 6d 65 2e 67 65  74 56 61 6c 75 65 0a 69   ntime.getValue.i
+08a0	6d 70 6f 72 74 20 61 6e  64 72 6f 69 64 78 2e 63   mport androidx.c
+08b0	6f 6d 70 6f 73 65 2e 72  75 6e 74 69 6d 65 2e 72   ompose.runtime.r
+08c0	65 6d 65 6d 62 65 72 0a  69 6d 70 6f 72 74 20 61   emember.import a
+08d0	6e 64 72 6f 69 64 78 2e  63 6f 6d 70 6f 73 65 2e   ndroidx.compose.
+08e0	75 69 2e 41 6c 69 67 6e  6d 65 6e 74 0a 69 6d 70   ui.Alignment.imp
+08f0	6f 72 74 20 61 6e 64 72  6f 69 64 78 2e 63 6f 6d   ort androidx.com
+0900	70 6f 73 65 2e 75 69 2e  4d 6f 64 69 66 69 65 72   pose.ui.Modifier
+0910	0a 69 6d 70 6f 72 74 20  61 6e 64 72 6f 69 64 78   .import androidx
+0920	2e 63 6f 6d 70 6f 73 65  2e 75 69 2e 67 72 61 70   .compose.ui.grap
+0930	68 69 63 73 2e 42 72 75  73 68 0a 69 6d 70 6f 72   hics.Brush.impor
+0940	74 20 61 6e 64 72 6f 69  64 78 2e 63 6f 6d 70 6f   t androidx.compo
+0950	73 65 2e 75 69 2e 67 72  61 70 68 69 63 73 2e 43   se.ui.graphics.C
+0960	6f 6c 6f 72 0a 69 6d 70  6f 72 74 20 61 6e 64 72   olor.import andr
+0970	6f 69 64 78 2e 63 6f 6d  70 6f 73 65 2e 75 69 2e   oidx.compose.ui.
+0980	67 72 61 70 68 69 63 73  2e 76 65 63 74 6f 72 2e   graphics.vector.
+0990	49 6d 61 67 65 56 65 63  74 6f 72 0a 69 6d 70 6f   ImageVector.impo
+09a0	72 74 20 61 6e 64 72 6f  69 64 78 2e 63 6f 6d 70   rt androidx.comp
+09b0	6f 73 65 2e 75 69 2e 70  6c 61 74 66 6f 72 6d 2e   ose.ui.platform.
+09c0	4c 6f 63 61 6c 4c 61 79  6f 75 74 44 69 72 65 63   LocalLayoutDirec
+09d0	74 69 6f 6e 0a 69 6d 70  6f 72 74 20 61 6e 64 72   tion.import andr
+09e0	6f 69 64 78 2e 63 6f 6d  70 6f 73 65 2e 75 69 2e   oidx.compose.ui.
+09f0	72 65 73 2e 73 74 72 69  6e 67 52 65 73 6f 75 72   res.stringResour
+0a00	63 65 0a 69 6d 70 6f 72  74 20 61 6e 64 72 6f 69   ce.import androi
+0a10	64 78 2e 63 6f 6d 70 6f  73 65 2e 75 69 2e 74 65   dx.compose.ui.te
+0a20	78 74 2e 66 6f 6e 74 2e  46 6f 6e 74 57 65 69 67   xt.font.FontWeig
+0a30	68 74 0a 69 6d 70 6f 72  74 20 61 6e 64 72 6f 69   ht.import androi
+0a40	64 78 2e 63 6f 6d 70 6f  73 65 2e 75 69 2e 74 65   dx.compose.ui.te
+0a50	78 74 2e 73 74 79 6c 65  2e 54 65 78 74 41 6c 69   xt.style.TextAli
+0a60	67 6e 0a 69 6d 70 6f 72  74 20 61 6e 64 72 6f 69   gn.import androi
+0a70	64 78 2e 63 6f 6d 70 6f  73 65 2e 75 69 2e 74 65   dx.compose.ui.te
+0a80	78 74 2e 73 74 79 6c 65  2e 54 65 78 74 4f 76 65   xt.style.TextOve
+0a90	72 66 6c 6f 77 0a 69 6d  70 6f 72 74 20 61 6e 64   rflow.import and
+0aa0	72 6f 69 64 78 2e 63 6f  6d 70 6f 73 65 2e 75 69   roidx.compose.ui
+0ab0	2e 74 6f 6f 6c 69 6e 67  2e 70 72 65 76 69 65 77   .tooling.preview
+0ac0	2e 50 72 65 76 69 65 77  0a 69 6d 70 6f 72 74 20   .Preview.import 
+0ad0	61 6e 64 72 6f 69 64 78  2e 63 6f 6d 70 6f 73 65   androidx.compose
+0ae0	2e 75 69 2e 75 6e 69 74  2e 4c 61 79 6f 75 74 44   .ui.unit.LayoutD
+0af0	69 72 65 63 74 69 6f 6e  0a 69 6d 70 6f 72 74 20   irection.import 
+0b00	61 6e 64 72 6f 69 64 78  2e 63 6f 6d 70 6f 73 65   androidx.compose
+0b10	2e 75 69 2e 75 6e 69 74  2e 64 70 0a 69 6d 70 6f   .ui.unit.dp.impo
+0b20	72 74 20 61 6e 64 72 6f  69 64 78 2e 68 69 6c 74   rt androidx.hilt
+0b30	2e 6e 61 76 69 67 61 74  69 6f 6e 2e 63 6f 6d 70   .navigation.comp
+0b40	6f 73 65 2e 68 69 6c 74  56 69 65 77 4d 6f 64 65   ose.hiltViewMode
+0b50	6c 0a 69 6d 70 6f 72 74  20 63 6f 6d 2e 70 68 61   l.import com.pha
+0b60	72 6d 61 6c 69 6e 6b 2e  64 65 73 69 67 6e 73 79   rmalink.designsy
+0b70	73 74 65 6d 2e 73 74 69  74 63 68 2e 53 74 69 74   stem.stitch.Stit
+0b80	63 68 54 68 65 6d 65 0a  69 6d 70 6f 72 74 20 63   chTheme.import c
+0b90	6f 6d 2e 70 68 61 72 6d  61 6c 69 6e 6b 2e 64 65   om.pharmalink.de
+0ba0	73 69 67 6e 73 79 73 74  65 6d 2e 73 74 69 74 63   signsystem.stitc
+0bb0	68 2e 63 6f 6d 70 6f 6e  65 6e 74 73 2e 53 74 69   h.components.Sti
+0bc0	74 63 68 42 75 74 74 6f  6e 0a 69 6d 70 6f 72 74   tchButton.import
+0bd0	20 63 6f 6d 2e 70 68 61  72 6d 61 6c 69 6e 6b 2e    com.pharmalink.
+0be0	64 65 73 69 67 6e 73 79  73 74 65 6d 2e 74 68 65   designsystem.the
+0bf0	6d 65 2e 43 6c 69 6e 69  63 61 6c 43 61 6e 76 61   me.ClinicalCanva
+0c00	73 0a 69 6d 70 6f 72 74  20 63 6f 6d 2e 70 68 61   s.import com.pha
+0c10	72 6d 61 6c 69 6e 6b 2e  64 65 73 69 67 6e 73 79   rmalink.designsy
+0c20	73 74 65 6d 2e 74 68 65  6d 65 2e 50 68 61 72 6d   stem.theme.Pharm
+0c30	61 42 6c 75 65 35 30 0a  69 6d 70 6f 72 74 20 63   aBlue50.import c
+0c40	6f 6d 2e 70 68 61 72 6d  61 6c 69 6e 6b 2e 64 65   om.pharmalink.de
+0c50	73 69 67 6e 73 79 73 74  65 6d 2e 74 68 65 6d 65   signsystem.theme
+0c60	2e 50 68 61 72 6d 61 42  6c 75 65 35 30 30 0a 69   .PharmaBlue500.i
+0c70	6d 70 6f 72 74 20 63 6f  6d 2e 70 68 61 72 6d 61   mport com.pharma
+0c80	6c 69 6e 6b 2e 64 65 73  69 67 6e 73 79 73 74 65   link.designsyste
+0c90	6d 2e 74 68 65 6d 65 2e  50 68 61 72 6d 61 42 6c   m.theme.PharmaBl
+0ca0	75 65 37 30 30 0a 69 6d  70 6f 72 74 20 63 6f 6d   ue700.import com
+0cb0	2e 70 68 61 72 6d 61 6c  69 6e 6b 2e 64 65 73 69   .pharmalink.desi
+0cc0	67 6e 73 79 73 74 65 6d  2e 74 68 65 6d 65 2e 50   gnsystem.theme.P
+0cd0	68 61 72 6d 61 4e 65 75  74 72 61 6c 36 30 30 0a   harmaNeutral600.
+0ce0	69 6d 70 6f 72 74 20 63  6f 6d 2e 70 68 61 72 6d   import com.pharm
+0cf0	61 6c 69 6e 6b 2e 64 65  73 69 67 6e 73 79 73 74   alink.designsyst
+0d00	65 6d 2e 74 68 65 6d 65  2e 50 68 61 72 6d 61 53   em.theme.PharmaS
+0d10	75 63 63 65 73 73 0a 69  6d 70 6f 72 74 20 63 6f   uccess.import co
+0d20	6d 2e 70 68 61 72 6d 61  6c 69 6e 6b 2e 64 65 73   m.pharmalink.des
+0d30	69 67 6e 73 79 73 74 65  6d 2e 74 68 65 6d 65 2e   ignsystem.theme.
+0d40	50 72 65 6d 69 75 6d 55  72 67 65 6e 74 0a 69 6d   PremiumUrgent.im
+0d50	70 6f 72 74 20 63 6f 6d  2e 70 68 61 72 6d 61 6c   port com.pharmal
+0d60	69 6e 6b 2e 64 65 73 69  67 6e 73 79 73 74 65 6d   ink.designsystem
+0d70	2e 74 68 65 6d 65 2e 64  69 6d 65 6e 73 0a 0a 70   .theme.dimens..p
+0d80	72 69 76 61 74 65 20 64  61 74 61 20 63 6c 61 73   rivate data clas
+0d90	73 20 53 65 74 74 69 6e  67 73 47 72 6f 75 70 28   s SettingsGroup(
+0da0	0a 20 20 20 20 76 61 6c  20 74 69 74 6c 65 3a 20   .    val title: 
+0db0	53 74 72 69 6e 67 2c 0a  20 20 20 20 76 61 6c 20   String,.    val 
+0dc0	73 75 62 74 69 74 6c 65  3a 20 53 74 72 69 6e 67   subtitle: String
+0dd0	2c 0a 20 20 20 20 76 61  6c 20 69 74 65 6d 73 3a   ,.    val items:
+0de0	20 4c 69 73 74 3c 53 65  74 74 69 6e 67 49 74 65    List<SettingIte
+0df0	6d 3e 2c 0a 29 0a 0a 40  43 6f 6d 70 6f 73 61 62   m>,.)..@Composab
+0e00	6c 65 0a 66 75 6e 20 50  72 6f 66 69 6c 65 53 63   le.fun ProfileSc
+0e10	72 65 65 6e 28 0a 20 20  20 20 6f 6e 4c 6f 67 6f   reen(.    onLogo
+0e20	75 74 3a 20 28 29 20 2d  3e 20 55 6e 69 74 20 3d   ut: () -> Unit =
+0e30	20 7b 7d 2c 0a 20 20 20  20 6f 6e 45 64 69 74 50    {},.    onEditP
+0e40	72 6f 66 69 6c 65 3a 20  28 29 20 2d 3e 20 55 6e   rofile: () -> Un
+0e50	69 74 20 3d 20 7b 7d 2c  0a 20 20 20 20 6f 6e 43   it = {},.    onC
+0e60	68 61 6e 67 65 50 61 73  73 77 6f 72 64 3a 20 28   hangePassword: (
+0e70	29 20 2d 3e 20 55 6e 69  74 20 3d 20 7b 7d 2c 0a   ) -> Unit = {},.
+0e80	20 20 20 20 6f 6e 4f 70  65 6e 48 65 6c 70 53 75       onOpenHelpSu
+0e90	70 70 6f 72 74 3a 20 28  29 20 2d 3e 20 55 6e 69   pport: () -> Uni
+0ea0	74 20 3d 20 7b 7d 2c 0a  20 20 20 20 6f 6e 4f 70   t = {},.    onOp
+0eb0	65 6e 41 62 6f 75 74 41  70 70 3a 20 28 29 20 2d   enAboutApp: () -
+0ec0	3e 20 55 6e 69 74 20 3d  20 7b 7d 2c 0a 20 20 20   > Unit = {},.   
+0ed0	20 6f 6e 4f 70 65 6e 43  6f 6e 74 61 63 74 55 73    onOpenContactUs
+0ee0	3a 20 28 29 20 2d 3e 20  55 6e 69 74 20 3d 20 7b   : () -> Unit = {
+0ef0	7d 2c 0a 20 20 20 20 6f  6e 4f 70 65 6e 4c 61 6e   },.    onOpenLan
+0f00	67 75 61 67 65 3a 20 28  29 20 2d 3e 20 55 6e 69   guage: () -> Uni
+0f10	74 20 3d 20 7b 7d 2c 0a  20 20 20 20 76 69 65 77   t = {},.    view
+0f20	4d 6f 64 65 6c 3a 20 50  72 6f 66 69 6c 65 56 69   Model: ProfileVi
+0f30	65 77 4d 6f 64 65 6c 20  3d 20 68 69 6c 74 56 69   ewModel = hiltVi
+0f40	65 77 4d 6f 64 65 6c 28  29 2c 0a 29 20 7b 0a 20   ewModel(),.) {. 
+0f50	20 20 20 76 61 6c 20 75  69 53 74 61 74 65 20 62      val uiState b
+0f60	79 20 76 69 65 77 4d 6f  64 65 6c 2e 75 69 53 74   y viewModel.uiSt
+0f70	61 74 65 2e 63 6f 6c 6c  65 63 74 41 73 53 74 61   ate.collectAsSta
+0f80	74 65 28 29 0a 0a 20 20  20 20 43 6f 6d 70 6f 73   te()..    Compos
+0f90	69 74 69 6f 6e 4c 6f 63  61 6c 50 72 6f 76 69 64   itionLocalProvid
+0fa0	65 72 28 4c 6f 63 61 6c  4c 61 79 6f 75 74 44 69   er(LocalLayoutDi
+0fb0	72 65 63 74 69 6f 6e 20  70 72 6f 76 69 64 65 73   rection provides
+0fc0	20 4c 61 79 6f 75 74 44  69 72 65 63 74 69 6f 6e    LayoutDirection
+0fd0	2e 52 74 6c 29 20 7b 0a  20 20 20 20 20 20 20 20   .Rtl) {.        
+0fe0	50 72 6f 66 69 6c 65 43  6f 6e 74 65 6e 74 28 0a   ProfileContent(.
+0ff0	20 20 20 20 20 20 20 20  20 20 20 20 75 69 53 74               uiSt
+1000	61 74 65 20 3d 20 75 69  53 74 61 74 65 2c 0a 20   ate = uiState,. 
+1010	20 20 20 20 20 20 20 20  20 20 20 6f 6e 4c 6f 67              onLog
+1020	6f 75 74 20 3d 20 6f 6e  4c 6f 67 6f 75 74 2c 0a   out = onLogout,.
+1030	20 20 20 20 20 20 20 20  20 20 20 20 6f 6e 45 64               onEd
+1040	69 74 50 72 6f 66 69 6c  65 20 3d 20 6f 6e 45 64   itProfile = onEd
+1050	69 74 50 72 6f 66 69 6c  65 2c 0a 20 20 20 20 20   itProfile,.     
+1060	20 20 20 20 20 20 20 6f  6e 43 68 61 6e 67 65 50          onChangeP
+1070	61 73 73 77 6f 72 64 20  3d 20 6f 6e 43 68 61 6e   assword = onChan
+1080	67 65 50 61 73 73 77 6f  72 64 2c 0a 20 20 20 20   gePassword,.    
+1090	20 20 20 20 20 20 20 20  6f 6e 4f 70 65 6e 48 65           onOpenHe
+10a0	6c 70 53 75 70 70 6f 72  74 20 3d 20 6f 6e 4f 70   lpSupport = onOp
+10b0	65 6e 48 65 6c 70 53 75  70 70 6f 72 74 2c 0a 20   enHelpSupport,. 
+10c0	20 20 20 20 20 20 20 20  20 20 20 6f 6e 4f 70 65              onOpe
+10d0	6e 41 62 6f 75 74 41 70  70 20 3d 20 6f 6e 4f 70   nAboutApp = onOp
+10e0	65 6e 41 62 6f 75 74 41  70 70 2c 0a 20 20 20 20   enAboutApp,.    
+10f0	20 20 20 20 20 20 20 20  6f 6e 4f 70 65 6e 43 6f           onOpenCo
+1100	6e 74 61 63 74 55 73 20  3d 20 6f 6e 4f 70 65 6e   ntactUs = onOpen
+1110	43 6f 6e 74 61 63 74 55  73 2c 0a 20 20 20 20 20   ContactUs,.     
+1120	20 20 20 20 20 20 20 6f  6e 4f 70 65 6e 4c 61 6e          onOpenLan
+1130	67 75 61 67 65 20 3d 20  6f 6e 4f 70 65 6e 4c 61   guage = onOpenLa
+1140	6e 67 75 61 67 65 2c 0a  20 20 20 20 20 20 20 20   nguage,.        
+1150	20 20 20 20 6f 6e 4e 6f  74 69 66 69 63 61 74 69       onNotificati
+1160	6f 6e 73 54 6f 67 67 6c  65 20 3d 20 76 69 65 77   onsToggle = view
+1170	4d 6f 64 65 6c 3a 3a 75  70 64 61 74 65 4e 6f 74   Model::updateNot
+1180	69 66 69 63 61 74 69 6f  6e 73 2c 0a 20 20 20 20   ifications,.    
+1190	20 20 20 20 29 0a 20 20  20 20 7d 0a 7d 0a 0a 40       ).    }.}..@
+11a0	43 6f 6d 70 6f 73 61 62  6c 65 0a 70 72 69 76 61   Composable.priva
+11b0	74 65 20 66 75 6e 20 50  72 6f 66 69 6c 65 43 6f   te fun ProfileCo
+11c0	6e 74 65 6e 74 28 0a 20  20 20 20 75 69 53 74 61   ntent(.    uiSta
+11d0	74 65 3a 20 50 72 6f 66  69 6c 65 55 69 53 74 61   te: ProfileUiSta
+11e0	74 65 2c 0a 20 20 20 20  6f 6e 4c 6f 67 6f 75 74   te,.    onLogout
+11f0	3a 20 28 29 20 2d 3e 20  55 6e 69 74 2c 0a 20 20   : () -> Unit,.  
+1200	20 20 6f 6e 45 64 69 74  50 72 6f 66 69 6c 65 3a     onEditProfile:
+1210	20 28 29 20 2d 3e 20 55  6e 69 74 2c 0a 20 20 20    () -> Unit,.   
+1220	20 6f 6e 43 68 61 6e 67  65 50 61 73 73 77 6f 72    onChangePasswor
+1230	64 3a 20 28 29 20 2d 3e  20 55 6e 69 74 2c 0a 20   d: () -> Unit,. 
+1240	20 20 20 6f 6e 4f 70 65  6e 48 65 6c 70 53 75 70      onOpenHelpSup
+1250	70 6f 72 74 3a 20 28 29  20 2d 3e 20 55 6e 69 74   port: () -> Unit
+1260	2c 0a 20 20 20 20 6f 6e  4f 70 65 6e 41 62 6f 75   ,.    onOpenAbou
+1270	74 41 70 70 3a 20 28 29  20 2d 3e 20 55 6e 69 74   tApp: () -> Unit
+1280	2c 0a 20 20 20 20 6f 6e  4f 70 65 6e 43 6f 6e 74   ,.    onOpenCont
+1290	61 63 74 55 73 3a 20 28  29 20 2d 3e 20 55 6e 69   actUs: () -> Uni
+12a0	74 2c 0a 20 20 20 20 6f  6e 4f 70 65 6e 4c 61 6e   t,.    onOpenLan
+12b0	67 75 61 67 65 3a 20 28  29 20 2d 3e 20 55 6e 69   guage: () -> Uni
+12c0	74 2c 0a 20 20 20 20 6f  6e 4e 6f 74 69 66 69 63   t,.    onNotific
+12d0	61 74 69 6f 6e 73 54 6f  67 67 6c 65 3a 20 28 42   ationsToggle: (B
+12e0	6f 6f 6c 65 61 6e 29 20  2d 3e 20 55 6e 69 74 2c   oolean) -> Unit,
+12f0	0a 29 20 7b 0a 20 20 20  20 76 61 6c 20 64 20 3d   .) {.    val d =
+1300	20 4d 61 74 65 72 69 61  6c 54 68 65 6d 65 2e 64    MaterialTheme.d
+1310	69 6d 65 6e 73 0a 20 20  20 20 76 61 6c 20 69 73   imens.    val is
+1320	50 75 62 6c 69 63 55 73  65 72 20 3d 20 75 69 53   PublicUser = uiS
+1330	74 61 74 65 2e 61 63 63  6f 75 6e 74 54 79 70 65   tate.accountType
+1340	45 6e 75 6d 20 3d 3d 20  63 6f 6d 2e 70 68 61 72   Enum == com.phar
+1350	6d 61 6c 69 6e 6b 2e 64  6f 6d 61 69 6e 2e 6d 6f   malink.domain.mo
+1360	64 65 6c 2e 41 63 63 6f  75 6e 74 54 79 70 65 2e   del.AccountType.
+1370	50 55 42 4c 49 43 5f 55  53 45 52 0a 20 20 20 20   PUBLIC_USER.    
+1380	76 61 6c 20 73 65 74 74  69 6e 67 73 47 72 6f 75   val settingsGrou
+1390	70 73 20 3d 20 72 65 6d  65 6d 62 65 72 28 75 69   ps = remember(ui
+13a0	53 74 61 74 65 2e 73 65  74 74 69 6e 67 73 4f 70   State.settingsOp
+13b0	74 69 6f 6e 73 2c 20 69  73 50 75 62 6c 69 63 55   tions, isPublicU
+13c0	73 65 72 2c 20 75 69 53  74 61 74 65 2e 61 63 63   ser, uiState.acc
+13d0	6f 75 6e 74 54 79 70 65  45 6e 75 6d 29 20 7b 0a   ountTypeEnum) {.
+13e0	20 20 20 20 20 20 20 20  75 69 53 74 61 74 65 2e           uiState.
+13f0	73 65 74 74 69 6e 67 73  4f 70 74 69 6f 6e 73 0a   settingsOptions.
+1400	20 20 20 20 20 20 20 20  20 20 20 20 2e 66 69 6c               .fil
+1410	74 65 72 4e 6f 74 20 7b  20 69 73 50 75 62 6c 69   terNot { isPubli
+1420	63 55 73 65 72 20 26 26  20 69 74 2e 69 73 4e 6f   cUser && it.isNo
+1430	74 69 66 69 63 61 74 69  6f 6e 28 29 20 7d 0a 20   tification() }. 
+1440	20 20 20 20 20 20 20 20  20 20 20 2e 67 72 6f 75              .grou
+1450	70 46 6f 72 50 72 6f 66  69 6c 65 28 75 69 53 74   pForProfile(uiSt
+1460	61 74 65 2e 61 63 63 6f  75 6e 74 54 79 70 65 45   ate.accountTypeE
+1470	6e 75 6d 29 0a 20 20 20  20 7d 0a 20 20 20 20 76   num).    }.    v
+1480	61 6c 20 6c 61 6e 67 75  61 67 65 50 72 65 76 69   al languagePrevi
+1490	65 77 20 3d 20 73 74 72  69 6e 67 52 65 73 6f 75   ew = stringResou
+14a0	72 63 65 28 52 2e 73 74  72 69 6e 67 2e 70 72 6f   rce(R.string.pro
+14b0	66 69 6c 65 5f 6c 61 6e  67 75 61 67 65 5f 61 72   file_language_ar
+14c0	61 62 69 63 5f 6f 6e 6c  79 29 0a 0a 20 20 20 20   abic_only)..    
+14d0	4c 61 7a 79 43 6f 6c 75  6d 6e 28 0a 20 20 20 20   LazyColumn(.    
+14e0	20 20 20 20 6d 6f 64 69  66 69 65 72 20 3d 20 4d       modifier = M
+14f0	6f 64 69 66 69 65 72 0a  20 20 20 20 20 20 20 20   odifier.        
+1500	20 20 20 20 2e 66 69 6c  6c 4d 61 78 53 69 7a 65       .fillMaxSize
+1510	28 29 0a 20 20 20 20 20  20 20 20 20 20 20 20 2e   ().            .
+1520	62 61 63 6b 67 72 6f 75  6e 64 28 43 6c 69 6e 69   background(Clini
+1530	63 61 6c 43 61 6e 76 61  73 29 2c 0a 20 20 20 20   calCanvas),.    
+1540	20 20 20 20 63 6f 6e 74  65 6e 74 50 61 64 64 69       contentPaddi
+1550	6e 67 20 3d 20 50 61 64  64 69 6e 67 56 61 6c 75   ng = PaddingValu
+1560	65 73 28 62 6f 74 74 6f  6d 20 3d 20 64 2e 73 70   es(bottom = d.sp
+1570	61 63 65 58 4c 29 2c 0a  20 20 20 20 20 20 20 20   aceXL),.        
+1580	76 65 72 74 69 63 61 6c  41 72 72 61 6e 67 65 6d   verticalArrangem
+1590	65 6e 74 20 3d 20 41 72  72 61 6e 67 65 6d 65 6e   ent = Arrangemen
+15a0	74 2e 73 70 61 63 65 64  42 79 28 64 2e 73 70 61   t.spacedBy(d.spa
+15b0	63 65 4c 29 2c 0a 20 20  20 20 29 20 7b 0a 20 20   ceL),.    ) {.  
+15c0	20 20 20 20 20 20 69 74  65 6d 20 7b 20 50 72 6f         item { Pro
+15d0	66 69 6c 65 48 65 61 64  65 72 28 29 20 7d 0a 20   fileHeader() }. 
+15e0	20 20 20 20 20 20 20 69  74 65 6d 20 7b 0a 20 20          item {.  
+15f0	20 20 20 20 20 20 20 20  20 20 50 72 6f 66 69 6c             Profil
+1600	65 48 65 72 6f 53 65 63  74 69 6f 6e 28 0a 20 20   eHeroSection(.  
+1610	20 20 20 20 20 20 20 20  20 20 20 20 20 20 75 73                 us
+1620	65 72 4e 61 6d 65 20 3d  20 75 69 53 74 61 74 65   erName = uiState
+1630	2e 75 73 65 72 4e 61 6d  65 2c 0a 20 20 20 20 20   .userName,.     
+1640	20 20 20 20 20 20 20 20  20 20 20 61 63 63 6f 75              accou
+1650	6e 74 54 79 70 65 20 3d  20 75 69 53 74 61 74 65   ntType = uiState
+1660	2e 61 63 63 6f 75 6e 74  54 79 70 65 2c 0a 20 20   .accountType,.  
+1670	20 20 20 20 20 20 20 20  20 20 20 20 20 20 70 68                 ph
+1680	61 72 6d 61 63 79 4e 61  6d 65 20 3d 20 75 69 53   armacyName = uiS
+1690	74 61 74 65 2e 70 68 61  72 6d 61 63 79 4e 61 6d   tate.pharmacyNam
+16a0	65 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   e,.             
+16b0	20 20 20 70 68 61 72 6d  61 63 79 41 64 64 72 65      pharmacyAddre
+16c0	73 73 20 3d 20 75 69 53  74 61 74 65 2e 70 68 61   ss = uiState.pha
+16d0	72 6d 61 63 79 41 64 64  72 65 73 73 2c 0a 20 20   rmacyAddress,.  
+16e0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 69 73                 is
+16f0	50 75 62 6c 69 63 55 73  65 72 20 3d 20 69 73 50   PublicUser = isP
+1700	75 62 6c 69 63 55 73 65  72 2c 0a 20 20 20 20 20   ublicUser,.     
+1710	20 20 20 20 20 20 20 20  20 20 20 6f 6e 45 64 69              onEdi
+1720	74 50 72 6f 66 69 6c 65  20 3d 20 6f 6e 45 64 69   tProfile = onEdi
+1730	74 50 72 6f 66 69 6c 65  2c 0a 20 20 20 20 20 20   tProfile,.      
+1740	20 20 20 20 20 20 20 20  20 20 6d 6f 64 69 66 69             modifi
+1750	65 72 20 3d 20 4d 6f 64  69 66 69 65 72 2e 70 61   er = Modifier.pa
+1760	64 64 69 6e 67 28 68 6f  72 69 7a 6f 6e 74 61 6c   dding(horizontal
+1770	20 3d 20 64 2e 73 70 61  63 65 4c 29 2c 0a 20 20    = d.spaceL),.  
+1780	20 20 20 20 20 20 20 20  20 20 29 0a 20 20 20 20             ).    
+1790	20 20 20 20 7d 0a 20 20  20 20 20 20 20 20 69 74       }.        it
+17a0	65 6d 20 7b 0a 20 20 20  20 20 20 20 20 20 20 20   em {.           
+17b0	20 50 72 6f 66 69 6c 65  53 75 6d 6d 61 72 79 43    ProfileSummaryC
+17c0	61 72 64 28 0a 20 20 20  20 20 20 20 20 20 20 20   ard(.           
+17d0	20 20 20 20 20 75 69 53  74 61 74 65 20 3d 20 75        uiState = u
+17e0	69 53 74 61 74 65 2c 0a  20 20 20 20 20 20 20 20   iState,.        
+17f0	20 20 20 20 20 20 20 20  6d 6f 64 69 66 69 65 72           modifier
+1800	20 3d 20 4d 6f 64 69 66  69 65 72 2e 70 61 64 64    = Modifier.padd
+1810	69 6e 67 28 68 6f 72 69  7a 6f 6e 74 61 6c 20 3d   ing(horizontal =
+1820	20 64 2e 73 70 61 63 65  4c 29 2c 0a 20 20 20 20    d.spaceL),.    
+1830	20 20 20 20 20 20 20 20  29 0a 20 20 20 20 20 20           ).      
+1840	20 20 7d 0a 20 20 20 20  20 20 20 20 69 74 65 6d     }.        item
+1850	73 28 73 65 74 74 69 6e  67 73 47 72 6f 75 70 73   s(settingsGroups
+1860	29 20 7b 20 67 72 6f 75  70 20 2d 3e 0a 20 20 20   ) { group ->.   
+1870	20 20 20 20 20 20 20 20  20 50 72 6f 66 69 6c 65            Profile
+1880	53 65 74 74 69 6e 67 73  53 65 63 74 69 6f 6e 28   SettingsSection(
+1890	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+18a0	20 67 72 6f 75 70 20 3d  20 67 72 6f 75 70 2c 0a    group = group,.
+18b0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+18c0	6c 61 6e 67 75 61 67 65  50 72 65 76 69 65 77 20   languagePreview 
+18d0	3d 20 6c 61 6e 67 75 61  67 65 50 72 65 76 69 65   = languagePrevie
+18e0	77 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   w,.             
+18f0	20 20 20 6f 6e 4c 61 6e  67 75 61 67 65 43 6c 69      onLanguageCli
+1900	63 6b 20 3d 20 6f 6e 4f  70 65 6e 4c 61 6e 67 75   ck = onOpenLangu
+1910	61 67 65 2c 0a 20 20 20  20 20 20 20 20 20 20 20   age,.           
+1920	20 20 20 20 20 6f 6e 53  65 63 75 72 69 74 79 43        onSecurityC
+1930	6c 69 63 6b 20 3d 20 6f  6e 43 68 61 6e 67 65 50   lick = onChangeP
+1940	61 73 73 77 6f 72 64 2c  0a 20 20 20 20 20 20 20   assword,.       
+1950	20 20 20 20 20 20 20 20  20 6f 6e 48 65 6c 70 53            onHelpS
+1960	75 70 70 6f 72 74 43 6c  69 63 6b 20 3d 20 6f 6e   upportClick = on
+1970	4f 70 65 6e 48 65 6c 70  53 75 70 70 6f 72 74 2c   OpenHelpSupport,
+1980	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+1990	20 6f 6e 41 62 6f 75 74  43 6c 69 63 6b 20 3d 20    onAboutClick = 
+19a0	6f 6e 4f 70 65 6e 41 62  6f 75 74 41 70 70 2c 0a   onOpenAboutApp,.
+19b0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+19c0	6f 6e 43 6f 6e 74 61 63  74 43 6c 69 63 6b 20 3d   onContactClick =
+19d0	20 6f 6e 4f 70 65 6e 43  6f 6e 74 61 63 74 55 73    onOpenContactUs
+19e0	2c 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ,.              
+19f0	20 20 6e 6f 74 69 66 69  63 61 74 69 6f 6e 73 45     notificationsE
+1a00	6e 61 62 6c 65 64 20 3d  20 75 69 53 74 61 74 65   nabled = uiState
+1a10	2e 6e 6f 74 69 66 69 63  61 74 69 6f 6e 73 45 6e   .notificationsEn
+1a20	61 62 6c 65 64 2c 0a 20  20 20 20 20 20 20 20 20   abled,.         
+1a30	20 20 20 20 20 20 20 6e  6f 74 69 66 69 63 61 74          notificat
+1a40	69 6f 6e 73 45 72 72 6f  72 20 3d 20 75 69 53 74   ionsError = uiSt
+1a50	61 74 65 2e 6e 6f 74 69  66 69 63 61 74 69 6f 6e   ate.notification
+1a60	73 45 72 72 6f 72 2c 0a  20 20 20 20 20 20 20 20   sError,.        
+1a70	20 20 20 20 20 20 20 20  6f 6e 4e 6f 74 69 66 69           onNotifi
+1a80	63 61 74 69 6f 6e 73 43  6c 69 63 6b 20 3d 20 7b   cationsClick = {
+1a90	20 6f 6e 4e 6f 74 69 66  69 63 61 74 69 6f 6e 73    onNotifications
+1aa0	54 6f 67 67 6c 65 28 21  75 69 53 74 61 74 65 2e   Toggle(!uiState.
+1ab0	6e 6f 74 69 66 69 63 61  74 69 6f 6e 73 45 6e 61   notificationsEna
+1ac0	62 6c 65 64 29 20 7d 2c  0a 20 20 20 20 20 20 20   bled) },.       
+1ad0	20 20 20 20 20 20 20 20  20 6d 6f 64 69 66 69 65            modifie
+1ae0	72 20 3d 20 4d 6f 64 69  66 69 65 72 2e 70 61 64   r = Modifier.pad
+1af0	64 69 6e 67 28 68 6f 72  69 7a 6f 6e 74 61 6c 20   ding(horizontal 
+1b00	3d 20 64 2e 73 70 61 63  65 4c 29 2c 0a 20 20 20   = d.spaceL),.   
+1b10	20 20 20 20 20 20 20 20  20 29 0a 20 20 20 20 20            ).     
+1b20	20 20 20 7d 0a 20 20 20  20 20 20 20 20 69 74 65      }.        ite
+1b30	6d 20 7b 0a 20 20 20 20  20 20 20 20 20 20 20 20   m {.            
+1b40	50 72 6f 66 69 6c 65 4c  6f 67 6f 75 74 42 75 74   ProfileLogoutBut
+1b50	74 6f 6e 28 0a 20 20 20  20 20 20 20 20 20 20 20   ton(.           
+1b60	20 20 20 20 20 6f 6e 4c  6f 67 6f 75 74 20 3d 20        onLogout = 
+1b70	6f 6e 4c 6f 67 6f 75 74  2c 0a 20 20 20 20 20 20   onLogout,.      
+1b80	20 20 20 20 20 20 20 20  20 20 6d 6f 64 69 66 69             modifi
+1b90	65 72 20 3d 20 4d 6f 64  69 66 69 65 72 2e 70 61   er = Modifier.pa
+1ba0	64 64 69 6e 67 28 68 6f  72 69 7a 6f 6e 74 61 6c   dding(horizontal
+1bb0	20 3d 20 64 2e 73 70 61  63 65 4c 29 2c 0a 20 20    = d.spaceL),.  
+1bc0	20 20 20 20 20 20 20 20  20 20 29 0a 20 20 20 20             ).    
+1bd0	20 20 20 20 7d 0a 20 20  20 20 20 20 20 20 69 74       }.        it
+1be0	65 6d 20 7b 0a 20 20 20  20 20 20 20 20 20 20 20   em {.           
+1bf0	20 50 72 6f 66 69 6c 65  46 6f 6f 74 65 72 28 0a    ProfileFooter(.
+1c00	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+1c10	74 65 78 74 20 3d 20 75  69 53 74 61 74 65 2e 73   text = uiState.s
+1c20	65 74 74 69 6e 67 73 4f  70 74 69 6f 6e 73 0a 20   ettingsOptions. 
+1c30	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+1c40	20 20 20 2e 66 69 72 73  74 4f 72 4e 75 6c 6c 20      .firstOrNull 
+1c50	7b 20 69 74 2e 69 73 41  62 6f 75 74 28 29 20 7d   { it.isAbout() }
+1c60	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+1c70	20 20 20 20 20 3f 2e 73  75 62 74 69 74 6c 65 0a        ?.subtitle.
+1c80	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+1c90	20 20 20 20 2e 6f 72 45  6d 70 74 79 28 29 2c 0a       .orEmpty(),.
+1ca0	20 20 20 20 20 20 20 20  20 20 20 20 29 0a 20 20               ).  
+1cb0	20 20 20 20 20 20 7d 0a  20 20 20 20 7d 0a 0a 7d         }.    }..}
+1cc0	0a 0a 40 43 6f 6d 70 6f  73 61 62 6c 65 0a 70 72   ..@Composable.pr
+1cd0	69 76 61 74 65 20 66 75  6e 20 50 72 6f 66 69 6c   ivate fun Profil
+1ce0	65 48 65 61 64 65 72 28  29 20 7b 0a 20 20 20 20   eHeader() {.    
+1cf0	76 61 6c 20 64 20 3d 20  4d 61 74 65 72 69 61 6c   val d = Material
+1d00	54 68 65 6d 65 2e 64 69  6d 65 6e 73 0a 0a 20 20   Theme.dimens..  
+1d10	20 20 53 75 72 66 61 63  65 28 0a 20 20 20 20 20     Surface(.     
+1d20	20 20 20 6d 6f 64 69 66  69 65 72 20 3d 20 4d 6f      modifier = Mo
+1d30	64 69 66 69 65 72 2e 66  69 6c 6c 4d 61 78 57 69   difier.fillMaxWi
+1d40	64 74 68 28 29 2c 0a 20  20 20 20 20 20 20 20 63   dth(),.        c
+1d50	6f 6c 6f 72 20 3d 20 4d  61 74 65 72 69 61 6c 54   olor = MaterialT
+1d60	68 65 6d 65 2e 63 6f 6c  6f 72 53 63 68 65 6d 65   heme.colorScheme
+1d70	2e 73 75 72 66 61 63 65  2e 63 6f 70 79 28 61 6c   .surface.copy(al
+1d80	70 68 61 20 3d 20 30 2e  39 36 66 29 2c 0a 20 20   pha = 0.96f),.  
+1d90	20 20 20 20 20 20 73 68  61 64 6f 77 45 6c 65 76         shadowElev
+1da0	61 74 69 6f 6e 20 3d 20  31 2e 64 70 2c 0a 20 20   ation = 1.dp,.  
+1db0	20 20 29 20 7b 0a 20 20  20 20 20 20 20 20 42 6f     ) {.        Bo
+1dc0	78 28 0a 20 20 20 20 20  20 20 20 20 20 20 20 6d   x(.            m
+1dd0	6f 64 69 66 69 65 72 20  3d 20 4d 6f 64 69 66 69   odifier = Modifi
+1de0	65 72 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   er.             
+1df0	20 20 20 2e 66 69 6c 6c  4d 61 78 57 69 64 74 68      .fillMaxWidth
+1e00	28 29 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   ().             
+1e10	20 20 20 2e 70 61 64 64  69 6e 67 28 68 6f 72 69      .padding(hori
+1e20	7a 6f 6e 74 61 6c 20 3d  20 64 2e 73 70 61 63 65   zontal = d.space
+1e30	4c 2c 20 76 65 72 74 69  63 61 6c 20 3d 20 64 2e   L, vertical = d.
+1e40	73 70 61 63 65 4d 29 2c  0a 20 20 20 20 20 20 20   spaceM),.       
+1e50	20 20 20 20 20 63 6f 6e  74 65 6e 74 41 6c 69 67        contentAlig
+1e60	6e 6d 65 6e 74 20 3d 20  41 6c 69 67 6e 6d 65 6e   nment = Alignmen
+1e70	74 2e 43 65 6e 74 65 72  2c 0a 20 20 20 20 20 20   t.Center,.      
+1e80	20 20 29 20 7b 0a 20 20  20 20 20 20 20 20 20 20     ) {.          
+1e90	20 20 54 65 78 74 28 0a  20 20 20 20 20 20 20 20     Text(.        
+1ea0	20 20 20 20 20 20 20 20  74 65 78 74 20 3d 20 22           text = "
+1eb0	ef bf bd ef bf bd ef bf  bd ef bf bd ef bf bd 20   ............... 
+1ec0	ef bf bd ef bf bd ef bf  bd ef bf bd ef bf bd ef   ................
+1ed0	bf bd 22 2c 0a 20 20 20  20 20 20 20 20 20 20 20   ..",.           
+1ee0	20 20 20 20 20 73 74 79  6c 65 20 3d 20 4d 61 74        style = Mat
+1ef0	65 72 69 61 6c 54 68 65  6d 65 2e 74 79 70 6f 67   erialTheme.typog
+1f00	72 61 70 68 79 2e 74 69  74 6c 65 4d 65 64 69 75   raphy.titleMediu
+1f10	6d 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   m,.             
+1f20	20 20 20 66 6f 6e 74 57  65 69 67 68 74 20 3d 20      fontWeight = 
+1f30	46 6f 6e 74 57 65 69 67  68 74 2e 42 6f 6c 64 2c   FontWeight.Bold,
+1f40	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+1f50	20 63 6f 6c 6f 72 20 3d  20 4d 61 74 65 72 69 61    color = Materia
+1f60	6c 54 68 65 6d 65 2e 63  6f 6c 6f 72 53 63 68 65   lTheme.colorSche
+1f70	6d 65 2e 6f 6e 53 75 72  66 61 63 65 2c 0a 20 20   me.onSurface,.  
+1f80	20 20 20 20 20 20 20 20  20 20 20 20 20 20 74 65                 te
+1f90	78 74 41 6c 69 67 6e 20  3d 20 54 65 78 74 41 6c   xtAlign = TextAl
+1fa0	69 67 6e 2e 43 65 6e 74  65 72 2c 0a 20 20 20 20   ign.Center,.    
+1fb0	20 20 20 20 20 20 20 20  29 0a 20 20 20 20 20 20           ).      
+1fc0	20 20 7d 0a 20 20 20 20  7d 0a 7d 0a 0a 40 43 6f     }.    }.}..@Co
+1fd0	6d 70 6f 73 61 62 6c 65  0a 70 72 69 76 61 74 65   mposable.private
+1fe0	20 66 75 6e 20 50 72 6f  66 69 6c 65 48 65 72 6f    fun ProfileHero
+1ff0	53 65 63 74 69 6f 6e 28  0a 20 20 20 20 75 73 65   Section(.    use
+2000	72 4e 61 6d 65 3a 20 53  74 72 69 6e 67 2c 0a 20   rName: String,. 
+2010	20 20 20 61 63 63 6f 75  6e 74 54 79 70 65 3a 20      accountType: 
+2020	53 74 72 69 6e 67 2c 0a  20 20 20 20 70 68 61 72   String,.    phar
+2030	6d 61 63 79 4e 61 6d 65  3a 20 53 74 72 69 6e 67   macyName: String
+2040	2c 0a 20 20 20 20 70 68  61 72 6d 61 63 79 41 64   ,.    pharmacyAd
+2050	64 72 65 73 73 3a 20 53  74 72 69 6e 67 2c 0a 20   dress: String,. 
+2060	20 20 20 69 73 50 75 62  6c 69 63 55 73 65 72 3a      isPublicUser:
+2070	20 42 6f 6f 6c 65 61 6e  2c 0a 20 20 20 20 6f 6e    Boolean,.    on
+2080	45 64 69 74 50 72 6f 66  69 6c 65 3a 20 28 29 20   EditProfile: () 
+2090	2d 3e 20 55 6e 69 74 2c  0a 20 20 20 20 6d 6f 64   -> Unit,.    mod
+20a0	69 66 69 65 72 3a 20 4d  6f 64 69 66 69 65 72 20   ifier: Modifier 
+20b0	3d 20 4d 6f 64 69 66 69  65 72 2c 0a 29 20 7b 0a   = Modifier,.) {.
+20c0	20 20 20 20 76 61 6c 20  64 20 3d 20 4d 61 74 65       val d = Mate
+20d0	72 69 61 6c 54 68 65 6d  65 2e 64 69 6d 65 6e 73   rialTheme.dimens
+20e0	0a 0a 20 20 20 20 43 6f  6c 75 6d 6e 28 0a 20 20   ..    Column(.  
+20f0	20 20 20 20 20 20 6d 6f  64 69 66 69 65 72 20 3d         modifier =
+2100	20 6d 6f 64 69 66 69 65  72 2e 66 69 6c 6c 4d 61    modifier.fillMa
+2110	78 57 69 64 74 68 28 29  2c 0a 20 20 20 20 20 20   xWidth(),.      
+2120	20 20 68 6f 72 69 7a 6f  6e 74 61 6c 41 6c 69 67     horizontalAlig
+2130	6e 6d 65 6e 74 20 3d 20  41 6c 69 67 6e 6d 65 6e   nment = Alignmen
+2140	74 2e 43 65 6e 74 65 72  48 6f 72 69 7a 6f 6e 74   t.CenterHorizont
+2150	61 6c 6c 79 2c 0a 20 20  20 20 20 20 20 20 76 65   ally,.        ve
+2160	72 74 69 63 61 6c 41 72  72 61 6e 67 65 6d 65 6e   rticalArrangemen
+2170	74 20 3d 20 41 72 72 61  6e 67 65 6d 65 6e 74 2e   t = Arrangement.
+2180	73 70 61 63 65 64 42 79  28 64 2e 73 70 61 63 65   spacedBy(d.space
+2190	53 29 2c 0a 20 20 20 20  29 20 7b 0a 20 20 20 20   S),.    ) {.    
+21a0	20 20 20 20 42 6f 78 20  7b 0a 20 20 20 20 20 20       Box {.      
+21b0	20 20 20 20 20 20 53 75  72 66 61 63 65 28 0a 20         Surface(. 
+21c0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 6d                  m
+21d0	6f 64 69 66 69 65 72 20  3d 20 4d 6f 64 69 66 69   odifier = Modifi
+21e0	65 72 2e 73 69 7a 65 28  31 31 32 2e 64 70 29 2c   er.size(112.dp),
+21f0	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+2200	20 73 68 61 70 65 20 3d  20 43 69 72 63 6c 65 53    shape = CircleS
+2210	68 61 70 65 2c 0a 20 20  20 20 20 20 20 20 20 20   hape,.          
+2220	20 20 20 20 20 20 63 6f  6c 6f 72 20 3d 20 4d 61         color = Ma
+2230	74 65 72 69 61 6c 54 68  65 6d 65 2e 63 6f 6c 6f   terialTheme.colo
+2240	72 53 63 68 65 6d 65 2e  73 75 72 66 61 63 65 2c   rScheme.surface,
+2250	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+2260	20 62 6f 72 64 65 72 20  3d 20 42 6f 72 64 65 72    border = Border
+2270	53 74 72 6f 6b 65 28 33  2e 64 70 2c 20 50 68 61   Stroke(3.dp, Pha
+2280	72 6d 61 42 6c 75 65 35  30 30 29 2c 0a 20 20 20   rmaBlue500),.   
+2290	20 20 20 20 20 20 20 20  20 20 20 20 20 73 68 61                sha
+22a0	64 6f 77 45 6c 65 76 61  74 69 6f 6e 20 3d 20 64   dowElevation = d
+22b0	2e 63 61 72 64 45 6c 65  76 61 74 69 6f 6e 2c 0a   .cardElevation,.
+22c0	20 20 20 20 20 20 20 20  20 20 20 20 29 20 7b 0a               ) {.
+22d0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+22e0	42 6f 78 28 63 6f 6e 74  65 6e 74 41 6c 69 67 6e   Box(contentAlign
+22f0	6d 65 6e 74 20 3d 20 41  6c 69 67 6e 6d 65 6e 74   ment = Alignment
+2300	2e 43 65 6e 74 65 72 29  20 7b 0a 20 20 20 20 20   .Center) {.     
+2310	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 49                  I
+2320	63 6f 6e 28 0a 20 20 20  20 20 20 20 20 20 20 20   con(.           
+2330	20 20 20 20 20 20 20 20  20 20 20 20 20 69 6d 61                ima
+2340	67 65 56 65 63 74 6f 72  20 3d 20 49 63 6f 6e 73   geVector = Icons
+2350	2e 44 65 66 61 75 6c 74  2e 50 65 72 73 6f 6e 2c   .Default.Person,
+2360	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+2370	20 20 20 20 20 20 20 20  20 63 6f 6e 74 65 6e 74            content
+2380	44 65 73 63 72 69 70 74  69 6f 6e 20 3d 20 73 74   Description = st
+2390	72 69 6e 67 52 65 73 6f  75 72 63 65 28 52 2e 73   ringResource(R.s
+23a0	74 72 69 6e 67 2e 70 72  6f 66 69 6c 65 5f 70 69   tring.profile_pi
+23b0	63 74 75 72 65 5f 64 65  73 63 72 69 70 74 69 6f   cture_descriptio
+23c0	6e 29 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   n),.            
+23d0	20 20 20 20 20 20 20 20  20 20 20 20 74 69 6e 74               tint
+23e0	20 3d 20 50 68 61 72 6d  61 42 6c 75 65 35 30 30    = PharmaBlue500
+23f0	2c 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ,.              
+2400	20 20 20 20 20 20 20 20  20 20 6d 6f 64 69 66 69             modifi
+2410	65 72 20 3d 20 4d 6f 64  69 66 69 65 72 2e 73 69   er = Modifier.si
+2420	7a 65 28 36 32 2e 64 70  29 2c 0a 20 20 20 20 20   ze(62.dp),.     
+2430	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 29                  )
+2440	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+2450	20 7d 0a 20 20 20 20 20  20 20 20 20 20 20 20 7d    }.            }
+2460	0a 20 20 20 20 20 20 20  20 20 20 20 20 53 75 72   .            Sur
+2470	66 61 63 65 28 0a 20 20  20 20 20 20 20 20 20 20   face(.          
+2480	20 20 20 20 20 20 6d 6f  64 69 66 69 65 72 20 3d         modifier =
+2490	20 4d 6f 64 69 66 69 65  72 0a 20 20 20 20 20 20    Modifier.      
+24a0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 2e 61                 .a
+24b0	6c 69 67 6e 28 41 6c 69  67 6e 6d 65 6e 74 2e 42   lign(Alignment.B
+24c0	6f 74 74 6f 6d 53 74 61  72 74 29 0a 20 20 20 20   ottomStart).    
+24d0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+24e0	2e 73 69 7a 65 28 33 34  2e 64 70 29 2c 0a 20 20   .size(34.dp),.  
+24f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 73 68                 sh
+2500	61 70 65 20 3d 20 43 69  72 63 6c 65 53 68 61 70   ape = CircleShap
+2510	65 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   e,.             
+2520	20 20 20 63 6f 6c 6f 72  20 3d 20 50 68 61 72 6d      color = Pharm
+2530	61 42 6c 75 65 35 30 30  2c 0a 20 20 20 20 20 20   aBlue500,.      
+2540	20 20 20 20 20 20 20 20  20 20 63 6f 6e 74 65 6e             conten
+2550	74 43 6f 6c 6f 72 20 3d  20 43 6f 6c 6f 72 2e 57   tColor = Color.W
+2560	68 69 74 65 2c 0a 20 20  20 20 20 20 20 20 20 20   hite,.          
+2570	20 20 20 20 20 20 62 6f  72 64 65 72 20 3d 20 42         border = B
+2580	6f 72 64 65 72 53 74 72  6f 6b 65 28 34 2e 64 70   orderStroke(4.dp
+2590	2c 20 43 6c 69 6e 69 63  61 6c 43 61 6e 76 61 73   , ClinicalCanvas
+25a0	29 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 29   ),.            )
+25b0	20 7b 0a 20 20 20 20 20  20 20 20 20 20 20 20 20    {.             
+25c0	20 20 20 42 6f 78 28 63  6f 6e 74 65 6e 74 41 6c      Box(contentAl
+25d0	69 67 6e 6d 65 6e 74 20  3d 20 41 6c 69 67 6e 6d   ignment = Alignm
+25e0	65 6e 74 2e 43 65 6e 74  65 72 29 20 7b 0a 20 20   ent.Center) {.  
+25f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+2600	20 20 49 63 6f 6e 28 0a  20 20 20 20 20 20 20 20     Icon(.        
+2610	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+2620	49 63 6f 6e 73 2e 4f 75  74 6c 69 6e 65 64 2e 45   Icons.Outlined.E
+2630	64 69 74 2c 0a 20 20 20  20 20 20 20 20 20 20 20   dit,.           
+2640	20 20 20 20 20 20 20 20  20 20 20 20 20 63 6f 6e                con
+2650	74 65 6e 74 44 65 73 63  72 69 70 74 69 6f 6e 20   tentDescription 
+2660	3d 20 6e 75 6c 6c 2c 0a  20 20 20 20 20 20 20 20   = null,.        
+2670	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+2680	6d 6f 64 69 66 69 65 72  20 3d 20 4d 6f 64 69 66   modifier = Modif
+2690	69 65 72 2e 73 69 7a 65  28 64 2e 69 63 6f 6e 53   ier.size(d.iconS
+26a0	29 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   ),.             
+26b0	20 20 20 20 20 20 20 29  0a 20 20 20 20 20 20 20          ).       
+26c0	20 20 20 20 20 20 20 20  20 7d 0a 20 20 20 20 20            }.     
+26d0	20 20 20 20 20 20 20 7d  0a 20 20 20 20 20 20 20          }.       
+26e0	20 7d 0a 0a 20 20 20 20  20 20 20 20 54 65 78 74    }..        Text
+26f0	28 0a 20 20 20 20 20 20  20 20 20 20 20 20 74 65   (.            te
+2700	78 74 20 3d 20 75 73 65  72 4e 61 6d 65 2c 0a 20   xt = userName,. 
+2710	20 20 20 20 20 20 20 20  20 20 20 73 74 79 6c 65              style
+2720	20 3d 20 4d 61 74 65 72  69 61 6c 54 68 65 6d 65    = MaterialTheme
+2730	2e 74 79 70 6f 67 72 61  70 68 79 2e 68 65 61 64   .typography.head
+2740	6c 69 6e 65 53 6d 61 6c  6c 2c 0a 20 20 20 20 20   lineSmall,.     
+2750	20 20 20 20 20 20 20 66  6f 6e 74 57 65 69 67 68          fontWeigh
+2760	74 20 3d 20 46 6f 6e 74  57 65 69 67 68 74 2e 42   t = FontWeight.B
+2770	6f 6c 64 2c 0a 20 20 20  20 20 20 20 20 20 20 20   old,.           
+2780	20 63 6f 6c 6f 72 20 3d  20 4d 61 74 65 72 69 61    color = Materia
+2790	6c 54 68 65 6d 65 2e 63  6f 6c 6f 72 53 63 68 65   lTheme.colorSche
+27a0	6d 65 2e 6f 6e 53 75 72  66 61 63 65 2c 0a 20 20   me.onSurface,.  
+27b0	20 20 20 20 20 20 20 20  20 20 74 65 78 74 41 6c             textAl
+27c0	69 67 6e 20 3d 20 54 65  78 74 41 6c 69 67 6e 2e   ign = TextAlign.
+27d0	43 65 6e 74 65 72 2c 0a  20 20 20 20 20 20 20 20   Center,.        
+27e0	29 0a 20 20 20 20 20 20  20 20 54 65 78 74 28 0a   ).        Text(.
+27f0	20 20 20 20 20 20 20 20  20 20 20 20 74 65 78 74               text
+2800	20 3d 20 69 66 20 28 69  73 50 75 62 6c 69 63 55    = if (isPublicU
+2810	73 65 72 29 20 61 63 63  6f 75 6e 74 54 79 70 65   ser) accountType
+2820	20 65 6c 73 65 20 70 68  61 72 6d 61 63 79 4e 61    else pharmacyNa
+2830	6d 65 2e 69 66 42 6c 61  6e 6b 20 7b 20 61 63 63   me.ifBlank { acc
+2840	6f 75 6e 74 54 79 70 65  20 7d 2c 0a 20 20 20 20   ountType },.    
+2850	20 20 20 20 20 20 20 20  73 74 79 6c 65 20 3d 20           style = 
+2860	4d 61 74 65 72 69 61 6c  54 68 65 6d 65 2e 74 79   MaterialTheme.ty
+2870	70 6f 67 72 61 70 68 79  2e 62 6f 64 79 4d 65 64   pography.bodyMed
+2880	69 75 6d 2c 0a 20 20 20  20 20 20 20 20 20 20 20   ium,.           
+2890	20 66 6f 6e 74 57 65 69  67 68 74 20 3d 20 46 6f    fontWeight = Fo
+28a0	6e 74 57 65 69 67 68 74  2e 53 65 6d 69 42 6f 6c   ntWeight.SemiBol
+28b0	64 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 63   d,.            c
+28c0	6f 6c 6f 72 20 3d 20 50  68 61 72 6d 61 42 6c 75   olor = PharmaBlu
+28d0	65 35 30 30 2c 0a 20 20  20 20 20 20 20 20 20 20   e500,.          
+28e0	20 20 74 65 78 74 41 6c  69 67 6e 20 3d 20 54 65     textAlign = Te
+28f0	78 74 41 6c 69 67 6e 2e  43 65 6e 74 65 72 2c 0a   xtAlign.Center,.
+2900	20 20 20 20 20 20 20 20  29 0a 20 20 20 20 20 20           ).      
+2910	20 20 69 66 20 28 21 69  73 50 75 62 6c 69 63 55     if (!isPublicU
+2920	73 65 72 20 26 26 20 70  68 61 72 6d 61 63 79 41   ser && pharmacyA
+2930	64 64 72 65 73 73 2e 69  73 4e 6f 74 42 6c 61 6e   ddress.isNotBlan
+2940	6b 28 29 29 20 7b 0a 20  20 20 20 20 20 20 20 20   k()) {.         
+2950	20 20 20 52 6f 77 28 0a  20 20 20 20 20 20 20 20      Row(.        
+2960	20 20 20 20 20 20 20 20  76 65 72 74 69 63 61 6c           vertical
+2970	41 6c 69 67 6e 6d 65 6e  74 20 3d 20 41 6c 69 67   Alignment = Alig
+2980	6e 6d 65 6e 74 2e 43 65  6e 74 65 72 56 65 72 74   nment.CenterVert
+2990	69 63 61 6c 6c 79 2c 0a  20 20 20 20 20 20 20 20   ically,.        
+29a0	20 20 20 20 20 20 20 20  68 6f 72 69 7a 6f 6e 74           horizont
+29b0	61 6c 41 72 72 61 6e 67  65 6d 65 6e 74 20 3d 20   alArrangement = 
+29c0	41 72 72 61 6e 67 65 6d  65 6e 74 2e 73 70 61 63   Arrangement.spac
+29d0	65 64 42 79 28 64 2e 73  70 61 63 65 58 53 29 2c   edBy(d.spaceXS),
+29e0	0a 20 20 20 20 20 20 20  20 20 20 20 20 29 20 7b   .            ) {
+29f0	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+2a00	20 49 63 6f 6e 28 0a 20  20 20 20 20 20 20 20 20    Icon(.         
+2a10	20 20 20 20 20 20 20 20  20 20 20 49 63 6f 6e 73              Icons
+2a20	2e 4f 75 74 6c 69 6e 65  64 2e 4c 6f 63 61 74 69   .Outlined.Locati
+2a30	6f 6e 4f 6e 2c 0a 20 20  20 20 20 20 20 20 20 20   onOn,.          
+2a40	20 20 20 20 20 20 20 20  20 20 63 6f 6e 74 65 6e             conten
+2a50	74 44 65 73 63 72 69 70  74 69 6f 6e 20 3d 20 6e   tDescription = n
+2a60	75 6c 6c 2c 0a 20 20 20  20 20 20 20 20 20 20 20   ull,.           
+2a70	20 20 20 20 20 20 20 20  20 74 69 6e 74 20 3d 20            tint = 
+2a80	4d 61 74 65 72 69 61 6c  54 68 65 6d 65 2e 63 6f   MaterialTheme.co
+2a90	6c 6f 72 53 63 68 65 6d  65 2e 6f 6e 53 75 72 66   lorScheme.onSurf
+2aa0	61 63 65 56 61 72 69 61  6e 74 2c 0a 20 20 20 20   aceVariant,.    
+2ab0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+2ac0	6d 6f 64 69 66 69 65 72  20 3d 20 4d 6f 64 69 66   modifier = Modif
+2ad0	69 65 72 2e 73 69 7a 65  28 64 2e 69 63 6f 6e 58   ier.size(d.iconX
+2ae0	53 29 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   S),.            
+2af0	20 20 20 20 29 0a 20 20  20 20 20 20 20 20 20 20       ).          
+2b00	20 20 20 20 20 20 54 65  78 74 28 0a 20 20 20 20         Text(.    
+2b10	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+2b20	74 65 78 74 20 3d 20 70  68 61 72 6d 61 63 79 41   text = pharmacyA
+2b30	64 64 72 65 73 73 2c 0a  20 20 20 20 20 20 20 20   ddress,.        
+2b40	20 20 20 20 20 20 20 20  20 20 20 20 73 74 79 6c               styl
+2b50	65 20 3d 20 4d 61 74 65  72 69 61 6c 54 68 65 6d   e = MaterialThem
+2b60	65 2e 74 79 70 6f 67 72  61 70 68 79 2e 6c 61 62   e.typography.lab
+2b70	65 6c 4d 65 64 69 75 6d  2c 0a 20 20 20 20 20 20   elMedium,.      
+2b80	20 20 20 20 20 20 20 20  20 20 20 20 20 20 63 6f                 co
+2b90	6c 6f 72 20 3d 20 4d 61  74 65 72 69 61 6c 54 68   lor = MaterialTh
+2ba0	65 6d 65 2e 63 6f 6c 6f  72 53 63 68 65 6d 65 2e   eme.colorScheme.
+2bb0	6f 6e 53 75 72 66 61 63  65 56 61 72 69 61 6e 74   onSurfaceVariant
+2bc0	2c 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ,.              
+2bd0	20 20 20 20 20 20 74 65  78 74 41 6c 69 67 6e 20         textAlign 
+2be0	3d 20 54 65 78 74 41 6c  69 67 6e 2e 43 65 6e 74   = TextAlign.Cent
+2bf0	65 72 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   er,.            
+2c00	20 20 20 20 20 20 20 20  6d 61 78 4c 69 6e 65 73           maxLines
+2c10	20 3d 20 31 2c 0a 20 20  20 20 20 20 20 20 20 20    = 1,.          
+2c20	20 20 20 20 20 20 20 20  20 20 6f 76 65 72 66 6c             overfl
+2c30	6f 77 20 3d 20 54 65 78  74 4f 76 65 72 66 6c 6f   ow = TextOverflo
+2c40	77 2e 45 6c 6c 69 70 73  69 73 2c 0a 20 20 20 20   w.Ellipsis,.    
+2c50	20 20 20 20 20 20 20 20  20 20 20 20 29 0a 20 20               ).  
+2c60	20 20 20 20 20 20 20 20  20 20 7d 0a 20 20 20 20             }.    
+2c70	20 20 20 20 7d 0a 20 20  20 20 20 20 20 20 53 74       }.        St
+2c80	69 74 63 68 42 75 74 74  6f 6e 28 0a 20 20 20 20   itchButton(.    
+2c90	20 20 20 20 20 20 20 20  6f 6e 43 6c 69 63 6b 20           onClick 
+2ca0	3d 20 6f 6e 45 64 69 74  50 72 6f 66 69 6c 65 2c   = onEditProfile,
+2cb0	0a 20 20 20 20 20 20 20  20 20 20 20 20 6d 6f 64   .            mod
+2cc0	69 66 69 65 72 20 3d 20  4d 6f 64 69 66 69 65 72   ifier = Modifier
+2cd0	2e 66 69 6c 6c 4d 61 78  57 69 64 74 68 28 30 2e   .fillMaxWidth(0.
+2ce0	37 32 66 29 2c 0a 20 20  20 20 20 20 20 20 20 20   72f),.          
+2cf0	20 20 63 6f 6e 74 65 6e  74 50 61 64 64 69 6e 67     contentPadding
+2d00	20 3d 20 50 61 64 64 69  6e 67 56 61 6c 75 65 73    = PaddingValues
+2d10	28 68 6f 72 69 7a 6f 6e  74 61 6c 20 3d 20 64 2e   (horizontal = d.
+2d20	73 70 61 63 65 4c 2c 20  76 65 72 74 69 63 61 6c   spaceL, vertical
+2d30	20 3d 20 64 2e 73 70 61  63 65 53 29 2c 0a 20 20    = d.spaceS),.  
+2d40	20 20 20 20 20 20 29 20  7b 0a 20 20 20 20 20 20         ) {.      
+2d50	20 20 20 20 20 20 54 65  78 74 28 74 65 78 74 20         Text(text 
+2d60	3d 20 73 74 72 69 6e 67  52 65 73 6f 75 72 63 65   = stringResource
+2d70	28 52 2e 73 74 72 69 6e  67 2e 65 64 69 74 5f 70   (R.string.edit_p
+2d80	72 6f 66 69 6c 65 5f 62  75 74 74 6f 6e 29 2c 20   rofile_button), 
+2d90	66 6f 6e 74 57 65 69 67  68 74 20 3d 20 46 6f 6e   fontWeight = Fon
+2da0	74 57 65 69 67 68 74 2e  42 6f 6c 64 29 0a 20 20   tWeight.Bold).  
+2db0	20 20 20 20 20 20 7d 0a  20 20 20 20 7d 0a 7d 0a         }.    }.}.
+2dc0	0a 40 43 6f 6d 70 6f 73  61 62 6c 65 0a 70 72 69   .@Composable.pri
+2dd0	76 61 74 65 20 66 75 6e  20 50 72 6f 66 69 6c 65   vate fun Profile
+2de0	53 75 6d 6d 61 72 79 43  61 72 64 28 0a 20 20 20   SummaryCard(.   
+2df0	20 75 69 53 74 61 74 65  3a 20 50 72 6f 66 69 6c    uiState: Profil
+2e00	65 55 69 53 74 61 74 65  2c 0a 20 20 20 20 6d 6f   eUiState,.    mo
+2e10	64 69 66 69 65 72 3a 20  4d 6f 64 69 66 69 65 72   difier: Modifier
+2e20	20 3d 20 4d 6f 64 69 66  69 65 72 2c 0a 29 20 7b    = Modifier,.) {
+2e30	0a 20 20 20 20 76 61 6c  20 64 20 3d 20 4d 61 74   .    val d = Mat
+2e40	65 72 69 61 6c 54 68 65  6d 65 2e 64 69 6d 65 6e   erialTheme.dimen
+2e50	73 0a 20 20 20 20 76 61  6c 20 69 73 50 75 62 6c   s.    val isPubl
+2e60	69 63 55 73 65 72 20 3d  20 75 69 53 74 61 74 65   icUser = uiState
+2e70	2e 61 63 63 6f 75 6e 74  54 79 70 65 45 6e 75 6d   .accountTypeEnum
+2e80	20 3d 3d 20 63 6f 6d 2e  70 68 61 72 6d 61 6c 69    == com.pharmali
+2e90	6e 6b 2e 64 6f 6d 61 69  6e 2e 6d 6f 64 65 6c 2e   nk.domain.model.
+2ea0	41 63 63 6f 75 6e 74 54  79 70 65 2e 50 55 42 4c   AccountType.PUBL
+2eb0	49 43 5f 55 53 45 52 0a  20 20 20 20 76 61 6c 20   IC_USER.    val 
+2ec0	6f 72 67 61 6e 69 7a 61  74 69 6f 6e 4c 61 62 65   organizationLabe
+2ed0	6c 20 3d 20 77 68 65 6e  20 7b 0a 20 20 20 20 20   l = when {.     
+2ee0	20 20 20 69 73 50 75 62  6c 69 63 55 73 65 72 20      isPublicUser 
+2ef0	2d 3e 20 22 ef bf bd ef  bf bd ef bf bd ef bf bd   -> "............
+2f00	ef bf bd ef bf bd ef bf  bd 22 0a 20 20 20 20 20   .........".     
+2f10	20 20 20 75 69 53 74 61  74 65 2e 61 63 63 6f 75      uiState.accou
+2f20	6e 74 54 79 70 65 2e 63  6f 6e 74 61 69 6e 73 28   ntType.contains(
+2f30	22 50 48 41 52 4d 41 43  59 22 2c 20 69 67 6e 6f   "PHARMACY", igno
+2f40	72 65 43 61 73 65 20 3d  20 74 72 75 65 29 20 2d   reCase = true) -
+2f50	3e 20 22 ef bf bd ef bf  bd ef bf bd ef bf bd ef   > ".............
+2f60	bf bd ef bf bd ef bf bd  ef bf bd 22 0a 20 20 20   ...........".   
+2f70	20 20 20 20 20 75 69 53  74 61 74 65 2e 61 63 63        uiState.acc
+2f80	6f 75 6e 74 54 79 70 65  2e 63 6f 6e 74 61 69 6e   ountType.contain
+2f90	73 28 22 57 41 52 45 48  4f 55 53 45 22 2c 20 69   s("WAREHOUSE", i
+2fa0	67 6e 6f 72 65 43 61 73  65 20 3d 20 74 72 75 65   gnoreCase = true
+2fb0	29 20 2d 3e 20 22 ef bf  bd ef bf bd ef bf bd ef   ) -> "..........
+2fc0	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd 22 0a   ..............".
+2fd0	20 20 20 20 20 20 20 20  65 6c 73 65 20 2d 3e 20           else -> 
+2fe0	22 ef bf bd ef bf bd ef  bf bd ef bf bd ef bf bd   "...............
+2ff0	22 0a 20 20 20 20 7d 0a  0a 20 20 20 20 53 75 72   ".    }..    Sur
+3000	66 61 63 65 28 0a 20 20  20 20 20 20 20 20 6d 6f   face(.        mo
+3010	64 69 66 69 65 72 20 3d  20 6d 6f 64 69 66 69 65   difier = modifie
+3020	72 2e 66 69 6c 6c 4d 61  78 57 69 64 74 68 28 29   r.fillMaxWidth()
+3030	2c 0a 20 20 20 20 20 20  20 20 73 68 61 70 65 20   ,.        shape 
+3040	3d 20 52 6f 75 6e 64 65  64 43 6f 72 6e 65 72 53   = RoundedCornerS
+3050	68 61 70 65 28 64 2e 72  61 64 69 75 73 58 58 4c   hape(d.radiusXXL
+3060	29 2c 0a 20 20 20 20 20  20 20 20 63 6f 6c 6f 72   ),.        color
+3070	20 3d 20 43 6f 6c 6f 72  2e 54 72 61 6e 73 70 61    = Color.Transpa
+3080	72 65 6e 74 2c 0a 20 20  20 20 20 20 20 20 73 68   rent,.        sh
+3090	61 64 6f 77 45 6c 65 76  61 74 69 6f 6e 20 3d 20   adowElevation = 
+30a0	64 2e 63 61 72 64 45 6c  65 76 61 74 69 6f 6e 2c   d.cardElevation,
+30b0	0a 20 20 20 20 29 20 7b  0a 20 20 20 20 20 20 20   .    ) {.       
+30c0	20 42 6f 78 28 0a 20 20  20 20 20 20 20 20 20 20    Box(.          
+30d0	20 20 6d 6f 64 69 66 69  65 72 20 3d 20 4d 6f 64     modifier = Mod
+30e0	69 66 69 65 72 0a 20 20  20 20 20 20 20 20 20 20   ifier.          
+30f0	20 20 20 20 20 20 2e 66  69 6c 6c 4d 61 78 57 69         .fillMaxWi
+3100	64 74 68 28 29 0a 20 20  20 20 20 20 20 20 20 20   dth().          
+3110	20 20 20 20 20 20 2e 62  61 63 6b 67 72 6f 75 6e         .backgroun
+3120	64 28 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   d(.             
+3130	20 20 20 20 20 20 20 42  72 75 73 68 2e 6c 69 6e          Brush.lin
+3140	65 61 72 47 72 61 64 69  65 6e 74 28 0a 20 20 20   earGradient(.   
+3150	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3160	20 20 20 20 20 63 6f 6c  6f 72 73 20 3d 20 6c 69        colors = li
+3170	73 74 4f 66 28 50 68 61  72 6d 61 42 6c 75 65 35   stOf(PharmaBlue5
+3180	30 30 2c 20 50 68 61 72  6d 61 42 6c 75 65 37 30   00, PharmaBlue70
+3190	30 29 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   0),.            
+31a0	20 20 20 20 20 20 20 20  29 2c 0a 20 20 20 20 20           ),.     
+31b0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 52                  R
+31c0	6f 75 6e 64 65 64 43 6f  72 6e 65 72 53 68 61 70   oundedCornerShap
+31d0	65 28 64 2e 72 61 64 69  75 73 58 58 4c 29 2c 0a   e(d.radiusXXL),.
+31e0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+31f0	29 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ).              
+3200	20 20 2e 70 61 64 64 69  6e 67 28 64 2e 73 70 61     .padding(d.spa
+3210	63 65 4c 29 2c 0a 20 20  20 20 20 20 20 20 29 20   ceL),.        ) 
+3220	7b 0a 20 20 20 20 20 20  20 20 20 20 20 20 43 6f   {.            Co
+3230	6c 75 6d 6e 28 0a 20 20  20 20 20 20 20 20 20 20   lumn(.          
+3240	20 20 20 20 20 20 76 65  72 74 69 63 61 6c 41 72         verticalAr
+3250	72 61 6e 67 65 6d 65 6e  74 20 3d 20 41 72 72 61   rangement = Arra
+3260	6e 67 65 6d 65 6e 74 2e  73 70 61 63 65 64 42 79   ngement.spacedBy
+3270	28 64 2e 73 70 61 63 65  4c 29 2c 0a 20 20 20 20   (d.spaceL),.    
+3280	20 20 20 20 20 20 20 20  20 20 20 20 68 6f 72 69               hori
+3290	7a 6f 6e 74 61 6c 41 6c  69 67 6e 6d 65 6e 74 20   zontalAlignment 
+32a0	3d 20 41 6c 69 67 6e 6d  65 6e 74 2e 53 74 61 72   = Alignment.Star
+32b0	74 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 29   t,.            )
+32c0	20 7b 0a 20 20 20 20 20  20 20 20 20 20 20 20 20    {.             
+32d0	20 20 20 52 6f 77 28 0a  20 20 20 20 20 20 20 20      Row(.        
+32e0	20 20 20 20 20 20 20 20  20 20 20 20 6d 6f 64 69               modi
+32f0	66 69 65 72 20 3d 20 4d  6f 64 69 66 69 65 72 2e   fier = Modifier.
+3300	66 69 6c 6c 4d 61 78 57  69 64 74 68 28 29 2c 0a   fillMaxWidth(),.
+3310	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3320	20 20 20 20 76 65 72 74  69 63 61 6c 41 6c 69 67       verticalAlig
+3330	6e 6d 65 6e 74 20 3d 20  41 6c 69 67 6e 6d 65 6e   nment = Alignmen
+3340	74 2e 54 6f 70 2c 0a 20  20 20 20 20 20 20 20 20   t.Top,.         
+3350	20 20 20 20 20 20 20 20  20 20 20 68 6f 72 69 7a              horiz
+3360	6f 6e 74 61 6c 41 72 72  61 6e 67 65 6d 65 6e 74   ontalArrangement
+3370	20 3d 20 41 72 72 61 6e  67 65 6d 65 6e 74 2e 53    = Arrangement.S
+3380	70 61 63 65 42 65 74 77  65 65 6e 2c 0a 20 20 20   paceBetween,.   
+3390	20 20 20 20 20 20 20 20  20 20 20 20 20 29 20 7b                ) {
+33a0	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+33b0	20 20 20 20 20 43 6f 6c  75 6d 6e 28 68 6f 72 69        Column(hori
+33c0	7a 6f 6e 74 61 6c 41 6c  69 67 6e 6d 65 6e 74 20   zontalAlignment 
+33d0	3d 20 41 6c 69 67 6e 6d  65 6e 74 2e 53 74 61 72   = Alignment.Star
+33e0	74 29 20 7b 0a 20 20 20  20 20 20 20 20 20 20 20   t) {.           
+33f0	20 20 20 20 20 20 20 20  20 20 20 20 20 54 65 78                Tex
+3400	74 28 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   t(.             
+3410	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 22                  "
+3420	ef bf bd ef bf bd ef bf  bd ef bf bd 20 ef bf bd   ............ ...
+3430	ef bf bd ef bf bd ef bf  bd ef bf bd ef bf bd 22   ..............."
+3440	2c 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ,.              
+3450	20 20 20 20 20 20 20 20  20 20 20 20 20 20 73 74                 st
+3460	79 6c 65 20 3d 20 4d 61  74 65 72 69 61 6c 54 68   yle = MaterialTh
+3470	65 6d 65 2e 74 79 70 6f  67 72 61 70 68 79 2e 6c   eme.typography.l
+3480	61 62 65 6c 4d 65 64 69  75 6d 2c 0a 20 20 20 20   abelMedium,.    
+3490	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+34a0	20 20 20 20 20 20 20 20  63 6f 6c 6f 72 20 3d 20           color = 
+34b0	43 6f 6c 6f 72 2e 57 68  69 74 65 2e 63 6f 70 79   Color.White.copy
+34c0	28 61 6c 70 68 61 20 3d  20 30 2e 38 32 66 29 2c   (alpha = 0.82f),
+34d0	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+34e0	20 20 20 20 20 20 20 20  20 29 0a 20 20 20 20 20            ).     
+34f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3500	20 20 20 54 65 78 74 28  0a 20 20 20 20 20 20 20      Text(.       
+3510	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3520	20 20 20 20 20 74 65 78  74 20 3d 20 75 69 53 74        text = uiSt
+3530	61 74 65 2e 61 63 63 6f  75 6e 74 54 79 70 65 2c   ate.accountType,
+3540	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+3550	20 20 20 20 20 20 20 20  20 20 20 20 20 73 74 79                sty
+3560	6c 65 20 3d 20 4d 61 74  65 72 69 61 6c 54 68 65   le = MaterialThe
+3570	6d 65 2e 74 79 70 6f 67  72 61 70 68 79 2e 68 65   me.typography.he
+3580	61 64 6c 69 6e 65 53 6d  61 6c 6c 2c 0a 20 20 20   adlineSmall,.   
+3590	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+35a0	20 20 20 20 20 20 20 20  20 66 6f 6e 74 57 65 69            fontWei
+35b0	67 68 74 20 3d 20 46 6f  6e 74 57 65 69 67 68 74   ght = FontWeight
+35c0	2e 42 6f 6c 64 2c 0a 20  20 20 20 20 20 20 20 20   .Bold,.         
+35d0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+35e0	20 20 20 63 6f 6c 6f 72  20 3d 20 43 6f 6c 6f 72      color = Color
+35f0	2e 57 68 69 74 65 2c 0a  20 20 20 20 20 20 20 20   .White,.        
+3600	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3610	29 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ).              
+3620	20 20 20 20 20 20 7d 0a  20 20 20 20 20 20 20 20         }.        
+3630	20 20 20 20 20 20 20 20  20 20 20 20 53 75 72 66               Surf
+3640	61 63 65 28 0a 20 20 20  20 20 20 20 20 20 20 20   ace(.           
+3650	20 20 20 20 20 20 20 20  20 20 20 20 20 73 68 61                sha
+3660	70 65 20 3d 20 43 69 72  63 6c 65 53 68 61 70 65   pe = CircleShape
+3670	2c 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ,.              
+3680	20 20 20 20 20 20 20 20  20 20 63 6f 6c 6f 72 20             color 
+3690	3d 20 43 6f 6c 6f 72 2e  57 68 69 74 65 2e 63 6f   = Color.White.co
+36a0	70 79 28 61 6c 70 68 61  20 3d 20 30 2e 31 38 66   py(alpha = 0.18f
+36b0	29 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   ),.             
+36c0	20 20 20 20 20 20 20 20  20 20 20 63 6f 6e 74 65              conte
+36d0	6e 74 43 6f 6c 6f 72 20  3d 20 43 6f 6c 6f 72 2e   ntColor = Color.
+36e0	57 68 69 74 65 2c 0a 20  20 20 20 20 20 20 20 20   White,.         
+36f0	20 20 20 20 20 20 20 20  20 20 20 29 20 7b 0a 20              ) {. 
+3700	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3710	20 20 20 20 20 20 20 49  63 6f 6e 28 0a 20 20 20          Icon(.   
+3720	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3730	20 20 20 20 20 20 20 20  20 49 63 6f 6e 73 2e 4f            Icons.O
+3740	75 74 6c 69 6e 65 64 2e  53 74 6f 72 65 2c 0a 20   utlined.Store,. 
+3750	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3760	20 20 20 20 20 20 20 20  20 20 20 63 6f 6e 74 65              conte
+3770	6e 74 44 65 73 63 72 69  70 74 69 6f 6e 20 3d 20   ntDescription = 
+3780	6e 75 6c 6c 2c 0a 20 20  20 20 20 20 20 20 20 20   null,.          
+3790	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+37a0	20 20 6d 6f 64 69 66 69  65 72 20 3d 20 4d 6f 64     modifier = Mod
+37b0	69 66 69 65 72 0a 20 20  20 20 20 20 20 20 20 20   ifier.          
+37c0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+37d0	20 20 20 20 20 20 2e 70  61 64 64 69 6e 67 28 64         .padding(d
+37e0	2e 73 70 61 63 65 53 29  0a 20 20 20 20 20 20 20   .spaceS).       
+37f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3800	20 20 20 20 20 20 20 20  20 2e 73 69 7a 65 28 64            .size(d
+3810	2e 69 63 6f 6e 4d 29 2c  0a 20 20 20 20 20 20 20   .iconM),.       
+3820	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3830	20 29 0a 20 20 20 20 20  20 20 20 20 20 20 20 20    ).             
+3840	20 20 20 20 20 20 20 7d  0a 20 20 20 20 20 20 20          }.       
+3850	20 20 20 20 20 20 20 20  20 7d 0a 20 20 20 20 20            }.     
+3860	20 20 20 20 20 20 20 20  20 20 20 52 6f 77 28 0a              Row(.
+3870	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3880	20 20 20 20 6d 6f 64 69  66 69 65 72 20 3d 20 4d       modifier = M
+3890	6f 64 69 66 69 65 72 2e  66 69 6c 6c 4d 61 78 57   odifier.fillMaxW
+38a0	69 64 74 68 28 29 2c 0a  20 20 20 20 20 20 20 20   idth(),.        
+38b0	20 20 20 20 20 20 20 20  20 20 20 20 68 6f 72 69               hori
+38c0	7a 6f 6e 74 61 6c 41 72  72 61 6e 67 65 6d 65 6e   zontalArrangemen
+38d0	74 20 3d 20 41 72 72 61  6e 67 65 6d 65 6e 74 2e   t = Arrangement.
+38e0	73 70 61 63 65 64 42 79  28 64 2e 73 70 61 63 65   spacedBy(d.space
+38f0	4d 29 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   M),.            
+3900	20 20 20 20 29 20 7b 0a  20 20 20 20 20 20 20 20       ) {.        
+3910	20 20 20 20 20 20 20 20  20 20 20 20 53 75 6d 6d               Summ
+3920	61 72 79 49 6e 66 6f 28  0a 20 20 20 20 20 20 20   aryInfo(.       
+3930	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3940	20 6c 61 62 65 6c 20 3d  20 6f 72 67 61 6e 69 7a    label = organiz
+3950	61 74 69 6f 6e 4c 61 62  65 6c 2c 0a 20 20 20 20   ationLabel,.    
+3960	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3970	20 20 20 20 76 61 6c 75  65 20 3d 20 69 66 20 28       value = if (
+3980	69 73 50 75 62 6c 69 63  55 73 65 72 29 20 75 69   isPublicUser) ui
+3990	53 74 61 74 65 2e 70 68  61 72 6d 61 63 79 41 64   State.pharmacyAd
+39a0	64 72 65 73 73 20 65 6c  73 65 20 75 69 53 74 61   dress else uiSta
+39b0	74 65 2e 70 68 61 72 6d  61 63 79 4e 61 6d 65 2c   te.pharmacyName,
+39c0	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+39d0	20 20 20 20 20 20 20 20  20 6d 6f 64 69 66 69 65            modifie
+39e0	72 20 3d 20 4d 6f 64 69  66 69 65 72 2e 77 65 69   r = Modifier.wei
+39f0	67 68 74 28 31 66 29 2c  0a 20 20 20 20 20 20 20   ght(1f),.       
+3a00	20 20 20 20 20 20 20 20  20 20 20 20 20 29 0a 20                ). 
+3a10	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3a20	20 20 20 53 75 6d 6d 61  72 79 49 6e 66 6f 28 0a      SummaryInfo(.
+3a30	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3a40	20 20 20 20 20 20 20 20  6c 61 62 65 6c 20 3d 20           label = 
+3a50	22 ef bf bd ef bf bd ef  bf bd ef bf bd ef bf bd   "...............
+3a60	ef bf bd 22 2c 0a 20 20  20 20 20 20 20 20 20 20   ...",.          
+3a70	20 20 20 20 20 20 20 20  20 20 20 20 20 20 76 61                 va
+3a80	6c 75 65 20 3d 20 75 69  53 74 61 74 65 2e 75 73   lue = uiState.us
+3a90	65 72 50 68 6f 6e 65 2c  0a 20 20 20 20 20 20 20   erPhone,.       
+3aa0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+3ab0	20 6d 6f 64 69 66 69 65  72 20 3d 20 4d 6f 64 69    modifier = Modi
+3ac0	66 69 65 72 2e 77 65 69  67 68 74 28 31 66 29 2c   fier.weight(1f),
+3ad0	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+3ae0	20 20 20 20 20 29 0a 20  20 20 20 20 20 20 20 20        ).         
+3af0	20 20 20 20 20 20 20 7d  0a 20 20 20 20 20 20 20          }.       
+3b00	20 20 20 20 20 20 20 20  20 53 75 6d 6d 61 72 79            Summary
+3b10	49 6e 66 6f 28 0a 20 20  20 20 20 20 20 20 20 20   Info(.          
+3b20	20 20 20 20 20 20 20 20  20 20 6c 61 62 65 6c 20             label 
+3b30	3d 20 22 ef bf bd ef bf  bd ef bf bd ef bf bd ef   = ".............
+3b40	bf bd ef bf bd 20 ef bf  bd ef bf bd ef bf bd ef   ..... ..........
+3b50	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd ef bf   ................
+3b60	bd ef bf bd 22 2c 0a 20  20 20 20 20 20 20 20 20   ....",.         
+3b70	20 20 20 20 20 20 20 20  20 20 20 76 61 6c 75 65              value
+3b80	20 3d 20 75 69 53 74 61  74 65 2e 75 73 65 72 45    = uiState.userE
+3b90	6d 61 69 6c 2c 0a 20 20  20 20 20 20 20 20 20 20   mail,.          
+3ba0	20 20 20 20 20 20 20 20  20 20 6d 6f 64 69 66 69             modifi
+3bb0	65 72 20 3d 20 4d 6f 64  69 66 69 65 72 2e 66 69   er = Modifier.fi
+3bc0	6c 6c 4d 61 78 57 69 64  74 68 28 29 2c 0a 20 20   llMaxWidth(),.  
+3bd0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 29 0a                 ).
+3be0	20 20 20 20 20 20 20 20  20 20 20 20 7d 0a 20 20               }.  
+3bf0	20 20 20 20 20 20 7d 0a  20 20 20 20 7d 0a 7d 0a         }.    }.}.
+3c00	0a 40 43 6f 6d 70 6f 73  61 62 6c 65 0a 70 72 69   .@Composable.pri
+3c10	76 61 74 65 20 66 75 6e  20 53 75 6d 6d 61 72 79   vate fun Summary
+3c20	49 6e 66 6f 28 6c 61 62  65 6c 3a 20 53 74 72 69   Info(label: Stri
+3c30	6e 67 2c 20 76 61 6c 75  65 3a 20 53 74 72 69 6e   ng, value: Strin
+3c40	67 2c 20 6d 6f 64 69 66  69 65 72 3a 20 4d 6f 64   g, modifier: Mod
+3c50	69 66 69 65 72 20 3d 20  4d 6f 64 69 66 69 65 72   ifier = Modifier
+3c60	29 20 7b 0a 20 20 20 20  43 6f 6c 75 6d 6e 28 6d   ) {.    Column(m
+3c70	6f 64 69 66 69 65 72 20  3d 20 6d 6f 64 69 66 69   odifier = modifi
+3c80	65 72 2c 20 68 6f 72 69  7a 6f 6e 74 61 6c 41 6c   er, horizontalAl
+3c90	69 67 6e 6d 65 6e 74 20  3d 20 41 6c 69 67 6e 6d   ignment = Alignm
+3ca0	65 6e 74 2e 53 74 61 72  74 29 20 7b 0a 20 20 20   ent.Start) {.   
+3cb0	20 20 20 20 20 54 65 78  74 28 0a 20 20 20 20 20        Text(.     
+3cc0	20 20 20 20 20 20 20 6c  61 62 65 6c 2c 0a 20 20          label,.  
+3cd0	20 20 20 20 20 20 20 20  20 20 73 74 79 6c 65 20             style 
+3ce0	3d 20 4d 61 74 65 72 69  61 6c 54 68 65 6d 65 2e   = MaterialTheme.
+3cf0	74 79 70 6f 67 72 61 70  68 79 2e 6c 61 62 65 6c   typography.label
+3d00	53 6d 61 6c 6c 2c 0a 20  20 20 20 20 20 20 20 20   Small,.         
+3d10	20 20 20 63 6f 6c 6f 72  20 3d 20 43 6f 6c 6f 72      color = Color
+3d20	2e 57 68 69 74 65 2e 63  6f 70 79 28 61 6c 70 68   .White.copy(alph
+3d30	61 20 3d 20 30 2e 37 32  66 29 2c 0a 20 20 20 20   a = 0.72f),.    
+3d40	20 20 20 20 20 20 20 20  6d 61 78 4c 69 6e 65 73           maxLines
+3d50	20 3d 20 31 2c 0a 20 20  20 20 20 20 20 20 29 0a    = 1,.        ).
+3d60	20 20 20 20 20 20 20 20  54 65 78 74 28 0a 20 20           Text(.  
+3d70	20 20 20 20 20 20 20 20  20 20 76 61 6c 75 65 2e             value.
+3d80	69 66 42 6c 61 6e 6b 20  7b 20 22 2d 22 20 7d 2c   ifBlank { "-" },
+3d90	0a 20 20 20 20 20 20 20  20 20 20 20 20 73 74 79   .            sty
+3da0	6c 65 20 3d 20 4d 61 74  65 72 69 61 6c 54 68 65   le = MaterialThe
+3db0	6d 65 2e 74 79 70 6f 67  72 61 70 68 79 2e 74 69   me.typography.ti
+3dc0	74 6c 65 53 6d 61 6c 6c  2c 0a 20 20 20 20 20 20   tleSmall,.      
+3dd0	20 20 20 20 20 20 66 6f  6e 74 57 65 69 67 68 74         fontWeight
+3de0	20 3d 20 46 6f 6e 74 57  65 69 67 68 74 2e 42 6f    = FontWeight.Bo
+3df0	6c 64 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   ld,.            
+3e00	63 6f 6c 6f 72 20 3d 20  43 6f 6c 6f 72 2e 57 68   color = Color.Wh
+3e10	69 74 65 2c 0a 20 20 20  20 20 20 20 20 20 20 20   ite,.           
+3e20	20 6d 61 78 4c 69 6e 65  73 20 3d 20 31 2c 0a 20    maxLines = 1,. 
+3e30	20 20 20 20 20 20 20 20  20 20 20 6f 76 65 72 66              overf
+3e40	6c 6f 77 20 3d 20 54 65  78 74 4f 76 65 72 66 6c   low = TextOverfl
+3e50	6f 77 2e 45 6c 6c 69 70  73 69 73 2c 0a 20 20 20   ow.Ellipsis,.   
+3e60	20 20 20 20 20 29 0a 20  20 20 20 7d 0a 7d 0a 0a        ).    }.}..
+3e70	40 43 6f 6d 70 6f 73 61  62 6c 65 0a 70 72 69 76   @Composable.priv
+3e80	61 74 65 20 66 75 6e 20  50 72 6f 66 69 6c 65 53   ate fun ProfileS
+3e90	65 74 74 69 6e 67 73 53  65 63 74 69 6f 6e 28 0a   ettingsSection(.
+3ea0	20 20 20 20 67 72 6f 75  70 3a 20 53 65 74 74 69       group: Setti
+3eb0	6e 67 73 47 72 6f 75 70  2c 0a 20 20 20 20 6c 61   ngsGroup,.    la
+3ec0	6e 67 75 61 67 65 50 72  65 76 69 65 77 3a 20 53   nguagePreview: S
+3ed0	74 72 69 6e 67 2c 0a 20  20 20 20 6f 6e 4c 61 6e   tring,.    onLan
+3ee0	67 75 61 67 65 43 6c 69  63 6b 3a 20 28 29 20 2d   guageClick: () -
+3ef0	3e 20 55 6e 69 74 2c 0a  20 20 20 20 6f 6e 53 65   > Unit,.    onSe
+3f00	63 75 72 69 74 79 43 6c  69 63 6b 3a 20 28 29 20   curityClick: () 
+3f10	2d 3e 20 55 6e 69 74 2c  0a 20 20 20 20 6f 6e 48   -> Unit,.    onH
+3f20	65 6c 70 53 75 70 70 6f  72 74 43 6c 69 63 6b 3a   elpSupportClick:
+3f30	20 28 29 20 2d 3e 20 55  6e 69 74 2c 0a 20 20 20    () -> Unit,.   
+3f40	20 6f 6e 41 62 6f 75 74  43 6c 69 63 6b 3a 20 28    onAboutClick: (
+3f50	29 20 2d 3e 20 55 6e 69  74 2c 0a 20 20 20 20 6f   ) -> Unit,.    o
+3f60	6e 43 6f 6e 74 61 63 74  43 6c 69 63 6b 3a 20 28   nContactClick: (
+3f70	29 20 2d 3e 20 55 6e 69  74 2c 0a 20 20 20 20 6e   ) -> Unit,.    n
+3f80	6f 74 69 66 69 63 61 74  69 6f 6e 73 45 6e 61 62   otificationsEnab
+3f90	6c 65 64 3a 20 42 6f 6f  6c 65 61 6e 2c 0a 20 20   led: Boolean,.  
+3fa0	20 20 6e 6f 74 69 66 69  63 61 74 69 6f 6e 73 45     notificationsE
+3fb0	72 72 6f 72 3a 20 53 74  72 69 6e 67 3f 2c 0a 20   rror: String?,. 
+3fc0	20 20 20 6f 6e 4e 6f 74  69 66 69 63 61 74 69 6f      onNotificatio
+3fd0	6e 73 43 6c 69 63 6b 3a  20 28 29 20 2d 3e 20 55   nsClick: () -> U
+3fe0	6e 69 74 2c 0a 20 20 20  20 6d 6f 64 69 66 69 65   nit,.    modifie
+3ff0	72 3a 20 4d 6f 64 69 66  69 65 72 20 3d 20 4d 6f   r: Modifier = Mo
+4000	64 69 66 69 65 72 2c 0a  29 20 7b 0a 20 20 20 20   difier,.) {.    
+4010	76 61 6c 20 64 20 3d 20  4d 61 74 65 72 69 61 6c   val d = Material
+4020	54 68 65 6d 65 2e 64 69  6d 65 6e 73 0a 0a 20 20   Theme.dimens..  
+4030	20 20 43 6f 6c 75 6d 6e  28 0a 20 20 20 20 20 20     Column(.      
+4040	20 20 6d 6f 64 69 66 69  65 72 20 3d 20 6d 6f 64     modifier = mod
+4050	69 66 69 65 72 2e 66 69  6c 6c 4d 61 78 57 69 64   ifier.fillMaxWid
+4060	74 68 28 29 2c 0a 20 20  20 20 20 20 20 20 76 65   th(),.        ve
+4070	72 74 69 63 61 6c 41 72  72 61 6e 67 65 6d 65 6e   rticalArrangemen
+4080	74 20 3d 20 41 72 72 61  6e 67 65 6d 65 6e 74 2e   t = Arrangement.
+4090	73 70 61 63 65 64 42 79  28 64 2e 73 70 61 63 65   spacedBy(d.space
+40a0	53 29 2c 0a 20 20 20 20  20 20 20 20 68 6f 72 69   S),.        hori
+40b0	7a 6f 6e 74 61 6c 41 6c  69 67 6e 6d 65 6e 74 20   zontalAlignment 
+40c0	3d 20 41 6c 69 67 6e 6d  65 6e 74 2e 53 74 61 72   = Alignment.Star
+40d0	74 2c 0a 20 20 20 20 29  20 7b 0a 20 20 20 20 20   t,.    ) {.     
+40e0	20 20 20 43 6f 6c 75 6d  6e 28 6d 6f 64 69 66 69      Column(modifi
+40f0	65 72 20 3d 20 4d 6f 64  69 66 69 65 72 2e 70 61   er = Modifier.pa
+4100	64 64 69 6e 67 28 68 6f  72 69 7a 6f 6e 74 61 6c   dding(horizontal
+4110	20 3d 20 64 2e 73 70 61  63 65 53 29 2c 20 68 6f    = d.spaceS), ho
+4120	72 69 7a 6f 6e 74 61 6c  41 6c 69 67 6e 6d 65 6e   rizontalAlignmen
+4130	74 20 3d 20 41 6c 69 67  6e 6d 65 6e 74 2e 53 74   t = Alignment.St
+4140	61 72 74 29 20 7b 0a 20  20 20 20 20 20 20 20 20   art) {.         
+4150	20 20 20 54 65 78 74 28  0a 20 20 20 20 20 20 20      Text(.       
+4160	20 20 20 20 20 20 20 20  20 74 65 78 74 20 3d 20            text = 
+4170	67 72 6f 75 70 2e 74 69  74 6c 65 2c 0a 20 20 20   group.title,.   
+4180	20 20 20 20 20 20 20 20  20 20 20 20 20 73 74 79                sty
+4190	6c 65 20 3d 20 4d 61 74  65 72 69 61 6c 54 68 65   le = MaterialThe
+41a0	6d 65 2e 74 79 70 6f 67  72 61 70 68 79 2e 74 69   me.typography.ti
+41b0	74 6c 65 4d 65 64 69 75  6d 2c 0a 20 20 20 20 20   tleMedium,.     
+41c0	20 20 20 20 20 20 20 20  20 20 20 66 6f 6e 74 57              fontW
+41d0	65 69 67 68 74 20 3d 20  46 6f 6e 74 57 65 69 67   eight = FontWeig
+41e0	68 74 2e 42 6f 6c 64 2c  0a 20 20 20 20 20 20 20   ht.Bold,.       
+41f0	20 20 20 20 20 20 20 20  20 63 6f 6c 6f 72 20 3d            color =
+4200	20 4d 61 74 65 72 69 61  6c 54 68 65 6d 65 2e 63    MaterialTheme.c
+4210	6f 6c 6f 72 53 63 68 65  6d 65 2e 6f 6e 53 75 72   olorScheme.onSur
+4220	66 61 63 65 2c 0a 20 20  20 20 20 20 20 20 20 20   face,.          
+4230	20 20 29 0a 20 20 20 20  20 20 20 20 20 20 20 20     ).            
+4240	54 65 78 74 28 0a 20 20  20 20 20 20 20 20 20 20   Text(.          
+4250	20 20 20 20 20 20 74 65  78 74 20 3d 20 67 72 6f         text = gro
+4260	75 70 2e 73 75 62 74 69  74 6c 65 2c 0a 20 20 20   up.subtitle,.   
+4270	20 20 20 20 20 20 20 20  20 20 20 20 20 73 74 79                sty
+4280	6c 65 20 3d 20 4d 61 74  65 72 69 61 6c 54 68 65   le = MaterialThe
+4290	6d 65 2e 74 79 70 6f 67  72 61 70 68 79 2e 6c 61   me.typography.la
+42a0	62 65 6c 53 6d 61 6c 6c  2c 0a 20 20 20 20 20 20   belSmall,.      
+42b0	20 20 20 20 20 20 20 20  20 20 63 6f 6c 6f 72 20             color 
+42c0	3d 20 4d 61 74 65 72 69  61 6c 54 68 65 6d 65 2e   = MaterialTheme.
+42d0	63 6f 6c 6f 72 53 63 68  65 6d 65 2e 6f 6e 53 75   colorScheme.onSu
+42e0	72 66 61 63 65 56 61 72  69 61 6e 74 2c 0a 20 20   rfaceVariant,.  
+42f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 74 65                 te
+4300	78 74 41 6c 69 67 6e 20  3d 20 54 65 78 74 41 6c   xtAlign = TextAl
+4310	69 67 6e 2e 53 74 61 72  74 2c 0a 20 20 20 20 20   ign.Start,.     
+4320	20 20 20 20 20 20 20 29  0a 20 20 20 20 20 20 20          ).       
+4330	20 7d 0a 20 20 20 20 20  20 20 20 53 75 72 66 61    }.        Surfa
+4340	63 65 28 0a 20 20 20 20  20 20 20 20 20 20 20 20   ce(.            
+4350	6d 6f 64 69 66 69 65 72  20 3d 20 4d 6f 64 69 66   modifier = Modif
+4360	69 65 72 2e 66 69 6c 6c  4d 61 78 57 69 64 74 68   ier.fillMaxWidth
+4370	28 29 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   (),.            
+4380	73 68 61 70 65 20 3d 20  52 6f 75 6e 64 65 64 43   shape = RoundedC
+4390	6f 72 6e 65 72 53 68 61  70 65 28 64 2e 72 61 64   ornerShape(d.rad
+43a0	69 75 73 58 4c 29 2c 0a  20 20 20 20 20 20 20 20   iusXL),.        
+43b0	20 20 20 20 63 6f 6c 6f  72 20 3d 20 4d 61 74 65       color = Mate
+43c0	72 69 61 6c 54 68 65 6d  65 2e 63 6f 6c 6f 72 53   rialTheme.colorS
+43d0	63 68 65 6d 65 2e 73 75  72 66 61 63 65 2c 0a 20   cheme.surface,. 
+43e0	20 20 20 20 20 20 20 20  20 20 20 73 68 61 64 6f              shado
+43f0	77 45 6c 65 76 61 74 69  6f 6e 20 3d 20 31 2e 64   wElevation = 1.d
+4400	70 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 62   p,.            b
+4410	6f 72 64 65 72 20 3d 20  42 6f 72 64 65 72 53 74   order = BorderSt
+4420	72 6f 6b 65 28 31 2e 64  70 2c 20 4d 61 74 65 72   roke(1.dp, Mater
+4430	69 61 6c 54 68 65 6d 65  2e 63 6f 6c 6f 72 53 63   ialTheme.colorSc
+4440	68 65 6d 65 2e 6f 75 74  6c 69 6e 65 56 61 72 69   heme.outlineVari
+4450	61 6e 74 2e 63 6f 70 79  28 61 6c 70 68 61 20 3d   ant.copy(alpha =
+4460	20 30 2e 33 36 66 29 29  2c 0a 20 20 20 20 20 20    0.36f)),.      
+4470	20 20 29 20 7b 0a 20 20  20 20 20 20 20 20 20 20     ) {.          
+4480	20 20 43 6f 6c 75 6d 6e  28 0a 20 20 20 20 20 20     Column(.      
+4490	20 20 20 20 20 20 20 20  20 20 6d 6f 64 69 66 69             modifi
+44a0	65 72 20 3d 20 4d 6f 64  69 66 69 65 72 2e 70 61   er = Modifier.pa
+44b0	64 64 69 6e 67 28 76 65  72 74 69 63 61 6c 20 3d   dding(vertical =
+44c0	20 64 2e 73 70 61 63 65  58 53 29 2c 0a 20 20 20    d.spaceXS),.   
+44d0	20 20 20 20 20 20 20 20  20 20 20 20 20 76 65 72                ver
+44e0	74 69 63 61 6c 41 72 72  61 6e 67 65 6d 65 6e 74   ticalArrangement
+44f0	20 3d 20 41 72 72 61 6e  67 65 6d 65 6e 74 2e 73    = Arrangement.s
+4500	70 61 63 65 64 42 79 28  64 2e 73 70 61 63 65 58   pacedBy(d.spaceX
+4510	58 53 29 2c 0a 20 20 20  20 20 20 20 20 20 20 20   XS),.           
+4520	20 29 20 7b 0a 20 20 20  20 20 20 20 20 20 20 20    ) {.           
+4530	20 20 20 20 20 67 72 6f  75 70 2e 69 74 65 6d 73        group.items
+4540	2e 66 6f 72 45 61 63 68  49 6e 64 65 78 65 64 20   .forEachIndexed 
+4550	7b 20 69 6e 64 65 78 2c  20 69 74 65 6d 20 2d 3e   { index, item ->
+4560	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+4570	20 20 20 20 20 50 72 6f  66 69 6c 65 53 65 74 74        ProfileSett
+4580	69 6e 67 52 6f 77 28 0a  20 20 20 20 20 20 20 20   ingRow(.        
+4590	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+45a0	69 74 65 6d 20 3d 20 69  74 65 6d 2c 0a 20 20 20   item = item,.   
+45b0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+45c0	20 20 20 20 20 69 73 4c  61 73 74 20 3d 20 69 6e        isLast = in
+45d0	64 65 78 20 3d 3d 20 67  72 6f 75 70 2e 69 74 65   dex == group.ite
+45e0	6d 73 2e 6c 61 73 74 49  6e 64 65 78 2c 0a 20 20   ms.lastIndex,.  
+45f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4600	20 20 20 20 20 20 6c 61  6e 67 75 61 67 65 50 72         languagePr
+4610	65 76 69 65 77 20 3d 20  6c 61 6e 67 75 61 67 65   eview = language
+4620	50 72 65 76 69 65 77 2c  0a 20 20 20 20 20 20 20   Preview,.       
+4630	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4640	20 6f 6e 43 6c 69 63 6b  20 3d 20 77 68 65 6e 20    onClick = when 
+4650	7b 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   {.              
+4660	20 20 20 20 20 20 20 20  20 20 20 20 20 20 69 74                 it
+4670	65 6d 2e 69 73 4c 61 6e  67 75 61 67 65 28 29 20   em.isLanguage() 
+4680	2d 3e 20 6f 6e 4c 61 6e  67 75 61 67 65 43 6c 69   -> onLanguageCli
+4690	63 6b 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   ck.             
+46a0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 69                  i
+46b0	74 65 6d 2e 69 73 53 65  63 75 72 69 74 79 28 29   tem.isSecurity()
+46c0	20 2d 3e 20 6f 6e 53 65  63 75 72 69 74 79 43 6c    -> onSecurityCl
+46d0	69 63 6b 0a 20 20 20 20  20 20 20 20 20 20 20 20   ick.            
+46e0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+46f0	69 74 65 6d 2e 69 73 41  62 6f 75 74 28 29 20 2d   item.isAbout() -
+4700	3e 20 6f 6e 41 62 6f 75  74 43 6c 69 63 6b 0a 20   > onAboutClick. 
+4710	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4720	20 20 20 20 20 20 20 20  20 20 20 69 74 65 6d 2e              item.
+4730	69 73 43 6f 6e 74 61 63  74 28 29 20 2d 3e 20 6f   isContact() -> o
+4740	6e 43 6f 6e 74 61 63 74  43 6c 69 63 6b 0a 20 20   nContactClick.  
+4750	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4760	20 20 20 20 20 20 20 20  20 20 69 74 65 6d 2e 69             item.i
+4770	73 48 65 6c 70 53 75 70  70 6f 72 74 28 29 20 2d   sHelpSupport() -
+4780	3e 20 6f 6e 48 65 6c 70  53 75 70 70 6f 72 74 43   > onHelpSupportC
+4790	6c 69 63 6b 0a 20 20 20  20 20 20 20 20 20 20 20   lick.           
+47a0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+47b0	20 69 74 65 6d 2e 69 73  4e 6f 74 69 66 69 63 61    item.isNotifica
+47c0	74 69 6f 6e 28 29 20 2d  3e 20 6f 6e 4e 6f 74 69   tion() -> onNoti
+47d0	66 69 63 61 74 69 6f 6e  73 43 6c 69 63 6b 0a 20   ficationsClick. 
+47e0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+47f0	20 20 20 20 20 20 20 20  20 20 20 65 6c 73 65 20              else 
+4800	2d 3e 20 28 7b 7d 29 0a  20 20 20 20 20 20 20 20   -> ({}).        
+4810	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4820	7d 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   },.             
+4830	20 20 20 20 20 20 20 20  20 20 20 6e 6f 74 69 66              notif
+4840	69 63 61 74 69 6f 6e 73  45 6e 61 62 6c 65 64 20   icationsEnabled 
+4850	3d 20 6e 6f 74 69 66 69  63 61 74 69 6f 6e 73 45   = notificationsE
+4860	6e 61 62 6c 65 64 2c 0a  20 20 20 20 20 20 20 20   nabled,.        
+4870	20 20 20 20 20 20 20 20  20 20 20 20 29 0a 20 20               ).  
+4880	20 20 20 20 20 20 20 20  20 20 20 20 20 20 7d 0a                 }.
+4890	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+48a0	69 66 20 28 21 6e 6f 74  69 66 69 63 61 74 69 6f   if (!notificatio
+48b0	6e 73 45 72 72 6f 72 2e  69 73 4e 75 6c 6c 4f 72   nsError.isNullOr
+48c0	42 6c 61 6e 6b 28 29 29  20 7b 0a 20 20 20 20 20   Blank()) {.     
+48d0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 54                  T
+48e0	65 78 74 28 0a 20 20 20  20 20 20 20 20 20 20 20   ext(.           
+48f0	20 20 20 20 20 20 20 20  20 20 20 20 20 74 65 78                tex
+4900	74 20 3d 20 6e 6f 74 69  66 69 63 61 74 69 6f 6e   t = notification
+4910	73 45 72 72 6f 72 2c 0a  20 20 20 20 20 20 20 20   sError,.        
+4920	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4930	73 74 79 6c 65 20 3d 20  4d 61 74 65 72 69 61 6c   style = Material
+4940	54 68 65 6d 65 2e 74 79  70 6f 67 72 61 70 68 79   Theme.typography
+4950	2e 6c 61 62 65 6c 53 6d  61 6c 6c 2c 0a 20 20 20   .labelSmall,.   
+4960	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4970	20 20 20 20 20 63 6f 6c  6f 72 20 3d 20 50 72 65        color = Pre
+4980	6d 69 75 6d 55 72 67 65  6e 74 2c 0a 20 20 20 20   miumUrgent,.    
+4990	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+49a0	20 20 20 20 6d 6f 64 69  66 69 65 72 20 3d 20 4d       modifier = M
+49b0	6f 64 69 66 69 65 72 2e  70 61 64 64 69 6e 67 28   odifier.padding(
+49c0	68 6f 72 69 7a 6f 6e 74  61 6c 20 3d 20 64 2e 73   horizontal = d.s
+49d0	70 61 63 65 4d 2c 20 76  65 72 74 69 63 61 6c 20   paceM, vertical 
+49e0	3d 20 64 2e 73 70 61 63  65 53 29 2c 0a 20 20 20   = d.spaceS),.   
+49f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4a00	20 29 0a 20 20 20 20 20  20 20 20 20 20 20 20 20    ).             
+4a10	20 20 20 7d 0a 20 20 20  20 20 20 20 20 20 20 20      }.           
+4a20	20 7d 0a 20 20 20 20 20  20 20 20 7d 0a 20 20 20    }.        }.   
+4a30	20 7d 0a 7d 0a 0a 40 43  6f 6d 70 6f 73 61 62 6c    }.}..@Composabl
+4a40	65 0a 70 72 69 76 61 74  65 20 66 75 6e 20 50 72   e.private fun Pr
+4a50	6f 66 69 6c 65 53 65 74  74 69 6e 67 52 6f 77 28   ofileSettingRow(
+4a60	0a 20 20 20 20 69 74 65  6d 3a 20 53 65 74 74 69   .    item: Setti
+4a70	6e 67 49 74 65 6d 2c 0a  20 20 20 20 69 73 4c 61   ngItem,.    isLa
+4a80	73 74 3a 20 42 6f 6f 6c  65 61 6e 2c 0a 20 20 20   st: Boolean,.   
+4a90	20 6c 61 6e 67 75 61 67  65 50 72 65 76 69 65 77    languagePreview
+4aa0	3a 20 53 74 72 69 6e 67  2c 0a 20 20 20 20 6f 6e   : String,.    on
+4ab0	43 6c 69 63 6b 3a 20 28  29 20 2d 3e 20 55 6e 69   Click: () -> Uni
+4ac0	74 2c 0a 20 20 20 20 6e  6f 74 69 66 69 63 61 74   t,.    notificat
+4ad0	69 6f 6e 73 45 6e 61 62  6c 65 64 3a 20 42 6f 6f   ionsEnabled: Boo
+4ae0	6c 65 61 6e 2c 0a 29 20  7b 0a 20 20 20 20 76 61   lean,.) {.    va
+4af0	6c 20 64 20 3d 20 4d 61  74 65 72 69 61 6c 54 68   l d = MaterialTh
+4b00	65 6d 65 2e 64 69 6d 65  6e 73 0a 20 20 20 20 76   eme.dimens.    v
+4b10	61 6c 20 69 63 6f 6e 20  3d 20 73 65 74 74 69 6e   al icon = settin
+4b20	67 49 63 6f 6e 28 69 74  65 6d 2e 74 69 74 6c 65   gIcon(item.title
+4b30	29 0a 20 20 20 20 76 61  6c 20 69 73 4c 61 6e 67   ).    val isLang
+4b40	75 61 67 65 20 3d 20 69  74 65 6d 2e 69 73 4c 61   uage = item.isLa
+4b50	6e 67 75 61 67 65 28 29  0a 20 20 20 20 76 61 6c   nguage().    val
+4b60	20 62 61 64 67 65 54 65  78 74 20 3d 20 77 68 65    badgeText = whe
+4b70	6e 20 7b 0a 20 20 20 20  20 20 20 20 69 73 4c 61   n {.        isLa
+4b80	6e 67 75 61 67 65 20 2d  3e 20 6c 61 6e 67 75 61   nguage -> langua
+4b90	67 65 50 72 65 76 69 65  77 0a 20 20 20 20 20 20   gePreview.      
+4ba0	20 20 69 74 65 6d 2e 69  73 41 62 6f 75 74 28 29     item.isAbout()
+4bb0	20 2d 3e 20 22 ef bf bd  ef bf bd ef bf bd ef bf    -> "...........
+4bc0	bd 22 0a 20 20 20 20 20  20 20 20 69 74 65 6d 2e   .".        item.
+4bd0	69 73 4e 6f 74 69 66 69  63 61 74 69 6f 6e 28 29   isNotification()
+4be0	20 2d 3e 20 69 66 20 28  6e 6f 74 69 66 69 63 61    -> if (notifica
+4bf0	74 69 6f 6e 73 45 6e 61  62 6c 65 64 29 20 22 ef   tionsEnabled) ".
+4c00	bf bd ef bf bd ef bf bd  ef bf bd 22 20 65 6c 73   ..........." els
+4c10	65 20 22 ef bf bd ef bf  bd ef bf bd ef bf bd ef   e ".............
+4c20	bf bd 22 0a 20 20 20 20  20 20 20 20 69 74 65 6d   ..".        item
+4c30	2e 69 73 48 65 6c 70 53  75 70 70 6f 72 74 28 29   .isHelpSupport()
+4c40	20 7c 7c 20 69 74 65 6d  2e 69 73 43 6f 6e 74 61    || item.isConta
+4c50	63 74 28 29 20 7c 7c 20  69 74 65 6d 2e 69 73 53   ct() || item.isS
+4c60	65 63 75 72 69 74 79 28  29 20 2d 3e 20 22 ef bf   ecurity() -> "..
+4c70	bd ef bf bd ef bf bd ef  bf bd 22 0a 20 20 20 20   ..........".    
+4c80	20 20 20 20 65 6c 73 65  20 2d 3e 20 22 ef bf bd       else -> "...
+4c90	ef bf bd ef bf bd ef bf  bd 22 0a 20 20 20 20 7d   .........".    }
+4ca0	0a 20 20 20 20 76 61 6c  20 62 61 64 67 65 43 6f   .    val badgeCo
+4cb0	6c 6f 72 20 3d 20 77 68  65 6e 20 7b 0a 20 20 20   lor = when {.   
+4cc0	20 20 20 20 20 69 73 4c  61 6e 67 75 61 67 65 20        isLanguage 
+4cd0	7c 7c 20 69 74 65 6d 2e  69 73 4e 6f 74 69 66 69   || item.isNotifi
+4ce0	63 61 74 69 6f 6e 28 29  20 2d 3e 20 50 68 61 72   cation() -> Phar
+4cf0	6d 61 53 75 63 63 65 73  73 0a 20 20 20 20 20 20   maSuccess.      
+4d00	20 20 69 74 65 6d 2e 69  73 48 65 6c 70 53 75 70     item.isHelpSup
+4d10	70 6f 72 74 28 29 20 7c  7c 20 69 74 65 6d 2e 69   port() || item.i
+4d20	73 43 6f 6e 74 61 63 74  28 29 20 7c 7c 20 69 74   sContact() || it
+4d30	65 6d 2e 69 73 53 65 63  75 72 69 74 79 28 29 20   em.isSecurity() 
+4d40	2d 3e 20 50 68 61 72 6d  61 42 6c 75 65 35 30 30   -> PharmaBlue500
+4d50	0a 20 20 20 20 20 20 20  20 65 6c 73 65 20 2d 3e   .        else ->
+4d60	20 4d 61 74 65 72 69 61  6c 54 68 65 6d 65 2e 63    MaterialTheme.c
+4d70	6f 6c 6f 72 53 63 68 65  6d 65 2e 6f 6e 53 75 72   olorScheme.onSur
+4d80	66 61 63 65 56 61 72 69  61 6e 74 0a 20 20 20 20   faceVariant.    
+4d90	7d 0a 0a 20 20 20 20 53  75 72 66 61 63 65 28 0a   }..    Surface(.
+4da0	20 20 20 20 20 20 20 20  6d 6f 64 69 66 69 65 72           modifier
+4db0	20 3d 20 4d 6f 64 69 66  69 65 72 2e 66 69 6c 6c    = Modifier.fill
+4dc0	4d 61 78 57 69 64 74 68  28 29 2c 0a 20 20 20 20   MaxWidth(),.    
+4dd0	20 20 20 20 63 6f 6c 6f  72 20 3d 20 43 6f 6c 6f       color = Colo
+4de0	72 2e 54 72 61 6e 73 70  61 72 65 6e 74 2c 0a 20   r.Transparent,. 
+4df0	20 20 20 20 20 20 20 74  6f 6e 61 6c 45 6c 65 76          tonalElev
+4e00	61 74 69 6f 6e 20 3d 20  30 2e 64 70 2c 0a 20 20   ation = 0.dp,.  
+4e10	20 20 29 20 7b 0a 20 20  20 20 20 20 20 20 43 6f     ) {.        Co
+4e20	6c 75 6d 6e 20 7b 0a 20  20 20 20 20 20 20 20 20   lumn {.         
+4e30	20 20 20 52 6f 77 28 0a  20 20 20 20 20 20 20 20      Row(.        
+4e40	20 20 20 20 20 20 20 20  6d 6f 64 69 66 69 65 72           modifier
+4e50	20 3d 20 4d 6f 64 69 66  69 65 72 0a 20 20 20 20    = Modifier.    
+4e60	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4e70	2e 66 69 6c 6c 4d 61 78  57 69 64 74 68 28 29 0a   .fillMaxWidth().
+4e80	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4e90	20 20 20 20 2e 63 6c 69  63 6b 61 62 6c 65 28 0a       .clickable(.
+4ea0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4eb0	20 20 20 20 20 20 20 20  69 6e 74 65 72 61 63 74           interact
+4ec0	69 6f 6e 53 6f 75 72 63  65 20 3d 20 72 65 6d 65   ionSource = reme
+4ed0	6d 62 65 72 20 7b 20 4d  75 74 61 62 6c 65 49 6e   mber { MutableIn
+4ee0	74 65 72 61 63 74 69 6f  6e 53 6f 75 72 63 65 28   teractionSource(
+4ef0	29 20 7d 2c 0a 20 20 20  20 20 20 20 20 20 20 20   ) },.           
+4f00	20 20 20 20 20 20 20 20  20 20 20 20 20 69 6e 64                ind
+4f10	69 63 61 74 69 6f 6e 20  3d 20 72 69 70 70 6c 65   ication = ripple
+4f20	28 29 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   (),.            
+4f30	20 20 20 20 20 20 20 20  20 20 20 20 6f 6e 43 6c               onCl
+4f40	69 63 6b 20 3d 20 6f 6e  43 6c 69 63 6b 2c 0a 20   ick = onClick,. 
+4f50	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+4f60	20 20 20 29 0a 20 20 20  20 20 20 20 20 20 20 20      ).           
+4f70	20 20 20 20 20 20 20 20  20 2e 70 61 64 64 69 6e            .paddin
+4f80	67 28 68 6f 72 69 7a 6f  6e 74 61 6c 20 3d 20 64   g(horizontal = d
+4f90	2e 73 70 61 63 65 4d 2c  20 76 65 72 74 69 63 61   .spaceM, vertica
+4fa0	6c 20 3d 20 64 2e 73 70  61 63 65 4d 29 2c 0a 20   l = d.spaceM),. 
+4fb0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 76                  v
+4fc0	65 72 74 69 63 61 6c 41  6c 69 67 6e 6d 65 6e 74   erticalAlignment
+4fd0	20 3d 20 41 6c 69 67 6e  6d 65 6e 74 2e 43 65 6e    = Alignment.Cen
+4fe0	74 65 72 56 65 72 74 69  63 61 6c 6c 79 2c 0a 20   terVertically,. 
+4ff0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 68                  h
+5000	6f 72 69 7a 6f 6e 74 61  6c 41 72 72 61 6e 67 65   orizontalArrange
+5010	6d 65 6e 74 20 3d 20 41  72 72 61 6e 67 65 6d 65   ment = Arrangeme
+5020	6e 74 2e 73 70 61 63 65  64 42 79 28 64 2e 73 70   nt.spacedBy(d.sp
+5030	61 63 65 4d 29 2c 0a 20  20 20 20 20 20 20 20 20   aceM),.         
+5040	20 20 20 29 20 7b 0a 20  20 20 20 20 20 20 20 20      ) {.         
+5050	20 20 20 20 20 20 20 53  75 72 66 61 63 65 28 0a          Surface(.
+5060	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5070	20 20 20 20 6d 6f 64 69  66 69 65 72 20 3d 20 4d       modifier = M
+5080	6f 64 69 66 69 65 72 2e  73 69 7a 65 28 34 34 2e   odifier.size(44.
+5090	64 70 29 2c 0a 20 20 20  20 20 20 20 20 20 20 20   dp),.           
+50a0	20 20 20 20 20 20 20 20  20 73 68 61 70 65 20 3d            shape =
+50b0	20 52 6f 75 6e 64 65 64  43 6f 72 6e 65 72 53 68    RoundedCornerSh
+50c0	61 70 65 28 64 2e 72 61  64 69 75 73 4c 29 2c 0a   ape(d.radiusL),.
+50d0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+50e0	20 20 20 20 63 6f 6c 6f  72 20 3d 20 69 66 20 28       color = if (
+50f0	69 73 4c 61 6e 67 75 61  67 65 29 20 50 68 61 72   isLanguage) Phar
+5100	6d 61 42 6c 75 65 35 30  30 2e 63 6f 70 79 28 61   maBlue500.copy(a
+5110	6c 70 68 61 20 3d 20 30  2e 31 32 66 29 20 65 6c   lpha = 0.12f) el
+5120	73 65 20 50 68 61 72 6d  61 42 6c 75 65 35 30 2c   se PharmaBlue50,
+5130	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+5140	20 20 20 20 20 63 6f 6e  74 65 6e 74 43 6f 6c 6f        contentColo
+5150	72 20 3d 20 50 68 61 72  6d 61 42 6c 75 65 35 30   r = PharmaBlue50
+5160	30 2c 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   0,.             
+5170	20 20 20 29 20 7b 0a 20  20 20 20 20 20 20 20 20      ) {.         
+5180	20 20 20 20 20 20 20 20  20 20 20 42 6f 78 28 63              Box(c
+5190	6f 6e 74 65 6e 74 41 6c  69 67 6e 6d 65 6e 74 20   ontentAlignment 
+51a0	3d 20 41 6c 69 67 6e 6d  65 6e 74 2e 43 65 6e 74   = Alignment.Cent
+51b0	65 72 29 20 7b 0a 20 20  20 20 20 20 20 20 20 20   er) {.          
+51c0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 49 63                 Ic
+51d0	6f 6e 28 69 63 6f 6e 2c  20 63 6f 6e 74 65 6e 74   on(icon, content
+51e0	44 65 73 63 72 69 70 74  69 6f 6e 20 3d 20 6e 75   Description = nu
+51f0	6c 6c 2c 20 6d 6f 64 69  66 69 65 72 20 3d 20 4d   ll, modifier = M
+5200	6f 64 69 66 69 65 72 2e  73 69 7a 65 28 64 2e 69   odifier.size(d.i
+5210	63 6f 6e 53 29 29 0a 20  20 20 20 20 20 20 20 20   conS)).         
+5220	20 20 20 20 20 20 20 20  20 20 20 7d 0a 20 20 20              }.   
+5230	20 20 20 20 20 20 20 20  20 20 20 20 20 7d 0a 20                }. 
+5240	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 43                  C
+5250	6f 6c 75 6d 6e 28 0a 20  20 20 20 20 20 20 20 20   olumn(.         
+5260	20 20 20 20 20 20 20 20  20 20 20 6d 6f 64 69 66              modif
+5270	69 65 72 20 3d 20 4d 6f  64 69 66 69 65 72 2e 77   ier = Modifier.w
+5280	65 69 67 68 74 28 31 66  29 2c 0a 20 20 20 20 20   eight(1f),.     
+5290	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 68                  h
+52a0	6f 72 69 7a 6f 6e 74 61  6c 41 6c 69 67 6e 6d 65   orizontalAlignme
+52b0	6e 74 20 3d 20 41 6c 69  67 6e 6d 65 6e 74 2e 53   nt = Alignment.S
+52c0	74 61 72 74 2c 0a 20 20  20 20 20 20 20 20 20 20   tart,.          
+52d0	20 20 20 20 20 20 20 20  20 20 76 65 72 74 69 63             vertic
+52e0	61 6c 41 72 72 61 6e 67  65 6d 65 6e 74 20 3d 20   alArrangement = 
+52f0	41 72 72 61 6e 67 65 6d  65 6e 74 2e 73 70 61 63   Arrangement.spac
+5300	65 64 42 79 28 32 2e 64  70 29 2c 0a 20 20 20 20   edBy(2.dp),.    
+5310	20 20 20 20 20 20 20 20  20 20 20 20 29 20 7b 0a               ) {.
+5320	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5330	20 20 20 20 54 65 78 74  28 0a 20 20 20 20 20 20       Text(.      
+5340	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5350	20 20 74 65 78 74 20 3d  20 69 74 65 6d 2e 74 69     text = item.ti
+5360	74 6c 65 2c 0a 20 20 20  20 20 20 20 20 20 20 20   tle,.           
+5370	20 20 20 20 20 20 20 20  20 20 20 20 20 73 74 79                sty
+5380	6c 65 20 3d 20 4d 61 74  65 72 69 61 6c 54 68 65   le = MaterialThe
+5390	6d 65 2e 74 79 70 6f 67  72 61 70 68 79 2e 62 6f   me.typography.bo
+53a0	64 79 4d 65 64 69 75 6d  2c 0a 20 20 20 20 20 20   dyMedium,.      
+53b0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+53c0	20 20 66 6f 6e 74 57 65  69 67 68 74 20 3d 20 46     fontWeight = F
+53d0	6f 6e 74 57 65 69 67 68  74 2e 53 65 6d 69 42 6f   ontWeight.SemiBo
+53e0	6c 64 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   ld,.            
+53f0	20 20 20 20 20 20 20 20  20 20 20 20 63 6f 6c 6f               colo
+5400	72 20 3d 20 4d 61 74 65  72 69 61 6c 54 68 65 6d   r = MaterialThem
+5410	65 2e 63 6f 6c 6f 72 53  63 68 65 6d 65 2e 6f 6e   e.colorScheme.on
+5420	53 75 72 66 61 63 65 2c  0a 20 20 20 20 20 20 20   Surface,.       
+5430	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5440	20 6d 61 78 4c 69 6e 65  73 20 3d 20 31 2c 0a 20    maxLines = 1,. 
+5450	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5460	20 20 20 20 20 20 20 6f  76 65 72 66 6c 6f 77 20          overflow 
+5470	3d 20 54 65 78 74 4f 76  65 72 66 6c 6f 77 2e 45   = TextOverflow.E
+5480	6c 6c 69 70 73 69 73 2c  0a 20 20 20 20 20 20 20   llipsis,.       
+5490	20 20 20 20 20 20 20 20  20 20 20 20 20 29 0a 20                ). 
+54a0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+54b0	20 20 20 69 66 20 28 69  74 65 6d 2e 73 75 62 74      if (item.subt
+54c0	69 74 6c 65 2e 69 73 4e  6f 74 42 6c 61 6e 6b 28   itle.isNotBlank(
+54d0	29 29 20 7b 0a 20 20 20  20 20 20 20 20 20 20 20   )) {.           
+54e0	20 20 20 20 20 20 20 20  20 20 20 20 20 54 65 78                Tex
+54f0	74 28 0a 20 20 20 20 20  20 20 20 20 20 20 20 20   t(.             
+5500	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 74                  t
+5510	65 78 74 20 3d 20 69 66  20 28 69 73 4c 61 6e 67   ext = if (isLang
+5520	75 61 67 65 29 20 7b 0a  20 20 20 20 20 20 20 20   uage) {.        
+5530	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5540	20 20 20 20 20 20 20 20  22 ef bf bd ef bf bd ef           ".......
+5550	bf bd ef bf bd ef bf bd  20 ef bf bd ef bf bd ef   ........ .......
+5560	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd 3a 20   ..............: 
+5570	24 6c 61 6e 67 75 61 67  65 50 72 65 76 69 65 77   $languagePreview
+5580	20 2d 20 ef bf bd ef bf  bd 20 ef bf bd ef bf bd    - ...... ......
+5590	ef bf bd ef bf bd 20 ef  bf bd ef bf bd ef bf bd   ...... .........
+55a0	20 ef bf bd ef bf bd ef  bf bd ef bf bd ef bf bd    ...............
+55b0	ef bf bd ef bf bd 20 ef  bf bd ef bf bd ef bf bd   ...... .........
+55c0	22 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ".              
+55d0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 7d 20                 } 
+55e0	65 6c 73 65 20 7b 0a 20  20 20 20 20 20 20 20 20   else {.         
+55f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5600	20 20 20 20 20 20 20 69  74 65 6d 2e 73 75 62 74          item.subt
+5610	69 74 6c 65 0a 20 20 20  20 20 20 20 20 20 20 20   itle.           
+5620	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5630	20 7d 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20    },.            
+5640	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5650	73 74 79 6c 65 20 3d 20  4d 61 74 65 72 69 61 6c   style = Material
+5660	54 68 65 6d 65 2e 74 79  70 6f 67 72 61 70 68 79   Theme.typography
+5670	2e 6c 61 62 65 6c 53 6d  61 6c 6c 2c 0a 20 20 20   .labelSmall,.   
+5680	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5690	20 20 20 20 20 20 20 20  20 63 6f 6c 6f 72 20 3d            color =
+56a0	20 4d 61 74 65 72 69 61  6c 54 68 65 6d 65 2e 63    MaterialTheme.c
+56b0	6f 6c 6f 72 53 63 68 65  6d 65 2e 6f 6e 53 75 72   olorScheme.onSur
+56c0	66 61 63 65 56 61 72 69  61 6e 74 2c 0a 20 20 20   faceVariant,.   
+56d0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+56e0	20 20 20 20 20 20 20 20  20 6d 61 78 4c 69 6e 65            maxLine
+56f0	73 20 3d 20 32 2c 0a 20  20 20 20 20 20 20 20 20   s = 2,.         
+5700	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5710	20 20 20 6f 76 65 72 66  6c 6f 77 20 3d 20 54 65      overflow = Te
+5720	78 74 4f 76 65 72 66 6c  6f 77 2e 45 6c 6c 69 70   xtOverflow.Ellip
+5730	73 69 73 2c 0a 20 20 20  20 20 20 20 20 20 20 20   sis,.           
+5740	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5750	20 74 65 78 74 41 6c 69  67 6e 20 3d 20 54 65 78    textAlign = Tex
+5760	74 41 6c 69 67 6e 2e 53  74 61 72 74 2c 0a 20 20   tAlign.Start,.  
+5770	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5780	20 20 20 20 20 20 29 0a  20 20 20 20 20 20 20 20         ).        
+5790	20 20 20 20 20 20 20 20  20 20 20 20 7d 0a 20 20               }.  
+57a0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 7d 0a                 }.
+57b0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+57c0	53 75 72 66 61 63 65 28  0a 20 20 20 20 20 20 20   Surface(.       
+57d0	20 20 20 20 20 20 20 20  20 20 20 20 20 73 68 61                sha
+57e0	70 65 20 3d 20 43 69 72  63 6c 65 53 68 61 70 65   pe = CircleShape
+57f0	2c 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ,.              
+5800	20 20 20 20 20 20 63 6f  6c 6f 72 20 3d 20 62 61         color = ba
+5810	64 67 65 43 6f 6c 6f 72  2e 63 6f 70 79 28 61 6c   dgeColor.copy(al
+5820	70 68 61 20 3d 20 30 2e  31 32 66 29 2c 0a 20 20   pha = 0.12f),.  
+5830	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5840	20 20 63 6f 6e 74 65 6e  74 43 6f 6c 6f 72 20 3d     contentColor =
+5850	20 62 61 64 67 65 43 6f  6c 6f 72 2c 0a 20 20 20    badgeColor,.   
+5860	20 20 20 20 20 20 20 20  20 20 20 20 20 29 20 7b                ) {
+5870	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+5880	20 20 20 20 20 54 65 78  74 28 0a 20 20 20 20 20        Text(.     
+5890	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+58a0	20 20 20 74 65 78 74 20  3d 20 62 61 64 67 65 54      text = badgeT
+58b0	65 78 74 2c 0a 20 20 20  20 20 20 20 20 20 20 20   ext,.           
+58c0	20 20 20 20 20 20 20 20  20 20 20 20 20 73 74 79                sty
+58d0	6c 65 20 3d 20 4d 61 74  65 72 69 61 6c 54 68 65   le = MaterialThe
+58e0	6d 65 2e 74 79 70 6f 67  72 61 70 68 79 2e 6c 61   me.typography.la
+58f0	62 65 6c 53 6d 61 6c 6c  2c 0a 20 20 20 20 20 20   belSmall,.      
+5900	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5910	20 20 66 6f 6e 74 57 65  69 67 68 74 20 3d 20 46     fontWeight = F
+5920	6f 6e 74 57 65 69 67 68  74 2e 42 6f 6c 64 2c 0a   ontWeight.Bold,.
+5930	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5940	20 20 20 20 20 20 20 20  6d 6f 64 69 66 69 65 72           modifier
+5950	20 3d 20 4d 6f 64 69 66  69 65 72 2e 70 61 64 64    = Modifier.padd
+5960	69 6e 67 28 68 6f 72 69  7a 6f 6e 74 61 6c 20 3d   ing(horizontal =
+5970	20 64 2e 73 70 61 63 65  4d 2c 20 76 65 72 74 69    d.spaceM, verti
+5980	63 61 6c 20 3d 20 64 2e  73 70 61 63 65 58 53 29   cal = d.spaceXS)
+5990	2c 0a 20 20 20 20 20 20  20 20 20 20 20 20 20 20   ,.              
+59a0	20 20 20 20 20 20 29 0a  20 20 20 20 20 20 20 20         ).        
+59b0	20 20 20 20 20 20 20 20  7d 0a 20 20 20 20 20 20           }.      
+59c0	20 20 20 20 20 20 20 20  20 20 49 63 6f 6e 28 0a             Icon(.
+59d0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+59e0	20 20 20 20 69 6d 61 67  65 56 65 63 74 6f 72 20       imageVector 
+59f0	3d 20 49 63 6f 6e 73 2e  41 75 74 6f 4d 69 72 72   = Icons.AutoMirr
+5a00	6f 72 65 64 2e 4f 75 74  6c 69 6e 65 64 2e 4b 65   ored.Outlined.Ke
+5a10	79 62 6f 61 72 64 41 72  72 6f 77 4c 65 66 74 2c   yboardArrowLeft,
+5a20	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+5a30	20 20 20 20 20 63 6f 6e  74 65 6e 74 44 65 73 63        contentDesc
+5a40	72 69 70 74 69 6f 6e 20  3d 20 6e 75 6c 6c 2c 0a   ription = null,.
+5a50	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5a60	20 20 20 20 74 69 6e 74  20 3d 20 4d 61 74 65 72       tint = Mater
+5a70	69 61 6c 54 68 65 6d 65  2e 63 6f 6c 6f 72 53 63   ialTheme.colorSc
+5a80	68 65 6d 65 2e 6f 6e 53  75 72 66 61 63 65 56 61   heme.onSurfaceVa
+5a90	72 69 61 6e 74 2c 0a 20  20 20 20 20 20 20 20 20   riant,.         
+5aa0	20 20 20 20 20 20 20 20  20 20 20 6d 6f 64 69 66              modif
+5ab0	69 65 72 20 3d 20 4d 6f  64 69 66 69 65 72 2e 73   ier = Modifier.s
+5ac0	69 7a 65 28 64 2e 69 63  6f 6e 53 29 2c 0a 20 20   ize(d.iconS),.  
+5ad0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 29 0a                 ).
+5ae0	20 20 20 20 20 20 20 20  20 20 20 20 7d 0a 20 20               }.  
+5af0	20 20 20 20 20 20 20 20  20 20 69 66 20 28 21 69             if (!i
+5b00	73 4c 61 73 74 29 20 7b  0a 20 20 20 20 20 20 20   sLast) {.       
+5b10	20 20 20 20 20 20 20 20  20 53 70 61 63 65 72 28            Spacer(
+5b20	0a 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20   .               
+5b30	20 20 20 20 20 6d 6f 64  69 66 69 65 72 20 3d 20        modifier = 
+5b40	4d 6f 64 69 66 69 65 72  0a 20 20 20 20 20 20 20   Modifier.       
+5b50	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5b60	20 2e 70 61 64 64 69 6e  67 28 73 74 61 72 74 20    .padding(start 
+5b70	3d 20 64 2e 73 70 61 63  65 4d 20 2b 20 34 34 2e   = d.spaceM + 44.
+5b80	64 70 20 2b 20 64 2e 73  70 61 63 65 4d 2c 20 65   dp + d.spaceM, e
+5b90	6e 64 20 3d 20 64 2e 73  70 61 63 65 4d 29 0a 20   nd = d.spaceM). 
+5ba0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5bb0	20 20 20 20 20 20 20 2e  66 69 6c 6c 4d 61 78 57          .fillMaxW
+5bc0	69 64 74 68 28 29 0a 20  20 20 20 20 20 20 20 20   idth().         
+5bd0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 2e                  .
+5be0	68 65 69 67 68 74 28 31  2e 64 70 29 0a 20 20 20   height(1.dp).   
+5bf0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5c00	20 20 20 20 20 2e 62 61  63 6b 67 72 6f 75 6e 64        .background
+5c10	28 4d 61 74 65 72 69 61  6c 54 68 65 6d 65 2e 63   (MaterialTheme.c
+5c20	6f 6c 6f 72 53 63 68 65  6d 65 2e 6f 75 74 6c 69   olorScheme.outli
+5c30	6e 65 56 61 72 69 61 6e  74 2e 63 6f 70 79 28 61   neVariant.copy(a
+5c40	6c 70 68 61 20 3d 20 30  2e 32 38 66 29 29 2c 0a   lpha = 0.28f)),.
+5c50	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5c60	29 0a 20 20 20 20 20 20  20 20 20 20 20 20 7d 0a   ).            }.
+5c70	20 20 20 20 20 20 20 20  7d 0a 20 20 20 20 7d 0a           }.    }.
+5c80	7d 0a 0a 40 43 6f 6d 70  6f 73 61 62 6c 65 0a 70   }..@Composable.p
+5c90	72 69 76 61 74 65 20 66  75 6e 20 50 72 6f 66 69   rivate fun Profi
+5ca0	6c 65 4c 6f 67 6f 75 74  42 75 74 74 6f 6e 28 0a   leLogoutButton(.
+5cb0	20 20 20 20 6f 6e 4c 6f  67 6f 75 74 3a 20 28 29       onLogout: ()
+5cc0	20 2d 3e 20 55 6e 69 74  2c 0a 20 20 20 20 6d 6f    -> Unit,.    mo
+5cd0	64 69 66 69 65 72 3a 20  4d 6f 64 69 66 69 65 72   difier: Modifier
+5ce0	20 3d 20 4d 6f 64 69 66  69 65 72 2c 0a 29 20 7b    = Modifier,.) {
+5cf0	0a 20 20 20 20 76 61 6c  20 64 20 3d 20 4d 61 74   .    val d = Mat
+5d00	65 72 69 61 6c 54 68 65  6d 65 2e 64 69 6d 65 6e   erialTheme.dimen
+5d10	73 0a 0a 20 20 20 20 53  75 72 66 61 63 65 28 0a   s..    Surface(.
+5d20	20 20 20 20 20 20 20 20  6d 6f 64 69 66 69 65 72           modifier
+5d30	20 3d 20 6d 6f 64 69 66  69 65 72 2e 66 69 6c 6c    = modifier.fill
+5d40	4d 61 78 57 69 64 74 68  28 29 2c 0a 20 20 20 20   MaxWidth(),.    
+5d50	20 20 20 20 73 68 61 70  65 20 3d 20 43 69 72 63       shape = Circ
+5d60	6c 65 53 68 61 70 65 2c  0a 20 20 20 20 20 20 20   leShape,.       
+5d70	20 63 6f 6c 6f 72 20 3d  20 4d 61 74 65 72 69 61    color = Materia
+5d80	6c 54 68 65 6d 65 2e 63  6f 6c 6f 72 53 63 68 65   lTheme.colorSche
+5d90	6d 65 2e 73 75 72 66 61  63 65 2c 0a 20 20 20 20   me.surface,.    
+5da0	20 20 20 20 63 6f 6e 74  65 6e 74 43 6f 6c 6f 72       contentColor
+5db0	20 3d 20 50 72 65 6d 69  75 6d 55 72 67 65 6e 74    = PremiumUrgent
+5dc0	2c 0a 20 20 20 20 20 20  20 20 62 6f 72 64 65 72   ,.        border
+5dd0	20 3d 20 42 6f 72 64 65  72 53 74 72 6f 6b 65 28    = BorderStroke(
+5de0	31 2e 64 70 2c 20 50 72  65 6d 69 75 6d 55 72 67   1.dp, PremiumUrg
+5df0	65 6e 74 2e 63 6f 70 79  28 61 6c 70 68 61 20 3d   ent.copy(alpha =
+5e00	20 30 2e 33 35 66 29 29  2c 0a 20 20 20 20 29 20    0.35f)),.    ) 
+5e10	7b 0a 20 20 20 20 20 20  20 20 52 6f 77 28 0a 20   {.        Row(. 
+5e20	20 20 20 20 20 20 20 20  20 20 20 6d 6f 64 69 66              modif
+5e30	69 65 72 20 3d 20 4d 6f  64 69 66 69 65 72 0a 20   ier = Modifier. 
+5e40	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 2e                  .
+5e50	66 69 6c 6c 4d 61 78 57  69 64 74 68 28 29 0a 20   fillMaxWidth(). 
+5e60	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 2e                  .
+5e70	63 6c 69 63 6b 61 62 6c  65 28 0a 20 20 20 20 20   clickable(.     
+5e80	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 69                  i
+5e90	6e 74 65 72 61 63 74 69  6f 6e 53 6f 75 72 63 65   nteractionSource
+5ea0	20 3d 20 72 65 6d 65 6d  62 65 72 20 7b 20 4d 75    = remember { Mu
+5eb0	74 61 62 6c 65 49 6e 74  65 72 61 63 74 69 6f 6e   tableInteraction
+5ec0	53 6f 75 72 63 65 28 29  20 7d 2c 0a 20 20 20 20   Source() },.    
+5ed0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5ee0	69 6e 64 69 63 61 74 69  6f 6e 20 3d 20 72 69 70   indication = rip
+5ef0	70 6c 65 28 63 6f 6c 6f  72 20 3d 20 50 72 65 6d   ple(color = Prem
+5f00	69 75 6d 55 72 67 65 6e  74 29 2c 0a 20 20 20 20   iumUrgent),.    
+5f10	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+5f20	6f 6e 43 6c 69 63 6b 20  3d 20 6f 6e 4c 6f 67 6f   onClick = onLogo
+5f30	75 74 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   ut,.            
+5f40	20 20 20 20 29 0a 20 20  20 20 20 20 20 20 20 20       ).          
+5f50	20 20 20 20 20 20 2e 70  61 64 64 69 6e 67 28 68         .padding(h
+5f60	6f 72 69 7a 6f 6e 74 61  6c 20 3d 20 64 2e 73 70   orizontal = d.sp
+5f70	61 63 65 4c 2c 20 76 65  72 74 69 63 61 6c 20 3d   aceL, vertical =
+5f80	20 64 2e 73 70 61 63 65  4d 29 2c 0a 20 20 20 20    d.spaceM),.    
+5f90	20 20 20 20 20 20 20 20  76 65 72 74 69 63 61 6c           vertical
+5fa0	41 6c 69 67 6e 6d 65 6e  74 20 3d 20 41 6c 69 67   Alignment = Alig
+5fb0	6e 6d 65 6e 74 2e 43 65  6e 74 65 72 56 65 72 74   nment.CenterVert
+5fc0	69 63 61 6c 6c 79 2c 0a  20 20 20 20 20 20 20 20   ically,.        
+5fd0	20 20 20 20 68 6f 72 69  7a 6f 6e 74 61 6c 41 72       horizontalAr
+5fe0	72 61 6e 67 65 6d 65 6e  74 20 3d 20 41 72 72 61   rangement = Arra
+5ff0	6e 67 65 6d 65 6e 74 2e  43 65 6e 74 65 72 2c 0a   ngement.Center,.
+6000	20 20 20 20 20 20 20 20  29 20 7b 0a 20 20 20 20           ) {.    
+6010	20 20 20 20 20 20 20 20  49 63 6f 6e 28 49 63 6f           Icon(Ico
+6020	6e 73 2e 4f 75 74 6c 69  6e 65 64 2e 4c 6f 67 6f   ns.Outlined.Logo
+6030	75 74 2c 20 63 6f 6e 74  65 6e 74 44 65 73 63 72   ut, contentDescr
+6040	69 70 74 69 6f 6e 20 3d  20 6e 75 6c 6c 2c 20 6d   iption = null, m
+6050	6f 64 69 66 69 65 72 20  3d 20 4d 6f 64 69 66 69   odifier = Modifi
+6060	65 72 2e 73 69 7a 65 28  64 2e 69 63 6f 6e 53 29   er.size(d.iconS)
+6070	29 0a 20 20 20 20 20 20  20 20 20 20 20 20 53 70   ).            Sp
+6080	61 63 65 72 28 4d 6f 64  69 66 69 65 72 2e 73 69   acer(Modifier.si
+6090	7a 65 28 64 2e 73 70 61  63 65 53 29 29 0a 20 20   ze(d.spaceS)).  
+60a0	20 20 20 20 20 20 20 20  20 20 54 65 78 74 28 0a             Text(.
+60b0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20                   
+60c0	74 65 78 74 20 3d 20 73  74 72 69 6e 67 52 65 73   text = stringRes
+60d0	6f 75 72 63 65 28 52 2e  73 74 72 69 6e 67 2e 6c   ource(R.string.l
+60e0	6f 67 6f 75 74 5f 62 75  74 74 6f 6e 29 2c 0a 20   ogout_button),. 
+60f0	20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 73                  s
+6100	74 79 6c 65 20 3d 20 4d  61 74 65 72 69 61 6c 54   tyle = MaterialT
+6110	68 65 6d 65 2e 74 79 70  6f 67 72 61 70 68 79 2e   heme.typography.
+6120	74 69 74 6c 65 53 6d 61  6c 6c 2c 0a 20 20 20 20   titleSmall,.    
+6130	20 20 20 20 20 20 20 20  20 20 20 20 66 6f 6e 74               font
+6140	57 65 69 67 68 74 20 3d  20 46 6f 6e 74 57 65 69   Weight = FontWei
+6150	67 68 74 2e 42 6f 6c 64  2c 0a 20 20 20 20 20 20   ght.Bold,.      
+6160	20 20 20 20 20 20 29 0a  20 20 20 20 20 20 20 20         ).        
+6170	7d 0a 20 20 20 20 7d 0a  7d 0a 0a 40 43 6f 6d 70   }.    }.}..@Comp
+6180	6f 73 61 62 6c 65 0a 70  72 69 76 61 74 65 20 66   osable.private f
+6190	75 6e 20 50 72 6f 66 69  6c 65 46 6f 6f 74 65 72   un ProfileFooter
+61a0	28 74 65 78 74 3a 20 53  74 72 69 6e 67 29 20 7b   (text: String) {
+61b0	0a 20 20 20 20 54 65 78  74 28 0a 20 20 20 20 20   .    Text(.     
+61c0	20 20 20 74 65 78 74 20  3d 20 74 65 78 74 2c 0a      text = text,.
+61d0	20 20 20 20 20 20 20 20  73 74 79 6c 65 20 3d 20           style = 
+61e0	4d 61 74 65 72 69 61 6c  54 68 65 6d 65 2e 74 79   MaterialTheme.ty
+61f0	70 6f 67 72 61 70 68 79  2e 6c 61 62 65 6c 53 6d   pography.labelSm
+6200	61 6c 6c 2c 0a 20 20 20  20 20 20 20 20 63 6f 6c   all,.        col
+6210	6f 72 20 3d 20 50 68 61  72 6d 61 4e 65 75 74 72   or = PharmaNeutr
+6220	61 6c 36 30 30 2e 63 6f  70 79 28 61 6c 70 68 61   al600.copy(alpha
+6230	20 3d 20 30 2e 37 32 66  29 2c 0a 20 20 20 20 20    = 0.72f),.     
+6240	20 20 20 74 65 78 74 41  6c 69 67 6e 20 3d 20 54      textAlign = T
+6250	65 78 74 41 6c 69 67 6e  2e 43 65 6e 74 65 72 2c   extAlign.Center,
+6260	0a 20 20 20 20 20 20 20  20 6d 6f 64 69 66 69 65   .        modifie
+6270	72 20 3d 20 4d 6f 64 69  66 69 65 72 0a 20 20 20   r = Modifier.   
+6280	20 20 20 20 20 20 20 20  20 2e 66 69 6c 6c 4d 61            .fillMa
+6290	78 57 69 64 74 68 28 29  0a 20 20 20 20 20 20 20   xWidth().       
+62a0	20 20 20 20 20 2e 70 61  64 64 69 6e 67 28 62 6f        .padding(bo
+62b0	74 74 6f 6d 20 3d 20 4d  61 74 65 72 69 61 6c 54   ttom = MaterialT
+62c0	68 65 6d 65 2e 64 69 6d  65 6e 73 2e 73 70 61 63   heme.dimens.spac
+62d0	65 4d 29 2c 0a 20 20 20  20 29 0a 7d 0a 0a 70 72   eM),.    ).}..pr
+62e0	69 76 61 74 65 20 66 75  6e 20 4c 69 73 74 3c 53   ivate fun List<S
+62f0	65 74 74 69 6e 67 49 74  65 6d 3e 2e 67 72 6f 75   ettingItem>.grou
+6300	70 46 6f 72 50 72 6f 66  69 6c 65 28 61 63 63 6f   pForProfile(acco
+6310	75 6e 74 54 79 70 65 3a  20 63 6f 6d 2e 70 68 61   untType: com.pha
+6320	72 6d 61 6c 69 6e 6b 2e  64 6f 6d 61 69 6e 2e 6d   rmalink.domain.m
+6330	6f 64 65 6c 2e 41 63 63  6f 75 6e 74 54 79 70 65   odel.AccountType
+6340	3f 29 3a 20 4c 69 73 74  3c 53 65 74 74 69 6e 67   ?): List<Setting
+6350	73 47 72 6f 75 70 3e 20  7b 0a 20 20 20 20 76 61   sGroup> {.    va
+6360	6c 20 67 65 6e 65 72 61  6c 20 3d 20 66 69 6c 74   l general = filt
+6370	65 72 20 7b 20 69 74 2e  69 73 4e 6f 74 69 66 69   er { it.isNotifi
+6380	63 61 74 69 6f 6e 28 29  20 7c 7c 20 69 74 2e 69   cation() || it.i
+6390	73 4c 61 6e 67 75 61 67  65 28 29 20 7c 7c 20 69   sLanguage() || i
+63a0	74 2e 69 73 41 62 6f 75  74 28 29 20 7d 0a 20 20   t.isAbout() }.  
+63b0	20 20 76 61 6c 20 73 65  63 75 72 69 74 79 20 3d     val security =
+63c0	20 66 69 6c 74 65 72 20  7b 20 69 74 2e 69 73 53    filter { it.isS
+63d0	65 63 75 72 69 74 79 28  29 20 7d 0a 20 20 20 20   ecurity() }.    
+63e0	76 61 6c 20 73 75 70 70  6f 72 74 20 3d 20 69 66   val support = if
+63f0	20 28 61 63 63 6f 75 6e  74 54 79 70 65 20 3d 3d    (accountType ==
+6400	20 63 6f 6d 2e 70 68 61  72 6d 61 6c 69 6e 6b 2e    com.pharmalink.
+6410	64 6f 6d 61 69 6e 2e 6d  6f 64 65 6c 2e 41 63 63   domain.model.Acc
+6420	6f 75 6e 74 54 79 70 65  2e 41 44 4d 49 4e 29 20   ountType.ADMIN) 
+6430	7b 0a 20 20 20 20 20 20  20 20 65 6d 70 74 79 4c   {.        emptyL
+6440	69 73 74 28 29 0a 20 20  20 20 7d 20 65 6c 73 65   ist().    } else
+6450	20 7b 0a 20 20 20 20 20  20 20 20 66 69 6c 74 65    {.        filte
+6460	72 20 7b 20 69 74 2e 69  73 48 65 6c 70 53 75 70   r { it.isHelpSup
+6470	70 6f 72 74 28 29 20 7c  7c 20 69 74 2e 69 73 43   port() || it.isC
+6480	6f 6e 74 61 63 74 28 29  20 7d 0a 20 20 20 20 7d   ontact() }.    }
+6490	0a 20 20 20 20 76 61 6c  20 67 72 6f 75 70 65 64   .    val grouped
+64a0	20 3d 20 67 65 6e 65 72  61 6c 20 2b 20 73 65 63    = general + sec
+64b0	75 72 69 74 79 20 2b 20  73 75 70 70 6f 72 74 0a   urity + support.
+64c0	20 20 20 20 76 61 6c 20  66 61 6c 6c 62 61 63 6b       val fallback
+64d0	20 3d 20 66 69 6c 74 65  72 4e 6f 74 20 7b 20 69    = filterNot { i
+64e0	74 20 69 6e 20 67 72 6f  75 70 65 64 20 7d 0a 0a   t in grouped }..
+64f0	20 20 20 20 72 65 74 75  72 6e 20 62 75 69 6c 64       return build
+6500	4c 69 73 74 20 7b 0a 20  20 20 20 20 20 20 20 69   List {.        i
+6510	66 20 28 67 65 6e 65 72  61 6c 2e 69 73 4e 6f 74   f (general.isNot
+6520	45 6d 70 74 79 28 29 29  20 7b 0a 20 20 20 20 20   Empty()) {.     
+6530	20 20 20 20 20 20 20 61  64 64 28 53 65 74 74 69          add(Setti
+6540	6e 67 73 47 72 6f 75 70  28 22 ef bf bd ef bf bd   ngsGroup("......
+6550	ef bf bd ef bf bd ef bf  bd ef bf bd ef bf bd ef   ................
+6560	bf bd ef bf bd 20 ef bf  bd ef bf bd ef bf bd ef   ..... ..........
+6570	bf bd ef bf bd ef bf bd  22 2c 20 22 ef bf bd ef   ........", "....
+6580	bf bd ef bf bd ef bf bd  ef bf bd 20 ef bf bd ef   ........... ....
+6590	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd ef bf   ................
+65a0	bd ef bf bd ef bf bd ef  bf bd 20 ef bf bd ef bf   .......... .....
+65b0	bd ef bf bd ef bf bd ef  bf bd ef bf bd ef bf bd   ................
+65c0	ef bf bd 20 ef bf bd ef  bf bd ef bf bd ef bf bd   ... ............
+65d0	ef bf bd ef bf bd ef bf  bd 22 2c 20 67 65 6e 65   .........", gene
+65e0	72 61 6c 29 29 0a 20 20  20 20 20 20 20 20 7d 0a   ral)).        }.
+65f0	20 20 20 20 20 20 20 20  69 66 20 28 73 65 63 75           if (secu
+6600	72 69 74 79 2e 69 73 4e  6f 74 45 6d 70 74 79 28   rity.isNotEmpty(
+6610	29 29 20 7b 0a 20 20 20  20 20 20 20 20 20 20 20   )) {.           
+6620	20 61 64 64 28 53 65 74  74 69 6e 67 73 47 72 6f    add(SettingsGro
+6630	75 70 28 22 ef bf bd ef  bf bd ef bf bd ef bf bd   up("............
+6640	ef bf bd ef bf bd 20 ef  bf bd ef bf bd ef bf bd   ...... .........
+6650	ef bf bd ef bf bd ef bf  bd ef bf bd ef bf bd ef   ................
+6660	bf bd 22 2c 20 22 ef bf  bd ef bf bd ef bf bd ef   ..", "..........
+6670	bf bd ef bf bd ef bf bd  20 ef bf bd ef bf bd ef   ........ .......
+6680	bf bd ef bf bd ef bf bd  20 ef bf bd ef bf bd ef   ........ .......
+6690	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd 20 ef   .............. .
+66a0	bf bd ef bf bd ef bf bd  20 ef bf bd ef bf bd ef   ........ .......
+66b0	bf bd 20 ef bf bd ef bf  bd ef bf bd ef bf bd ef   .. .............
+66c0	bf bd ef bf bd 22 2c 20  73 65 63 75 72 69 74 79   .....", security
+66d0	29 29 0a 20 20 20 20 20  20 20 20 7d 0a 20 20 20   )).        }.   
+66e0	20 20 20 20 20 69 66 20  28 73 75 70 70 6f 72 74        if (support
+66f0	2e 69 73 4e 6f 74 45 6d  70 74 79 28 29 29 20 7b   .isNotEmpty()) {
+6700	0a 20 20 20 20 20 20 20  20 20 20 20 20 61 64 64   .            add
+6710	28 53 65 74 74 69 6e 67  73 47 72 6f 75 70 28 22   (SettingsGroup("
+6720	ef bf bd ef bf bd ef bf  bd ef bf bd ef bf bd 20   ............... 
+6730	ef bf bd ef bf bd ef bf  bd ef bf bd ef bf bd ef   ................
+6740	bf bd ef bf bd ef bf bd  ef bf bd 22 2c 20 22 ef   ...........", ".
+6750	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd 20 ef   .............. .
+6760	bf bd ef bf bd ef bf bd  ef bf bd 20 ef bf bd ef   ........... ....
+6770	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd ef bf   ................
+6780	bd 20 ef bf bd ef bf bd  ef bf bd ef bf bd ef bf   . ..............
+6790	bd 20 ef bf bd ef bf bd  ef bf bd ef bf bd ef bf   . ..............
+67a0	bd 22 2c 20 73 75 70 70  6f 72 74 29 29 0a 20 20   .", support)).  
+67b0	20 20 20 20 20 20 7d 0a  20 20 20 20 20 20 20 20         }.        
+67c0	69 66 20 28 66 61 6c 6c  62 61 63 6b 2e 69 73 4e   if (fallback.isN
+67d0	6f 74 45 6d 70 74 79 28  29 29 20 7b 0a 20 20 20   otEmpty()) {.   
+67e0	20 20 20 20 20 20 20 20  20 61 64 64 28 53 65 74            add(Set
+67f0	74 69 6e 67 73 47 72 6f  75 70 28 22 ef bf bd ef   tingsGroup("....
+6800	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd 20 ef   .............. .
+6810	bf bd ef bf bd ef bf bd  ef bf bd 22 2c 20 22 ef   ...........", ".
+6820	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd 20 ef   .............. .
+6830	bf bd ef bf bd ef bf bd  ef bf bd ef bf bd ef bf   ................
+6840	bd 20 ef bf bd ef bf bd  ef bf bd 20 ef bf bd ef   . ......... ....
+6850	bf bd ef bf bd ef bf bd  ef bf bd 22 2c 20 66 61   ...........", fa
+6860	6c 6c 62 61 63 6b 29 29  0a 20 20 20 20 20 20 20   llback)).       
+6870	20 7d 0a 20 20 20 20 7d  0a 7d 0a 0a 70 72 69 76    }.    }.}..priv
+6880	61 74 65 20 66 75 6e 20  73 65 74 74 69 6e 67 49   ate fun settingI
+6890	63 6f 6e 28 74 69 74 6c  65 3a 20 53 74 72 69 6e   con(title: Strin
+68a0	67 29 3a 20 49 6d 61 67  65 56 65 63 74 6f 72 20   g): ImageVector 
+68b0	3d 20 77 68 65 6e 20 7b  0a 20 20 20 20 53 65 74   = when {.    Set
+68c0	74 69 6e 67 49 74 65 6d  28 74 69 74 6c 65 2c 20   tingItem(title, 
+68d0	22 22 29 2e 69 73 4e 6f  74 69 66 69 63 61 74 69   "").isNotificati
+68e0	6f 6e 28 29 20 2d 3e 20  49 63 6f 6e 73 2e 4f 75   on() -> Icons.Ou
+68f0	74 6c 69 6e 65 64 2e 4e  6f 74 69 66 69 63 61 74   tlined.Notificat
+6900	69 6f 6e 73 0a 20 20 20  20 53 65 74 74 69 6e 67   ions.    Setting
+6910	49 74 65 6d 28 74 69 74  6c 65 2c 20 22 22 29 2e   Item(title, "").
+6920	69 73 4c 61 6e 67 75 61  67 65 28 29 20 2d 3e 20   isLanguage() -> 
+6930	49 63 6f 6e 73 2e 4f 75  74 6c 69 6e 65 64 2e 4c   Icons.Outlined.L
+6940	61 6e 67 75 61 67 65 0a  20 20 20 20 53 65 74 74   anguage.    Sett
+6950	69 6e 67 49 74 65 6d 28  74 69 74 6c 65 2c 20 22   ingItem(title, "
+6960	22 29 2e 69 73 53 65 63  75 72 69 74 79 28 29 20   ").isSecurity() 
+6970	2d 3e 20 49 63 6f 6e 73  2e 4f 75 74 6c 69 6e 65   -> Icons.Outline
+6980	64 2e 4c 6f 63 6b 0a 20  20 20 20 53 65 74 74 69   d.Lock.    Setti
+6990	6e 67 49 74 65 6d 28 74  69 74 6c 65 2c 20 22 22   ngItem(title, ""
+69a0	29 2e 69 73 48 65 6c 70  53 75 70 70 6f 72 74 28   ).isHelpSupport(
+69b0	29 20 2d 3e 20 49 63 6f  6e 73 2e 4f 75 74 6c 69   ) -> Icons.Outli
+69c0	6e 65 64 2e 48 65 6c 70  4f 75 74 6c 69 6e 65 0a   ned.HelpOutline.
+69d0	20 20 20 20 53 65 74 74  69 6e 67 49 74 65 6d 28       SettingItem(
+69e0	74 69 74 6c 65 2c 20 22  22 29 2e 69 73 43 6f 6e   title, "").isCon
+69f0	74 61 63 74 28 29 20 2d  3e 20 49 63 6f 6e 73 2e   tact() -> Icons.
+6a00	4f 75 74 6c 69 6e 65 64  2e 50 68 6f 6e 65 0a 20   Outlined.Phone. 
+6a10	20 20 20 53 65 74 74 69  6e 67 49 74 65 6d 28 74      SettingItem(t
+6a20	69 74 6c 65 2c 20 22 22  29 2e 69 73 41 62 6f 75   itle, "").isAbou
+6a30	74 28 29 20 2d 3e 20 49  63 6f 6e 73 2e 4f 75 74   t() -> Icons.Out
+6a40	6c 69 6e 65 64 2e 49 6e  66 6f 0a 20 20 20 20 65   lined.Info.    e
+6a50	6c 73 65 20 2d 3e 20 49  63 6f 6e 73 2e 4f 75 74   lse -> Icons.Out
+6a60	6c 69 6e 65 64 2e 53 65  74 74 69 6e 67 73 0a 7d   lined.Settings.}
+6a70	0a 0a 70 72 69 76 61 74  65 20 66 75 6e 20 53 65   ..private fun Se
+6a80	74 74 69 6e 67 49 74 65  6d 2e 69 73 4e 6f 74 69   ttingItem.isNoti
+6a90	66 69 63 61 74 69 6f 6e  28 29 3a 20 42 6f 6f 6c   fication(): Bool
+6aa0	65 61 6e 20 3d 20 74 69  74 6c 65 2e 63 6f 6e 74   ean = title.cont
+6ab0	61 69 6e 73 28 22 ef bf  bd ef bf bd ef bf bd ef   ains("..........
+6ac0	bf bd ef bf bd 22 29 20  7c 7c 20 74 69 74 6c 65   .....") || title
+6ad0	2e 63 6f 6e 74 61 69 6e  73 28 22 d8 a5 d8 b4 d8   .contains(".....
+6ae0	b9 d8 a7 d8 b1 22 29 0a  0a 70 72 69 76 61 74 65   .....")..private
+6af0	20 66 75 6e 20 53 65 74  74 69 6e 67 49 74 65 6d    fun SettingItem
+6b00	2e 69 73 4c 61 6e 67 75  61 67 65 28 29 3a 20 42   .isLanguage(): B
+6b10	6f 6f 6c 65 61 6e 20 3d  20 74 69 74 6c 65 2e 63   oolean = title.c
+6b20	6f 6e 74 61 69 6e 73 28  22 ef bf bd ef bf bd ef   ontains(".......
+6b30	bf bd 22 29 20 7c 7c 20  74 69 74 6c 65 2e 63 6f   ..") || title.co
+6b40	6e 74 61 69 6e 73 28 22  d9 84 d8 ba d8 a9 22 29   ntains("......")
+6b50	0a 0a 70 72 69 76 61 74  65 20 66 75 6e 20 53 65   ..private fun Se
+6b60	74 74 69 6e 67 49 74 65  6d 2e 69 73 53 65 63 75   ttingItem.isSecu
+6b70	72 69 74 79 28 29 3a 20  42 6f 6f 6c 65 61 6e 20   rity(): Boolean 
+6b80	3d 0a 20 20 20 20 74 69  74 6c 65 2e 63 6f 6e 74   =.    title.cont
+6b90	61 69 6e 73 28 22 ef bf  bd ef bf bd ef bf bd ef   ains("..........
+6ba0	bf bd 22 29 20 7c 7c 20  74 69 74 6c 65 2e 63 6f   ..") || title.co
+6bb0	6e 74 61 69 6e 73 28 22  ef bf bd ef bf bd ef bf   ntains("........
+6bc0	bd ef bf bd 22 29 20 7c  7c 20 74 69 74 6c 65 2e   ....") || title.
+6bd0	63 6f 6e 74 61 69 6e 73  28 22 ef bf bd ef bf bd   contains("......
+6be0	ef bf bd ef bf bd 22 29  20 7c 7c 0a 20 20 20 20   ......") ||.    
+6bf0	20 20 20 20 74 69 74 6c  65 2e 63 6f 6e 74 61 69       title.contai
+6c00	6e 73 28 22 d8 a3 d9 85  d8 a7 d9 86 22 29 20 7c   ns("........") |
+6c10	7c 20 74 69 74 6c 65 2e  63 6f 6e 74 61 69 6e 73   | title.contains
+6c20	28 22 d8 ae d8 b5 d9 88  d8 b5 22 29 20 7c 7c 20   ("........") || 
+6c30	74 69 74 6c 65 2e 63 6f  6e 74 61 69 6e 73 28 22   title.contains("
+6c40	d9 83 d9 84 d9 85 d8 a9  22 29 0a 0a 70 72 69 76   ........")..priv
+6c50	61 74 65 20 66 75 6e 20  53 65 74 74 69 6e 67 49   ate fun SettingI
+6c60	74 65 6d 2e 69 73 48 65  6c 70 53 75 70 70 6f 72   tem.isHelpSuppor
+6c70	74 28 29 3a 20 42 6f 6f  6c 65 61 6e 20 3d 0a 20   t(): Boolean =. 
+6c80	20 20 20 74 69 74 6c 65  2e 63 6f 6e 74 61 69 6e      title.contain
+6c90	73 28 22 ef bf bd ef bf  bd ef bf bd ef bf bd ef   s(".............
+6ca0	bf bd ef bf bd 22 29 20  7c 7c 20 74 69 74 6c 65   .....") || title
+6cb0	2e 63 6f 6e 74 61 69 6e  73 28 22 ef bf bd ef bf   .contains(".....
+6cc0	bd ef bf bd 22 29 20 7c  7c 20 74 69 74 6c 65 2e   ....") || title.
+6cd0	63 6f 6e 74 61 69 6e 73  28 22 d9 85 d8 b3 d8 a7   contains("......
+6ce0	d8 b9 d8 af d8 a9 22 29  20 7c 7c 20 74 69 74 6c   ......") || titl
+6cf0	65 2e 63 6f 6e 74 61 69  6e 73 28 22 d8 af d8 b9   e.contains("....
+6d00	d9 85 22 29 0a 0a 70 72  69 76 61 74 65 20 66 75   ..")..private fu
+6d10	6e 20 53 65 74 74 69 6e  67 49 74 65 6d 2e 69 73   n SettingItem.is
+6d20	43 6f 6e 74 61 63 74 28  29 3a 20 42 6f 6f 6c 65   Contact(): Boole
+6d30	61 6e 20 3d 0a 20 20 20  20 74 69 74 6c 65 2e 63   an =.    title.c
+6d40	6f 6e 74 61 69 6e 73 28  22 ef bf bd ef bf bd ef   ontains(".......
+6d50	bf bd ef bf bd ef bf bd  22 29 20 7c 7c 20 74 69   ........") || ti
+6d60	74 6c 65 2e 63 6f 6e 74  61 69 6e 73 28 22 ef bf   tle.contains("..
+6d70	bd ef bf bd ef bf bd ef  bf bd ef bf bd 22 29 20   .............") 
+6d80	7c 7c 20 74 69 74 6c 65  2e 63 6f 6e 74 61 69 6e   || title.contain
+6d90	73 28 22 d8 aa d9 88 d8  a7 d8 b5 d9 84 22 29 0a   s("..........").
+6da0	0a 70 72 69 76 61 74 65  20 66 75 6e 20 53 65 74   .private fun Set
+6db0	74 69 6e 67 49 74 65 6d  2e 69 73 41 62 6f 75 74   tingItem.isAbout
+6dc0	28 29 3a 20 42 6f 6f 6c  65 61 6e 20 3d 20 74 69   (): Boolean = ti
+6dd0	74 6c 65 2e 63 6f 6e 74  61 69 6e 73 28 22 ef bf   tle.contains("..
+6de0	bd ef bf bd ef bf bd 22  29 20 7c 7c 20 74 69 74   .......") || tit
+6df0	6c 65 2e 63 6f 6e 74 61  69 6e 73 28 22 d8 ad d9   le.contains("...
+6e00	88 d9 84 22 29 0a 0a 40  50 72 65 76 69 65 77 28   ...")..@Preview(
+6e10	73 68 6f 77 42 61 63 6b  67 72 6f 75 6e 64 20 3d   showBackground =
+6e20	20 74 72 75 65 29 0a 40  43 6f 6d 70 6f 73 61 62    true).@Composab
+6e30	6c 65 0a 66 75 6e 20 50  72 6f 66 69 6c 65 53 63   le.fun ProfileSc
+6e40	72 65 65 6e 50 72 65 76  69 65 77 28 29 20 7b 0a   reenPreview() {.
+6e50	20 20 20 20 53 74 69 74  63 68 54 68 65 6d 65 20       StitchTheme 
+6e60	7b 0a 20 20 20 20 20 20  20 20 50 72 6f 66 69 6c   {.        Profil
+6e70	65 43 6f 6e 74 65 6e 74  28 0a 20 20 20 20 20 20   eContent(.      
+6e80	20 20 20 20 20 20 75 69  53 74 61 74 65 20 3d 20         uiState = 
+6e90	50 72 6f 66 69 6c 65 55  69 53 74 61 74 65 28 29   ProfileUiState()
+6ea0	2c 0a 20 20 20 20 20 20  20 20 20 20 20 20 6f 6e   ,.            on
+6eb0	4c 6f 67 6f 75 74 20 3d  20 7b 7d 2c 0a 20 20 20   Logout = {},.   
+6ec0	20 20 20 20 20 20 20 20  20 6f 6e 45 64 69 74 50            onEditP
+6ed0	72 6f 66 69 6c 65 20 3d  20 7b 7d 2c 0a 20 20 20   rofile = {},.   
+6ee0	20 20 20 20 20 20 20 20  20 6f 6e 43 68 61 6e 67            onChang
+6ef0	65 50 61 73 73 77 6f 72  64 20 3d 20 7b 7d 2c 0a   ePassword = {},.
+6f00	20 20 20 20 20 20 20 20  20 20 20 20 6f 6e 4f 70               onOp
+6f10	65 6e 48 65 6c 70 53 75  70 70 6f 72 74 20 3d 20   enHelpSupport = 
+6f20	7b 7d 2c 0a 20 20 20 20  20 20 20 20 20 20 20 20   {},.            
+6f30	6f 6e 4f 70 65 6e 41 62  6f 75 74 41 70 70 20 3d   onOpenAboutApp =
+6f40	20 7b 7d 2c 0a 20 20 20  20 20 20 20 20 20 20 20    {},.           
+6f50	20 6f 6e 4f 70 65 6e 43  6f 6e 74 61 63 74 55 73    onOpenContactUs
+6f60	20 3d 20 7b 7d 2c 0a 20  20 20 20 20 20 20 20 20    = {},.         
+6f70	20 20 20 6f 6e 4f 70 65  6e 4c 61 6e 67 75 61 67      onOpenLanguag
+6f80	65 20 3d 20 7b 7d 2c 0a  20 20 20 20 20 20 20 20   e = {},.        
+6f90	20 20 20 20 6f 6e 4e 6f  74 69 66 69 63 61 74 69       onNotificati
+6fa0	6f 6e 73 54 6f 67 67 6c  65 20 3d 20 7b 7d 2c 0a   onsToggle = {},.
+6fb0	20 20 20 20 20 20 20 20  29 0a 20 20 20 20 7d 0a           ).    }.
+6fc0	7d 0a                                              }.

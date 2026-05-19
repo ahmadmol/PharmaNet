@@ -19,6 +19,8 @@ data class SignUpRequest(
     val pharmacyLocation: String = "",
     val warehouseName: String = "",
     val warehouseLocation: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
 )
 
 data class SignUpResult(
@@ -74,7 +76,11 @@ fun SignUpRequest.toProfileData(): Map<String, String> = buildMap {
     put("full_name", fullName)
     put("phone_number", phoneNumber)
     put("account_type", accountType.name)
-    
+
+    // Add location coordinates if available
+    latitude?.let { put("latitude", it.toString()) }
+    longitude?.let { put("longitude", it.toString()) }
+
     when (accountType) {
         AccountType.PHARMACY -> {
             put("pharmacy_name", pharmacyName)

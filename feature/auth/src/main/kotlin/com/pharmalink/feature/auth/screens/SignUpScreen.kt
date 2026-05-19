@@ -13,12 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.LocalPharmacy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.designsystem.R as DsR
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.feature.auth.R
 import com.pharmalink.feature.auth.SignUpUiState
@@ -54,6 +55,7 @@ fun SignUpScreen(
     onPharmacyLocationChange: (String) -> Unit,
     onWarehouseNameChange: (String) -> Unit,
     onWarehouseLocationChange: (String) -> Unit,
+    onRequestCurrentLocationClick: () -> Unit,
     onPhoneNumberChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
@@ -94,10 +96,10 @@ fun SignUpScreen(
                     horizontalArrangement = Arrangement.spacedBy(d.spaceS),
                 ) {
                     Icon(
-                        Icons.Outlined.LocalPharmacy,
+                        painter = painterResource(id = DsR.drawable.sydaliti_logo_full),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp),
+                        modifier = Modifier.size(44.dp),
                     )
                     Text(
                         text = stringResource(R.string.auth_brand_title),
@@ -121,7 +123,7 @@ fun SignUpScreen(
             )
             Spacer(Modifier.height(d.spaceS))
             Text(
-                text = "ابدأ رحلتك في إدارة صيدليتك باحترافية",
+                text = stringResource(R.string.signup_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -130,7 +132,7 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(d.spaceXL))
 
-            StitchStepChip(text = "الخطوة 1: نوع الحساب")
+            StitchStepChip(text = stringResource(R.string.signup_step_1_account_type))
             Spacer(Modifier.height(d.spaceM))
             StitchAccountTypeSelector(
                 selected = uiState.accountType,
@@ -139,7 +141,7 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(d.spaceXL))
 
-            StitchStepChip(text = "الخطوة 2: المعلومات الشخصية")
+            StitchStepChip(text = stringResource(R.string.signup_step_2_personal_info))
             Spacer(Modifier.height(d.spaceM))
 
             Surface(
@@ -156,31 +158,31 @@ fun SignUpScreen(
                         value = uiState.fullName,
                         onValueChange = onFullNameChange,
                         isError = isFullNameError,
-                        errorMessage = if (isFullNameError) "الاسم الكامل مطلوب" else null,
+                        errorMessage = if (isFullNameError) stringResource(R.string.error_full_name_required) else null,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     StitchPhoneRow(
                         fullPhoneNumber = uiState.phoneNumber,
                         onFullPhoneNumberChange = onPhoneNumberChange,
                         isError = isPhoneError,
-                        errorMessage = if (isPhoneError) "رقم الهاتف مطلوب" else null,
+                        errorMessage = if (isPhoneError) stringResource(R.string.error_phone_required) else null,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     PasswordTextField(
                         value = uiState.password,
                         onValueChange = onPasswordChange,
                         isError = isPasswordError,
-                        errorMessage = if (isPasswordError) "كلمة المرور مطلوبة" else null,
+                        errorMessage = if (isPasswordError) stringResource(R.string.error_password_required) else null,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     PasswordTextField(
                         value = uiState.confirmPassword,
                         onValueChange = onConfirmPasswordChange,
-                        label = "تأكيد كلمة المرور",
+                        label = stringResource(R.string.field_label_confirm_password),
                         isError = isConfirmPasswordError,
                         errorMessage = when {
-                            uiState.confirmPassword.isEmpty() -> "تأكيد كلمة المرور مطلوب"
-                            uiState.password != uiState.confirmPassword -> "كلمات المرور غير متطابقة"
+                            uiState.confirmPassword.isEmpty() -> stringResource(R.string.error_confirm_password_required)
+                            uiState.password != uiState.confirmPassword -> stringResource(R.string.error_password_mismatch_detail)
                             else -> null
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -190,7 +192,7 @@ fun SignUpScreen(
 
             if (uiState.accountType == AccountType.PHARMACY) {
                 Spacer(Modifier.height(d.spaceL))
-                StitchStepChip(text = "الخطوة 3: تفاصيل الصيدلية")
+                StitchStepChip(text = stringResource(R.string.signup_step_3_pharmacy_details))
                 Spacer(Modifier.height(d.spaceM))
                 Surface(
                     shape = RoundedCornerShape(d.radiusL),
@@ -206,24 +208,41 @@ fun SignUpScreen(
                             value = uiState.pharmacyName,
                             onValueChange = onPharmacyNameChange,
                             isError = isPharmacyNameError,
-                            errorMessage = if (isPharmacyNameError) "اسم الصيدلية مطلوب" else null,
+                            errorMessage = if (isPharmacyNameError) stringResource(R.string.error_pharmacy_name_required) else null,
                             modifier = Modifier.fillMaxWidth(),
                         )
                         LocationTextField(
                             value = uiState.pharmacyLocation,
                             onValueChange = onPharmacyLocationChange,
-                            label = "الموقع (الحي / الشارع)",
+                            label = stringResource(R.string.field_label_location_pharmacy),
                             isError = false,
                             errorMessage = null,
                             modifier = Modifier.fillMaxWidth(),
                         )
+                        TextButton(
+                            onClick = onRequestCurrentLocationClick,
+                            enabled = !uiState.isResolvingLocation,
+                        ) {
+                            Text(stringResource(R.string.location_picker_use_current_location))
+                        }
+                        if (uiState.latitude != null && uiState.longitude != null) {
+                            Text(
+                                text = stringResource(
+                                    R.string.location_picker_lat_lng_format,
+                                    uiState.latitude,
+                                    uiState.longitude
+                                ),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
 
             if (uiState.accountType == AccountType.WAREHOUSE) {
                 Spacer(Modifier.height(d.spaceL))
-                StitchStepChip(text = "الخطوة 3: تفاصيل المستودع")
+                StitchStepChip(text = stringResource(R.string.signup_step_3_warehouse_details))
                 Spacer(Modifier.height(d.spaceM))
                 Surface(
                     shape = RoundedCornerShape(d.radiusL),
@@ -239,17 +258,35 @@ fun SignUpScreen(
                             value = uiState.warehouseName,
                             onValueChange = onWarehouseNameChange,
                             isError = isWarehouseNameError,
-                            errorMessage = if (isWarehouseNameError) "اسم المستودع مطلوب" else null,
+                            errorMessage = if (isWarehouseNameError) stringResource(R.string.error_warehouse_name_required) else null,
                             modifier = Modifier.fillMaxWidth(),
                         )
                         LocationTextField(
                             value = uiState.warehouseLocation,
                             onValueChange = onWarehouseLocationChange,
-                            label = "الموقع (في حلب)",
+                            label = stringResource(R.string.field_label_location_warehouse),
                             isError = isWarehouseLocationError,
-                            errorMessage = if (isWarehouseLocationError) "موقع المستودع مطلوب" else null,
+                            errorMessage = if (isWarehouseLocationError) stringResource(R.string.error_warehouse_location_required) else null,
                             modifier = Modifier.fillMaxWidth(),
+                            readOnly = true,
                         )
+                        TextButton(
+                            onClick = onRequestCurrentLocationClick,
+                            enabled = !uiState.isResolvingLocation,
+                        ) {
+                            Text(stringResource(R.string.location_picker_use_current_location))
+                        }
+                        if (uiState.latitude != null && uiState.longitude != null) {
+                            Text(
+                                text = stringResource(
+                                    R.string.location_picker_lat_lng_format,
+                                    uiState.latitude,
+                                    uiState.longitude
+                                ),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
@@ -257,7 +294,7 @@ fun SignUpScreen(
             Spacer(Modifier.height(d.spaceXL))
 
             StitchGradientPrimaryButton(
-                text = "إنشاء حساب",
+                text = stringResource(R.string.signup_create_account),
                 onClick = onSignUpClick,
                 enabled = isFormValid(uiState),
                 isLoading = uiState.isLoading,
@@ -293,18 +330,32 @@ fun SignUpScreen(
                 )
             }
 
+            uiState.locationMessage?.let { message ->
+                Spacer(Modifier.height(d.spaceM))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (uiState.locationMessageIsError) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
             Spacer(Modifier.height(d.spaceXL))
 
             AuthLinkRow(
-                prefixText = "لديك حساب بالفعل؟",
-                linkText = "تسجيل الدخول",
+                prefixText = stringResource(R.string.signup_have_account),
+                linkText = stringResource(R.string.signup_login),
                 onLinkClick = onLoginClick,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(Modifier.height(d.spaceL))
             Text(
-                text = "© 2024 Smart Pharmacy Platform - جميع الحقوق محفوظة",
+                text = stringResource(R.string.signup_copyright),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center,
@@ -324,7 +375,11 @@ private fun isFormValid(uiState: SignUpUiState): Boolean {
     return when (uiState.accountType) {
         AccountType.PUBLIC_USER -> base
         AccountType.PHARMACY -> base && uiState.pharmacyName.isNotEmpty()
-        AccountType.WAREHOUSE -> base && uiState.warehouseName.isNotEmpty() && uiState.warehouseLocation.isNotEmpty()
+        AccountType.WAREHOUSE -> base &&
+            uiState.warehouseName.isNotEmpty() &&
+            uiState.warehouseLocation.isNotEmpty() &&
+            uiState.latitude != null &&
+            uiState.longitude != null
         AccountType.ADMIN -> base
     }
 }

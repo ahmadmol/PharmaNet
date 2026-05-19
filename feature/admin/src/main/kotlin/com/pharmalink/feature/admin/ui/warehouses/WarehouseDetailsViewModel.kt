@@ -28,7 +28,10 @@ class WarehouseDetailsViewModel @Inject constructor(
     private val _state = MutableStateFlow(WarehouseDetailsUiState())
     val state: StateFlow<WarehouseDetailsUiState> = _state.asStateFlow()
 
-    private val _effect = MutableSharedFlow<WarehouseDetailsEffect>()
+    private val _effect = MutableSharedFlow<WarehouseDetailsEffect>(
+        replay = 0,
+        extraBufferCapacity = 1,
+    )
     val effect: SharedFlow<WarehouseDetailsEffect> = _effect.asSharedFlow()
 
     init {
@@ -95,6 +98,8 @@ class WarehouseDetailsViewModel @Inject constructor(
     }
 
     private fun Warehouse.toDetailModel(): WarehouseDetailModel {
+        // Note: Secondary stats (totalInventoryItems, activeShipments, completedOrders)
+        // are not included because endpoints are not available yet
         return WarehouseDetailModel(
             id = id,
             name = name,
@@ -108,9 +113,6 @@ class WarehouseDetailsViewModel @Inject constructor(
             estimatedDeliveryLabel = estimatedDeliveryLabel,
             distanceLabel = distanceLabel,
             lastUpdatedLabel = lastUpdatedLabel,
-            totalInventoryItems = 0, // TODO: fetch real stats when inventory endpoint is added
-            activeShipments = 0, // TODO: fetch real stats when shipments endpoint is added
-            completedOrders = 0, // TODO: fetch real stats when orders/requests RPCs are added
         )
     }
 }

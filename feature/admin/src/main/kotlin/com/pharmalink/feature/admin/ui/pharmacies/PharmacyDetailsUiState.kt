@@ -18,10 +18,8 @@ data class PharmacyDetailModel(
     val licenseNumber: String = "",
     val isActive: Boolean = false,
     val createdAt: String = "",
-    val totalEmployees: Int = 0,
-    val totalOrders: Int = 0,
-    val totalCustomers: Int = 0,
-    val averageRating: Float = 0f,
+    // Note: Secondary stats removed - endpoints not available yet
+    // totalEmployees, totalOrders, totalCustomers, averageRating
 )
 
 sealed interface PharmacyDetailsAction {

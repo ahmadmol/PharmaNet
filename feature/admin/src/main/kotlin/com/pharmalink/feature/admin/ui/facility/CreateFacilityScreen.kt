@@ -1,5 +1,6 @@
 package com.pharmalink.feature.admin.ui.facility
 
+import android.Manifest
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -47,9 +48,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,6 +61,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.pharmalink.designsystem.utils.CollectEffect
 import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.components.PharmaButtonSize
 import com.pharmalink.designsystem.components.PharmaCard
@@ -68,45 +73,54 @@ import com.pharmalink.designsystem.components.PharmaTextField
 import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.FacilityType
+import java.util.Locale
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun CreateFacilityScreen(
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
-    onPickLocation: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateFacilityViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val locationPermissionState = rememberPermissionState(
+        permission = Manifest.permission.ACCESS_FINE_LOCATION,
+        onPermissionResult = { isGranted ->
+            if (isGranted) viewModel.requestCurrentLocation() else viewModel.onLocationPermissionDenied()
+        },
+    )
 
-    LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) {
-            snackbarHostState.showSnackbar(
-                message = when (uiState.facilityType) {
-                    FacilityType.PHARMACY -> "تم إنشاء الصيدلية بنجاح"
-                    FacilityType.WAREHOUSE -> "تم إنشاء المستودع بنجاح"
-                }
-            )
-            onSuccess()
-        }
-    }
-
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let { error ->
-            snackbarHostState.showSnackbar(message = error)
+    CollectEffect(effect = viewModel.effect) { effect ->
+        when (effect) {
+            is CreateFacilityEffect.ShowSuccess -> {
+                snackbarHostState.showSnackbar(effect.message)
+            }
+            is CreateFacilityEffect.ShowError -> {
+                snackbarHostState.showSnackbar(effect.message)
+            }
+            CreateFacilityEffect.NavigateBack -> onSuccess()
         }
     }
 
     CreateFacilityContent(
         uiState = uiState,
         onBackClick = onBackClick,
+        onNavigateToProfile = onNavigateToProfile,
         onFacilityTypeChange = viewModel::onFacilityTypeChange,
         onNameChange = viewModel::onNameChange,
         onAddressChange = viewModel::onAddressChange,
         onPhoneChange = viewModel::onPhoneChange,
         onLicenseNumberChange = viewModel::onLicenseNumberChange,
-        onMapPickerClick = onPickLocation,
+        onUseCurrentLocation = {
+            if (locationPermissionState.status.isGranted) {
+                viewModel.requestCurrentLocation()
+            } else {
+                locationPermissionState.launchPermissionRequest()
+            }
+        },
         onActiveToggle = viewModel::onActiveToggle,
         onCreateClick = viewModel::onCreateClick,
         snackbarHostState = snackbarHostState,
@@ -119,12 +133,13 @@ fun CreateFacilityScreen(
 private fun CreateFacilityContent(
     uiState: CreateFacilityUiState,
     onBackClick: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onFacilityTypeChange: (FacilityType) -> Unit,
     onNameChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
     onLicenseNumberChange: (String) -> Unit,
-    onMapPickerClick: () -> Unit,
+    onUseCurrentLocation: () -> Unit,
     onActiveToggle: (Boolean) -> Unit,
     onCreateClick: () -> Unit,
     snackbarHostState: SnackbarHostState,
@@ -166,7 +181,12 @@ private fun CreateFacilityContent(
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     shape = CircleShape,
                                 )
-                                .background(MaterialTheme.colorScheme.primary),
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(),
+                                    onClick = onNavigateToProfile,
+                                ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
@@ -179,7 +199,7 @@ private fun CreateFacilityContent(
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -194,22 +214,17 @@ private fun CreateFacilityContent(
                 .padding(horizontal = d.spaceL, vertical = d.spaceL),
             verticalArrangement = Arrangement.spacedBy(d.spaceL),
         ) {
-            // Facility Type Segmented Selector
             FacilityTypeSelector(
                 selectedType = uiState.facilityType,
                 onTypeSelected = onFacilityTypeChange,
             )
 
-            // Main Form Card
             PharmaCard(
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.surface,
                 elevationDp = 6f,
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(d.spaceM),
-                ) {
-                    // Facility Name
+                Column(verticalArrangement = Arrangement.spacedBy(d.spaceM)) {
                     PharmaTextField(
                         value = uiState.name,
                         onValueChange = onNameChange,
@@ -225,17 +240,49 @@ private fun CreateFacilityContent(
                         errorMessage = uiState.nameError,
                     )
 
-                    // Address
                     PharmaTextField(
                         value = uiState.address,
                         onValueChange = onAddressChange,
-                        label = "الموقع الجغرافي",
-                        placeholder = "حدد العنوان بالتفصيل",
+                        label = "المنطقة",
+                        placeholder = if (uiState.isResolvingLocation) {
+                            "جاري تحديد المنطقة..."
+                        } else {
+                            "اضغط أيقونة الموقع لتعبئة المنطقة تلقائياً"
+                        },
                         leadingIcon = Icons.Outlined.LocationOn,
+                        trailingIcon = {
+                            IconButton(
+                                onClick = onUseCurrentLocation,
+                                enabled = !uiState.isResolvingLocation,
+                            ) {
+                                if (uiState.isResolvingLocation) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Outlined.LocationOn,
+                                        contentDescription = "تحديد الموقع الحالي",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+                            }
+                        },
+                        supportingText = when {
+                            uiState.latitude != null && uiState.longitude != null -> {
+                                String.format(
+                                    Locale.US,
+                                    "GPS: %.6f, %.6f",
+                                    uiState.latitude,
+                                    uiState.longitude,
+                                )
+                            }
+                            else -> "سيتم استخدام GPS لتعبئة اسم المنطقة"
+                        },
                         errorMessage = uiState.addressError,
                     )
 
-                    // Phone Number
                     PharmaTextField(
                         value = uiState.phone,
                         onValueChange = onPhoneChange,
@@ -246,7 +293,6 @@ private fun CreateFacilityContent(
                         errorMessage = uiState.phoneError,
                     )
 
-                    // License Number
                     PharmaTextField(
                         value = uiState.licenseNumber,
                         onValueChange = onLicenseNumberChange,
@@ -258,21 +304,17 @@ private fun CreateFacilityContent(
                 }
             }
 
-            // Map Picker Card
-            MapPickerCard(
+            LocationSummaryCard(
                 hasCoordinates = uiState.latitude != null && uiState.longitude != null,
                 latitude = uiState.latitude,
                 longitude = uiState.longitude,
-                onMapPickerClick = onMapPickerClick,
             )
 
-            // Status Card
             StatusCard(
                 isActive = uiState.isActive,
                 onActiveToggle = onActiveToggle,
             )
 
-            // Create Button
             PharmaButton(
                 text = when (uiState.facilityType) {
                     FacilityType.PHARMACY -> "إنشاء الصيدلية"
@@ -346,9 +388,8 @@ private fun FacilityTypeTab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val d = MaterialTheme.dimens
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) Color.White else Color.Transparent,
+        targetValue = if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
         animationSpec = tween(300),
         label = "tab_background",
     )
@@ -394,136 +435,61 @@ private fun FacilityTypeTab(
 }
 
 @Composable
-private fun MapPickerCard(
+private fun LocationSummaryCard(
     hasCoordinates: Boolean,
     latitude: Double?,
     longitude: Double?,
-    onMapPickerClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(190.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(),
-                onClick = onMapPickerClick,
-            ),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (hasCoordinates) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             },
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = d.spaceL, vertical = d.spaceM),
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(d.spaceM),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.LocationOn,
-                    contentDescription = null,
-                    tint = if (hasCoordinates) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    modifier = Modifier.size(48.dp),
-                )
-                
-                if (hasCoordinates && latitude != null && longitude != null) {
-                    // Show coordinates when selected
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(d.spaceXS),
-                    ) {
-                        Card(
-                            shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(
-                                    horizontal = d.spaceL,
-                                    vertical = d.spaceM,
-                                ),
-                                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.LocationOn,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                                Text(
-                                    text = "تم تحديد الموقع",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            }
-                        }
-                        
-                        // Display coordinates
-                        Text(
-                            text = "%.6f, %.6f".format(latitude, longitude),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                        
-                        Text(
-                            text = "اضغط لتغيير الموقع",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+            Icon(
+                imageVector = Icons.Outlined.LocationOn,
+                contentDescription = null,
+                tint = if (hasCoordinates) {
+                    MaterialTheme.colorScheme.primary
                 } else {
-                    // Show prompt to select location
-                    Card(
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White,
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(
-                                horizontal = d.spaceL,
-                                vertical = d.spaceM,
-                            ),
-                            horizontalArrangement = Arrangement.spacedBy(d.spaceS),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.LocationOn,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp),
-                            )
-                            Text(
-                                text = "تحديد الموقع على الخريطة",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-                    }
-                }
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.size(28.dp),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (hasCoordinates) "تم التقاط موقع المنشأة" else "لم يتم التقاط موقع GPS بعد",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(d.spaceXS))
+                Text(
+                    text = if (hasCoordinates && latitude != null && longitude != null) {
+                        String.format(Locale.US, "%.6f, %.6f", latitude, longitude)
+                    } else {
+                        "استخدم أيقونة الموقع داخل حقل المنطقة"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Start,
+                )
             }
         }
     }
@@ -552,9 +518,7 @@ private fun StatusCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "حالة المنشأة",
                     style = MaterialTheme.typography.titleMedium,
@@ -584,20 +548,19 @@ private fun CreateFacilityScreenPreview() {
             uiState = CreateFacilityUiState(
                 facilityType = FacilityType.PHARMACY,
                 name = "صيدلية النور",
-                address = "الرياض، حي النخيل",
+                address = "حي النخيل",
                 phone = "0501234567",
                 licenseNumber = "PH-2024-001",
-                latitude = null,
-                longitude = null,
                 isActive = true,
             ),
             onBackClick = {},
+            onNavigateToProfile = {},
             onFacilityTypeChange = {},
             onNameChange = {},
             onAddressChange = {},
             onPhoneChange = {},
             onLicenseNumberChange = {},
-            onMapPickerClick = {},
+            onUseCurrentLocation = {},
             onActiveToggle = {},
             onCreateClick = {},
             snackbarHostState = remember { SnackbarHostState() },
@@ -613,7 +576,7 @@ private fun CreateFacilityWithLocationPreview() {
             uiState = CreateFacilityUiState(
                 facilityType = FacilityType.PHARMACY,
                 name = "صيدلية النور",
-                address = "الرياض، حي النخيل",
+                address = "حي النخيل",
                 phone = "0501234567",
                 licenseNumber = "PH-2024-001",
                 latitude = 24.713600,
@@ -621,12 +584,13 @@ private fun CreateFacilityWithLocationPreview() {
                 isActive = true,
             ),
             onBackClick = {},
+            onNavigateToProfile = {},
             onFacilityTypeChange = {},
             onNameChange = {},
             onAddressChange = {},
             onPhoneChange = {},
             onLicenseNumberChange = {},
-            onMapPickerClick = {},
+            onUseCurrentLocation = {},
             onActiveToggle = {},
             onCreateClick = {},
             snackbarHostState = remember { SnackbarHostState() },
@@ -642,18 +606,19 @@ private fun CreateWarehouseScreenPreview() {
             uiState = CreateFacilityUiState(
                 facilityType = FacilityType.WAREHOUSE,
                 name = "مستودع الدواء المركزي",
-                address = "جدة، حي الصناعية",
+                address = "المنطقة الصناعية",
                 phone = "0507654321",
                 licenseNumber = "WH-2024-001",
                 isActive = true,
             ),
             onBackClick = {},
+            onNavigateToProfile = {},
             onFacilityTypeChange = {},
             onNameChange = {},
             onAddressChange = {},
             onPhoneChange = {},
             onLicenseNumberChange = {},
-            onMapPickerClick = {},
+            onUseCurrentLocation = {},
             onActiveToggle = {},
             onCreateClick = {},
             snackbarHostState = remember { SnackbarHostState() },

@@ -1,5 +1,13 @@
 package com.pharmalink.feature.orders
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,14 +36,20 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.components.PharmaButtonStyle
 import com.pharmalink.designsystem.components.PharmaTextField
@@ -43,6 +58,16 @@ import com.pharmalink.designsystem.theme.PharmaBlue50
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.CustomerRequestUrgency
 import com.pharmalink.domain.model.FulfillmentType
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 
 @Composable
 fun CreateCustomerOrderScreen(
@@ -53,6 +78,39 @@ fun CreateCustomerOrderScreen(
     viewModel: CreateCustomerOrderViewModel = hiltViewModel(),
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    val context = LocalContext.current
+    val activity = context.findActivity()
+    val permissionDeniedPermanently = remember { mutableStateOf(false) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            viewModel.onImageSelected(uri)
+        }
+    )
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            if (granted) {
+                permissionDeniedPermanently.value = false
+                viewModel.detectDeliveryLocation()
+            } else {
+                val permanentlyDenied = activity?.let {
+                    !ActivityCompat.shouldShowRequestPermissionRationale(
+                        it,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                    ) && !ActivityCompat.shouldShowRequestPermissionRationale(
+                        it,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                    )
+                } ?: true
+                permissionDeniedPermanently.value = permanentlyDenied
+                viewModel.onDeliveryLocationPermissionDenied(permanentlyDenied)
+            }
+        },
+    )
 
     LaunchedEffect(medicine, pharmacy) {
         viewModel.initialize(
@@ -75,9 +133,35 @@ fun CreateCustomerOrderScreen(
         onDecrementQuantity = viewModel::onDecrementQuantity,
         onUrgencyChange = viewModel::onUrgencyChange,
         onFulfillmentTypeChange = viewModel::onFulfillmentTypeChange,
-        onDeliveryAddressChange = viewModel::onDeliveryAddressChange,
+        permissionDeniedPermanently = permissionDeniedPermanently.value,
+        onDetectDeliveryLocationClick = {
+            val hasPermission = context.hasLocationPermission()
+            if (hasPermission) {
+                viewModel.detectDeliveryLocation()
+            } else {
+                locationPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                    ),
+                )
+            }
+        },
+        onOpenAppSettingsClick = {
+            context.startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", context.packageName, null),
+                ),
+            )
+        },
+        onOpenLocationSettingsClick = {
+            context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+        },
         onDeliveryPhoneChange = viewModel::onDeliveryPhoneChange,
         onNotesChange = viewModel::onNotesChange,
+        onAttachPrescriptionClick = { imagePickerLauncher.launch("image/*") },
+        onRemovePrescriptionClick = { viewModel.onImageSelected(null) },
         onSubmitClick = viewModel::onSubmitClick,
     )
 }
@@ -92,9 +176,14 @@ private fun CreateCustomerOrderContent(
     onDecrementQuantity: () -> Unit,
     onUrgencyChange: (CustomerRequestUrgency) -> Unit,
     onFulfillmentTypeChange: (FulfillmentType) -> Unit,
-    onDeliveryAddressChange: (String) -> Unit,
+    permissionDeniedPermanently: Boolean,
+    onDetectDeliveryLocationClick: () -> Unit,
+    onOpenAppSettingsClick: () -> Unit,
+    onOpenLocationSettingsClick: () -> Unit,
     onDeliveryPhoneChange: (String) -> Unit,
     onNotesChange: (String) -> Unit,
+    onAttachPrescriptionClick: () -> Unit,
+    onRemovePrescriptionClick: () -> Unit,
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -146,6 +235,13 @@ private fun CreateCustomerOrderContent(
                     )
                 }
                 item {
+                    PrescriptionAttachmentCard(
+                        prescriptionUri = uiState.prescriptionUri,
+                        onAttachClick = onAttachPrescriptionClick,
+                        onRemoveClick = onRemovePrescriptionClick,
+                    )
+                }
+                item {
                     RequestTypeSelectorCard(
                         selectedUrgency = uiState.urgency,
                         canSelectUrgent = uiState.pharmacy.id.isNotBlank(),
@@ -163,11 +259,19 @@ private fun CreateCustomerOrderContent(
                 item {
                     DeliverySection(
                         fulfillmentType = uiState.fulfillmentType,
+                        requestScope = uiState.requestScope,
                         deliveryAddress = uiState.deliveryAddress,
+                        deliveryLatitude = uiState.deliveryLatitude,
+                        deliveryLongitude = uiState.deliveryLongitude,
                         deliveryPhone = uiState.deliveryPhone,
                         deliveryAddressErrorMessage = uiState.deliveryAddressErrorMessage,
+                        deliveryLocationErrorMessage = uiState.deliveryLocationErrorMessage,
                         deliveryPhoneErrorMessage = uiState.deliveryPhoneErrorMessage,
-                        onDeliveryAddressChange = onDeliveryAddressChange,
+                        isDetectingLocation = uiState.isDetectingLocation,
+                        permissionDeniedPermanently = permissionDeniedPermanently,
+                        onDetectLocationClick = onDetectDeliveryLocationClick,
+                        onOpenAppSettingsClick = onOpenAppSettingsClick,
+                        onOpenLocationSettingsClick = onOpenLocationSettingsClick,
                         onDeliveryPhoneChange = onDeliveryPhoneChange,
                     )
                 }
@@ -202,10 +306,10 @@ private fun CreateCustomerOrderContent(
                     PharmaButton(
                         text = stringResource(R.string.customer_order_submit),
                         onClick = onSubmitClick,
-                        enabled = !uiState.isSubmitting,
+                        enabled = !uiState.isSubmitting && !uiState.isUploadingImage && !uiState.isDetectingLocation,
                     )
                 }
-                if (uiState.isSubmitting) {
+                if (uiState.isSubmitting || uiState.isUploadingImage || uiState.isDetectingLocation) {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -216,6 +320,74 @@ private fun CreateCustomerOrderContent(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrescriptionAttachmentCard(
+    prescriptionUri: android.net.Uri?,
+    onAttachClick: () -> Unit,
+    onRemoveClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = d.cardElevation,
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Text(
+                text = stringResource(R.string.customer_order_attach_prescription),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            if (prescriptionUri != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .sizeIn(maxHeight = 200.dp)
+                ) {
+                    AsyncImage(
+                        model = prescriptionUri,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.medium)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
+                        contentScale = ContentScale.Crop
+                    )
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(d.spaceS),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                        onClick = onRemoveClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = stringResource(R.string.customer_order_remove_prescription),
+                            modifier = Modifier.padding(d.spaceXS),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            } else {
+                PharmaButton(
+                    text = stringResource(R.string.customer_order_attach_prescription),
+                    onClick = onAttachClick,
+                    style = PharmaButtonStyle.Outlined,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
@@ -261,7 +433,11 @@ private fun OrderSummaryCard(
                     tint = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = pharmacy.name.ifBlank { stringResource(R.string.customer_order_scope_all) },
+                    text = if (pharmacy.name.isBlank()) {
+                        stringResource(R.string.customer_order_scope_all)
+                    } else {
+                        pharmacy.name
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -319,6 +495,13 @@ private fun RequestTypeSelectorCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (selectedUrgency == CustomerRequestUrgency.NORMAL) {
+                Text(
+                    text = stringResource(R.string.customer_order_scope_all_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -492,16 +675,25 @@ private fun FulfillmentOptionCard(
 @Composable
 private fun DeliverySection(
     fulfillmentType: FulfillmentType,
+    requestScope: com.pharmalink.domain.model.CustomerRequestScope,
     deliveryAddress: String,
+    deliveryLatitude: Double?,
+    deliveryLongitude: Double?,
     deliveryPhone: String,
     deliveryAddressErrorMessage: String?,
+    deliveryLocationErrorMessage: String?,
     deliveryPhoneErrorMessage: String?,
-    onDeliveryAddressChange: (String) -> Unit,
+    isDetectingLocation: Boolean,
+    permissionDeniedPermanently: Boolean,
+    onDetectLocationClick: () -> Unit,
+    onOpenAppSettingsClick: () -> Unit,
+    onOpenLocationSettingsClick: () -> Unit,
     onDeliveryPhoneChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
     val isDelivery = fulfillmentType == FulfillmentType.DELIVERY
+    val requiresLocation = isDelivery || requestScope == com.pharmalink.domain.model.CustomerRequestScope.ALL_PHARMACIES
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -518,20 +710,26 @@ private fun DeliverySection(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            if (isDelivery) {
-                PharmaTextField(
-                    value = deliveryAddress,
-                    onValueChange = onDeliveryAddressChange,
-                    label = stringResource(R.string.customer_order_address_label),
-                    singleLine = false,
-                    errorMessage = deliveryAddressErrorMessage,
+            if (requiresLocation) {
+                DeliveryLocationPicker(
+                    deliveryAddress = deliveryAddress,
+                    deliveryLatitude = deliveryLatitude,
+                    deliveryLongitude = deliveryLongitude,
+                    errorMessage = deliveryAddressErrorMessage ?: deliveryLocationErrorMessage,
+                    isDetectingLocation = isDetectingLocation,
+                    permissionDeniedPermanently = permissionDeniedPermanently,
+                    onDetectLocationClick = onDetectLocationClick,
+                    onOpenAppSettingsClick = onOpenAppSettingsClick,
+                    onOpenLocationSettingsClick = onOpenLocationSettingsClick,
                 )
-                PharmaTextField(
-                    value = deliveryPhone,
-                    onValueChange = onDeliveryPhoneChange,
-                    label = stringResource(R.string.customer_order_phone_label),
-                    errorMessage = deliveryPhoneErrorMessage,
-                )
+                if (isDelivery) {
+                    PharmaTextField(
+                        value = deliveryPhone,
+                        onValueChange = onDeliveryPhoneChange,
+                        label = stringResource(R.string.customer_order_phone_label),
+                        errorMessage = deliveryPhoneErrorMessage,
+                    )
+                }
             } else {
                 Text(
                     text = stringResource(R.string.customer_order_pickup_no_delivery_fields),
@@ -539,6 +737,104 @@ private fun DeliverySection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun DeliveryLocationPicker(
+    deliveryAddress: String,
+    deliveryLatitude: Double?,
+    deliveryLongitude: Double?,
+    errorMessage: String?,
+    isDetectingLocation: Boolean,
+    permissionDeniedPermanently: Boolean,
+    onDetectLocationClick: () -> Unit,
+    onOpenAppSettingsClick: () -> Unit,
+    onOpenLocationSettingsClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    val hasCoordinates = deliveryLatitude != null && deliveryLongitude != null
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceM),
+            verticalArrangement = Arrangement.spacedBy(d.spaceS),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = stringResource(R.string.customer_order_location_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = if (hasCoordinates) {
+                    deliveryAddress
+                } else {
+                    stringResource(R.string.customer_order_location_not_selected)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (hasCoordinates) {
+                Text(
+                    text = stringResource(
+                        R.string.customer_order_location_coordinates,
+                        deliveryLatitude,
+                        deliveryLongitude,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (!errorMessage.isNullOrBlank()) {
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            PharmaButton(
+                text = if (hasCoordinates) {
+                    stringResource(R.string.customer_order_location_retry)
+                } else {
+                    stringResource(R.string.customer_order_location_use_current)
+                },
+                onClick = onDetectLocationClick,
+                enabled = !isDetectingLocation,
+                style = PharmaButtonStyle.Outlined,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (permissionDeniedPermanently) {
+                PharmaButton(
+                    text = stringResource(R.string.customer_order_location_open_app_settings),
+                    onClick = onOpenAppSettingsClick,
+                    enabled = !isDetectingLocation,
+                    style = PharmaButtonStyle.Outlined,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            PharmaButton(
+                text = stringResource(R.string.customer_order_location_open_gps_settings),
+                onClick = onOpenLocationSettingsClick,
+                enabled = !isDetectingLocation,
+                style = PharmaButtonStyle.Outlined,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -574,6 +870,22 @@ private fun NotesSection(
             )
         }
     }
+}
+
+private fun Context.hasLocationPermission(): Boolean =
+    ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+    ) == PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable

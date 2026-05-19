@@ -79,11 +79,11 @@ fun OrdersSegmentedControl(
             )
             
             val statusText = when (status) {
-                OrderFilterStatus.ALL -> "الكل الطلبات"
-                OrderFilterStatus.PENDING -> "قيد الانتظار"
-                OrderFilterStatus.APPROVED -> "موافق عليه"
+                OrderFilterStatus.ALL -> "كل الطلبات"
+                OrderFilterStatus.PENDING -> "قيد المراجعة"
+                OrderFilterStatus.APPROVED -> "تم التأكيد"
                 OrderFilterStatus.IN_TRANSIT -> "قيد التوصيل"
-                OrderFilterStatus.DELIVERED -> "تم التسليم"
+                OrderFilterStatus.DELIVERED -> "تم التوصيل"
                 OrderFilterStatus.REJECTED -> "مرفوض"
             }
             
