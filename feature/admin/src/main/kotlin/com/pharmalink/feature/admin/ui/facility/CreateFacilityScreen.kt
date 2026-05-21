@@ -1,9 +1,16 @@
 package com.pharmalink.feature.admin.ui.facility
 
 import android.Manifest
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -177,8 +184,8 @@ private fun CreateFacilityContent(
                                 .size(44.dp)
                                 .clip(CircleShape)
                                 .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
                                     shape = CircleShape,
                                 )
                                 .background(MaterialTheme.colorScheme.primary)
@@ -202,7 +209,7 @@ private fun CreateFacilityContent(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
             }
         },
     ) { innerPadding ->
@@ -255,17 +262,23 @@ private fun CreateFacilityContent(
                                 onClick = onUseCurrentLocation,
                                 enabled = !uiState.isResolvingLocation,
                             ) {
-                                if (uiState.isResolvingLocation) {
+                                Crossfade(
+                                    targetState = uiState.isResolvingLocation,
+                                    animationSpec = tween(durationMillis = 160),
+                                    label = "create_facility_location_icon",
+                                ) { resolving ->
+                                    if (resolving) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(18.dp),
                                         strokeWidth = 2.dp,
                                     )
-                                } else {
+                                    } else {
                                     Icon(
                                         imageVector = Icons.Outlined.LocationOn,
                                         contentDescription = "تحديد الموقع الحالي",
                                         tint = MaterialTheme.colorScheme.primary,
                                     )
+                                    }
                                 }
                             }
                         },
@@ -287,7 +300,7 @@ private fun CreateFacilityContent(
                         value = uiState.phone,
                         onValueChange = onPhoneChange,
                         label = "رقم التواصل",
-                        placeholder = "05XXXXXXXX",
+                        placeholder = "+963 9XX XXX XXX",
                         leadingIcon = Icons.Outlined.Phone,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         errorMessage = uiState.phoneError,
@@ -310,6 +323,18 @@ private fun CreateFacilityContent(
                 longitude = uiState.longitude,
             )
 
+            AnimatedVisibility(
+                visible = uiState.latitude == null || uiState.longitude == null,
+                enter = fadeIn(animationSpec = tween(durationMillis = 160)) + expandVertically(),
+                exit = fadeOut(animationSpec = tween(durationMillis = 120)) + shrinkVertically(),
+            ) {
+                Text(
+                    text = "GPS مطلوب لإنشاء المنشأة. استخدم أيقونة الموقع داخل حقل المنطقة قبل المتابعة.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
             StatusCard(
                 isActive = uiState.isActive,
                 onActiveToggle = onActiveToggle,
@@ -321,12 +346,16 @@ private fun CreateFacilityContent(
                     FacilityType.WAREHOUSE -> "إنشاء المستودع"
                 },
                 onClick = onCreateClick,
-                enabled = !uiState.isSubmitting,
+                enabled = !uiState.isSubmitting && uiState.latitude != null && uiState.longitude != null,
                 size = PharmaButtonSize.Large,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            if (uiState.isSubmitting) {
+            AnimatedVisibility(
+                visible = uiState.isSubmitting,
+                enter = fadeIn(animationSpec = tween(durationMillis = 160)) + expandVertically(),
+                exit = fadeOut(animationSpec = tween(durationMillis = 120)) + shrinkVertically(),
+            ) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,
@@ -442,17 +471,31 @@ private fun LocationSummaryCard(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val containerColor by animateColorAsState(
+        targetValue = if (hasCoordinates) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        animationSpec = tween(durationMillis = 220),
+        label = "location_summary_container",
+    )
+    val iconColor by animateColorAsState(
+        targetValue = if (hasCoordinates) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "location_summary_icon",
+    )
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(durationMillis = 180)),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (hasCoordinates) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-        ),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
@@ -465,14 +508,16 @@ private fun LocationSummaryCard(
             Icon(
                 imageVector = Icons.Outlined.LocationOn,
                 contentDescription = null,
-                tint = if (hasCoordinates) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                tint = iconColor,
                 modifier = Modifier.size(28.dp),
             )
-            Column(modifier = Modifier.weight(1f)) {
+            Crossfade(
+                targetState = hasCoordinates,
+                animationSpec = tween(durationMillis = 180),
+                label = "location_summary_content",
+                modifier = Modifier.weight(1f),
+            ) {
+                Column {
                 Text(
                     text = if (hasCoordinates) "تم التقاط موقع المنشأة" else "لم يتم التقاط موقع GPS بعد",
                     style = MaterialTheme.typography.titleSmall,
@@ -494,6 +539,8 @@ private fun LocationSummaryCard(
         }
     }
 }
+}
+
 
 @Composable
 private fun StatusCard(

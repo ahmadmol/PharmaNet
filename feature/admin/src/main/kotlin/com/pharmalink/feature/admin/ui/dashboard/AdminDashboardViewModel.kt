@@ -84,8 +84,11 @@ class AdminDashboardViewModel @Inject constructor(
             }
             is AdminDashboardAction.OnPendingRequestClicked -> {
                 viewModelScope.launch {
-                    // Navigate to order detail for ORDER type requests
-                    _effect.emit(AdminDashboardEffect.NavigateToOrderDetail(action.requestId))
+                    if (action.requestType == RequestType.ORDER) {
+                        _effect.emit(AdminDashboardEffect.NavigateToOrderDetail(action.requestId))
+                    } else {
+                        _effect.emit(AdminDashboardEffect.ShowMessage("تفاصيل هذا الطلب غير متاحة من لوحة التحكم حاليا"))
+                    }
                 }
             }
             AdminDashboardAction.OnViewAllRequestsClicked -> {
@@ -128,7 +131,7 @@ class AdminDashboardViewModel @Inject constructor(
                                 "ORDER" -> RequestType.ORDER
                                 "FACILITY" -> RequestType.FACILITY
                                 "USER" -> RequestType.USER
-                                else -> RequestType.ORDER
+                                else -> RequestType.UNKNOWN
                             },
                         )
                     } ?: emptyList()
@@ -211,7 +214,7 @@ class AdminDashboardViewModel @Inject constructor(
                                 "ORDER" -> RequestType.ORDER
                                 "FACILITY" -> RequestType.FACILITY
                                 "USER" -> RequestType.USER
-                                else -> RequestType.ORDER
+                                else -> RequestType.UNKNOWN
                             },
                         )
                     } ?: emptyList()

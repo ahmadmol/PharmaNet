@@ -157,8 +157,8 @@ private fun AdminPharmaciesContent(
                                 .size(44.dp)
                                 .clip(CircleShape)
                                 .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
                                     shape = CircleShape,
                                 )
                                 .background(MaterialTheme.colorScheme.primary)
@@ -182,7 +182,7 @@ private fun AdminPharmaciesContent(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
             }
         },
         floatingActionButton = {
@@ -511,7 +511,7 @@ private fun PharmacyCard(
                 }
             }
             
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.16f))
             
             // Action Button
             PharmaButton(

@@ -1,5 +1,12 @@
 ﻿package com.pharmalink.feature.admin.ui.users
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,6 +34,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -90,6 +99,57 @@ fun EditUserBottomSheet(
             EditUserBottomSheetContent(
                 state = state,
                 onAction = viewModel::onAction,
+            )
+        }
+
+        AnimatedVisibility(
+            visible = state.showSensitiveChangeConfirmation,
+            enter = fadeIn(animationSpec = tween(durationMillis = 140)) +
+                slideInVertically(animationSpec = tween(durationMillis = 140)) { it / 12 },
+            exit = fadeOut(animationSpec = tween(durationMillis = 100)),
+        ) {
+            AlertDialog(
+                onDismissRequest = {
+                    viewModel.onAction(EditUserAction.OnDismissSensitiveConfirmation)
+                },
+                title = { Text("تأكيد تغيير حساس") },
+                text = {
+                    Column(
+                        modifier = Modifier.animateContentSize(animationSpec = tween(durationMillis = 160)),
+                        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
+                    ) {
+                        Text("هذه التغييرات تؤثر على الصلاحيات أو حالة الحساب:")
+                        Crossfade(
+                            targetState = state.sensitiveChangeWarning,
+                            animationSpec = tween(durationMillis = 160),
+                            label = "edit_user_sensitive_warning",
+                        ) { warning ->
+                            Text(
+                                text = warning,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.onAction(EditUserAction.OnConfirmSensitiveSave)
+                        },
+                    ) {
+                        Text("تأكيد الحفظ")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.onAction(EditUserAction.OnDismissSensitiveConfirmation)
+                        },
+                    ) {
+                        Text("مراجعة")
+                    }
+                },
             )
         }
     }

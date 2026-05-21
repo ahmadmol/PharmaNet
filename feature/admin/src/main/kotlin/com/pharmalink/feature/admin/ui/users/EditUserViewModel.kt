@@ -37,8 +37,12 @@ class EditUserViewModel @Inject constructor(
                 userId = userId,
                 fullName = fullName,
                 accountType = accountType,
+                originalAccountType = accountType,
                 facilityId = facilityId,
                 isActive = isActive,
+                originalIsActive = isActive,
+                showSensitiveChangeConfirmation = false,
+                sensitiveChangeWarning = "",
             )
         }
     }
@@ -50,6 +54,15 @@ class EditUserViewModel @Inject constructor(
             is EditUserAction.OnFacilityIdChanged -> updateFacilityId(action.id)
             is EditUserAction.OnActiveToggled -> updateActive(action.isActive)
             EditUserAction.OnSaveClicked -> saveChanges()
+            EditUserAction.OnConfirmSensitiveSave -> saveChanges(skipSensitiveConfirmation = true)
+            EditUserAction.OnDismissSensitiveConfirmation -> {
+                _state.update {
+                    it.copy(
+                        showSensitiveChangeConfirmation = false,
+                        sensitiveChangeWarning = "",
+                    )
+                }
+            }
             EditUserAction.OnDismiss -> dismiss()
         }
     }
@@ -85,7 +98,7 @@ class EditUserViewModel @Inject constructor(
         _state.update { it.copy(isActive = isActive) }
     }
 
-    private fun saveChanges() {
+    private fun saveChanges(skipSensitiveConfirmation: Boolean = false) {
         val state = _state.value
 
         // Validate
@@ -109,8 +122,38 @@ class EditUserViewModel @Inject constructor(
             return
         }
 
+        if (!skipSensitiveConfirmation) {
+            val warnings = buildList {
+                if (state.accountType == AccountType.ADMIN && state.originalAccountType != AccountType.ADMIN) {
+                    add("سيتم منح هذا المستخدم صلاحيات مدير.")
+                }
+                if (state.originalAccountType == AccountType.ADMIN && state.accountType != AccountType.ADMIN) {
+                    add("سيتم سحب صلاحيات المدير من هذا المستخدم.")
+                }
+                if (state.isActive != state.originalIsActive) {
+                    add(if (state.isActive) "سيتم تفعيل الحساب." else "سيتم تعطيل الحساب.")
+                }
+            }
+
+            if (warnings.isNotEmpty()) {
+                _state.update {
+                    it.copy(
+                        showSensitiveChangeConfirmation = true,
+                        sensitiveChangeWarning = warnings.joinToString(separator = "\n"),
+                    )
+                }
+                return
+            }
+        }
+
         viewModelScope.launch {
-            _state.update { it.copy(isSaving = true) }
+            _state.update {
+                it.copy(
+                    isSaving = true,
+                    showSensitiveChangeConfirmation = false,
+                    sensitiveChangeWarning = "",
+                )
+            }
 
             val pharmacyId = if (state.accountType == AccountType.PHARMACY) state.facilityId else null
             val warehouseId = if (state.accountType == AccountType.WAREHOUSE) state.facilityId else null

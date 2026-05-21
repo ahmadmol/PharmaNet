@@ -1,6 +1,9 @@
 package com.pharmalink.data.repository
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
+import com.pharmalink.core.common.BuildConfig
 import com.pharmalink.core.common.error.MissingPharmacyLinkageException
 import com.pharmalink.core.location.FacilityLocation
 import com.pharmalink.core.repository.AuthRepository
@@ -56,8 +59,6 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.storage.storage
 import dagger.hilt.android.qualifiers.ApplicationContext
-import android.content.Context
-import android.net.Uri
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -71,12 +72,15 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.postgresChangeFlow
@@ -99,6 +103,10 @@ class SupabasePharmaRepository @Inject constructor(
 ) : PharmaRepository {
     private val realtime = SupabaseRealtimeDataSource(supabase)
     private val auth: Auth get() = supabase.auth
+    private val profileRefreshRequests = MutableSharedFlow<Unit>(
+        replay = 1,
+        extraBufferCapacity = 1,
+    )
 
     override fun observeWarehouses(): Flow<List<Warehouse>> = flow {
         Log.d(TAG, "=== OBSERVE WAREHOUSES INITIALIZED ===")
@@ -331,7 +339,10 @@ class SupabasePharmaRepository @Inject constructor(
     }.flowOn(Dispatchers.IO)
 
     override fun observeProfile(): Flow<PharmacyProfile> =
-        authRepository.observeUserSnapshot()
+        combine(
+            authRepository.observeUserSnapshot(),
+            profileRefreshRequests.onStart { emit(Unit) },
+        ) { snapshot, _ -> snapshot }
             .mapLatest { snapshot ->
                 if (snapshot == null) {
                     // Logout/session-race safe fallback: never crash collectors on null snapshot.
@@ -362,8 +373,8 @@ class SupabasePharmaRepository @Inject constructor(
         if (identity.role == AccountType.WAREHOUSE) {
             val updateDto = WarehouseProfileUpdateDto(
                 fullName = profile.managerName,
-                pharmacyName = profile.pharmacyName.takeIf { it.isNotBlank() },
                 phoneNumber = profile.contactPhone,
+                avatarUrl = profile.avatarUrl,
             )
 
             val updatedRows = supabase.postgrest.from("profiles").update(updateDto) {
@@ -389,6 +400,10 @@ class SupabasePharmaRepository @Inject constructor(
             require(updatedRow.phoneNumber == updateDto.phoneNumber) {
                 "Profile update verification failed for phone_number on profile ${profile.id}."
             }
+            require(updatedRow.avatarUrl == updateDto.avatarUrl) {
+                "Profile update verification failed for avatar_url on profile ${profile.id}."
+            }
+            profileRefreshRequests.tryEmit(Unit)
             return@runCatching
         }
 
@@ -398,6 +413,7 @@ class SupabasePharmaRepository @Inject constructor(
             pharmacyLocation = profile.addressLine.takeIf { profile.pharmacyName.isNotBlank() },
             defaultAddress = profile.addressLine.takeIf { it.isNotBlank() },
             phoneNumber = profile.contactPhone,
+            avatarUrl = profile.avatarUrl,
         )
 
         val updatedRows = supabase.postgrest.from("profiles").update(updateDto) {
@@ -415,6 +431,7 @@ class SupabasePharmaRepository @Inject constructor(
             expected = updateDto,
             profileId = profile.id,
         )
+        profileRefreshRequests.tryEmit(Unit)
     }.onFailure { e ->
         Log.e(TAG, "updateProfile failed", e)
     }.map { Unit }
@@ -1006,6 +1023,9 @@ class SupabasePharmaRepository @Inject constructor(
         require(updatedRow.phoneNumber == expected.phoneNumber) {
             "Profile update verification failed for phone_number on profile $profileId."
         }
+        require(updatedRow.avatarUrl == expected.avatarUrl) {
+            "Profile update verification failed for avatar_url on profile $profileId."
+        }
     }
 
     private fun <T> requireSingleProfileRow(
@@ -1581,6 +1601,44 @@ class SupabasePharmaRepository @Inject constructor(
         }
 
         bucket.publicUrl(fileName)
+    }
+
+    override suspend fun uploadProfileAvatar(uri: android.net.Uri): Result<String> = runCatching {
+        val identity = resolveAccessContext()
+        val sessionUserId = auth.currentUserOrNull()?.id
+            ?: throw UnauthorizedException("unauthorized: no authenticated Supabase user")
+        require(sessionUserId == identity.userId) {
+            "Authenticated user does not match access context"
+        }
+
+        val bucket = supabase.storage.from("profile-avatars")
+        val uploadFile = readUploadFile(
+            uri = uri,
+            allowedMimeTypes = avatarUploadMimeTypes,
+        )
+        val fileName = "$sessionUserId/avatar_${UUID.randomUUID()}.${uploadFile.extension}"
+
+        bucket.upload(fileName, uploadFile.bytes) {
+            contentType = uploadFile.contentType
+            upsert = false
+        }
+
+        bucket.publicUrl(fileName)
+    }
+
+    override suspend fun deleteProfileAvatar(avatarUrl: String): Result<Unit> = runCatching {
+        val identity = resolveAccessContext()
+        val sessionUserId = identity.userId
+
+        val path = extractOwnedProfileAvatarStoragePath(
+            avatarUrl = avatarUrl,
+            userId = sessionUserId,
+        ) ?: return@runCatching
+
+        // Best-effort safety proof:
+        // - only delete objects under "{auth.uid()}/..." inside profile-avatars bucket
+        // - ignore malformed/unowned URLs (extractOwnedProfileAvatarStoragePath returns null)
+        supabase.storage.from("profile-avatars").delete(path)
     }
 
     override suspend fun addMedicine(medicine: Medicine, warehouseId: String): Result<Unit> = runCatching {
@@ -2173,7 +2231,7 @@ class SupabasePharmaRepository @Inject constructor(
                 contactNumber = contactNumber,
                 licenseNumber = licenseNumber,
             ),
-        ).decodeSingle<FacilityDto>().toPharmacy()
+        ).decodeAs<FacilityDto>().toPharmacy()
     }
 
     override suspend fun adminGetAllWarehouses(): Result<List<Warehouse>> = runCatching {
@@ -2196,7 +2254,7 @@ class SupabasePharmaRepository @Inject constructor(
                 location = location,
                 contactNumber = contactNumber,
             ),
-        ).decodeSingle<FacilityDto>().toWarehouse()
+        ).decodeAs<FacilityDto>().toWarehouse()
     }
 
     override suspend fun createFacility(request: CreateFacilityRequest): Result<Unit> = runCatching {
@@ -2217,7 +2275,7 @@ class SupabasePharmaRepository @Inject constructor(
                         latitude = lat,
                         longitude = lng,
                     ),
-                ).decodeSingle<FacilityDto>().toPharmacy()
+                ).decodeAs<FacilityDto>().toPharmacy()
                 if (!request.isActive) {
                     supabase.postgrest.from("pharmacies").update(FacilityActiveUpdateDto(isActive = false)) {
                         filter { eq("id", pharmacy.id) }
@@ -2234,7 +2292,7 @@ class SupabasePharmaRepository @Inject constructor(
                         latitude = lat,
                         longitude = lng,
                     ),
-                ).decodeSingle<FacilityDto>().toWarehouse()
+                ).decodeAs<FacilityDto>().toWarehouse()
                 if (!request.isActive) {
                     supabase.postgrest.from("warehouses").update(FacilityActiveUpdateDto(isActive = false)) {
                         filter { eq("id", warehouse.id) }
@@ -2897,6 +2955,7 @@ private data class ProfileDetailsDto(
     @SerialName("default_address") val defaultAddress: String? = null,
     @SerialName("phone_number") val phoneNumber: String? = null,
     @SerialName("notifications_enabled") val notificationsEnabled: Boolean? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 ) {
     fun toDomain(
         contactEmail: String,
@@ -2933,6 +2992,7 @@ private data class ProfileDetailsDto(
             activeOrders = 0,
             latitude = if (isWarehouse) warehouseLocation?.latitude else null,
             longitude = if (isWarehouse) warehouseLocation?.longitude else null,
+            avatarUrl = avatarUrl,
         )
     }
 }
@@ -2953,6 +3013,7 @@ private data class ProfileUpdateDto(
     @SerialName("pharmacy_location") val pharmacyLocation: String? = null,
     @SerialName("default_address") val defaultAddress: String? = null,
     @SerialName("phone_number") val phoneNumber: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable
@@ -2960,6 +3021,7 @@ private data class WarehouseProfileUpdateDto(
     @SerialName("full_name") val fullName: String? = null,
     @SerialName("pharmacy_name") val pharmacyName: String? = null,
     @SerialName("phone_number") val phoneNumber: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable
@@ -3046,6 +3108,12 @@ private val medicineUploadMimeTypes = mapOf(
     "image/webp" to "webp",
 )
 
+private val avatarUploadMimeTypes = mapOf(
+    "image/jpeg" to "jpg",
+    "image/png" to "png",
+    "image/webp" to "webp",
+)
+
 private data class UploadFile(
     val bytes: ByteArray,
     val extension: String,
@@ -3068,6 +3136,58 @@ private fun inferMimeTypeFromUri(uri: Uri): String? {
         "pdf" -> "application/pdf"
         else -> null
     }
+}
+
+private fun extractOwnedProfileAvatarStoragePath(
+    avatarUrl: String,
+    userId: String,
+): String? {
+    if (avatarUrl.isBlank() || userId.isBlank()) return null
+
+    val uri = runCatching { Uri.parse(avatarUrl) }.getOrNull() ?: return null
+    val scheme = uri.scheme?.lowercase() ?: return null
+    if (scheme != "https" && scheme != "http") return null
+
+    val expectedHost = runCatching {
+        Uri.parse(BuildConfig.SUPABASE_URL.trim()).host
+    }.getOrNull()?.lowercase() ?: return null
+    val actualHost = uri.host?.lowercase() ?: return null
+    if (actualHost != expectedHost) return null
+
+    val segments = uri.pathSegments
+    val bucketIndex = segments.indexOf("profile-avatars")
+    val publicIndex = bucketIndex - 1
+    if (
+        bucketIndex < 4 ||
+        publicIndex < 3 ||
+        segments.getOrNull(publicIndex) != "public" ||
+        segments.getOrNull(publicIndex - 1) != "object" ||
+        segments.getOrNull(publicIndex - 2) != "v1" ||
+        segments.getOrNull(publicIndex - 3) != "storage"
+    ) {
+        return null
+    }
+
+    val objectSegments = segments.drop(bucketIndex + 1)
+    if (objectSegments.size != 2) return null
+    if (objectSegments[0] != userId) return null
+
+    val fileName = objectSegments[1]
+    if (
+        fileName.isBlank() ||
+        fileName.contains('/') ||
+        fileName.contains('\\') ||
+        fileName.contains("..")
+    ) {
+        return null
+    }
+
+    val allowedAvatarName = Regex(
+        pattern = """avatar_[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\.(jpg|png|webp)""",
+    )
+    if (!allowedAvatarName.matches(fileName)) return null
+
+    return "$userId/$fileName"
 }
 
 private fun isoStringToDisplayLabel(iso: String?): String {

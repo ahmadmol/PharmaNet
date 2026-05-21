@@ -1,5 +1,6 @@
 package com.pharmalink.feature.admin.ui.inventory
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,17 +8,25 @@ import com.pharmalink.core.navigation.NavArgs
 import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.model.Medicine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+
+private const val TAG = "AddMedicineViewModel"
+private const val MISSING_WAREHOUSE_SAFE_ERROR =
+    "\u062a\u0639\u0630\u0631 \u062a\u062d\u062f\u064a\u062f \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639"
+private const val IMAGE_UPLOAD_SAFE_ERROR =
+    "\u062a\u0639\u0630\u0631 \u0631\u0641\u0639 \u0635\u0648\u0631\u0629 \u0627\u0644\u062f\u0648\u0627\u0621. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
+private const val ADD_MEDICINE_SAFE_ERROR =
+    "\u062a\u0639\u0630\u0631 \u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u062f\u0648\u0627\u0621. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
 
 @HiltViewModel
 class AddMedicineViewModel @Inject constructor(
     private val pharmaRepository: PharmaRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val warehouseId: String = savedStateHandle[NavArgs.WAREHOUSE_ID] ?: ""
@@ -34,7 +43,7 @@ class AddMedicineViewModel @Inject constructor(
 
     fun submitMedicine() {
         if (warehouseId.isBlank()) {
-            _state.update { it.copy(errorMessage = "معرف المستودع مفقود") }
+            _state.update { it.copy(errorMessage = MISSING_WAREHOUSE_SAFE_ERROR) }
             return
         }
 
@@ -45,10 +54,16 @@ class AddMedicineViewModel @Inject constructor(
             _state.value.imageUri?.let { uri ->
                 pharmaRepository.uploadMedicineImage(uri).fold(
                     onSuccess = { imageUrl = it },
-                    onFailure = { e ->
-                        _state.update { it.copy(isUploading = false, errorMessage = "فشل رفع الصورة: ${e.message}") }
+                    onFailure = { error ->
+                        Log.e(TAG, "Failed to upload medicine image", error)
+                        _state.update {
+                            it.copy(
+                                isUploading = false,
+                                errorMessage = IMAGE_UPLOAD_SAFE_ERROR,
+                            )
+                        }
                         return@launch
-                    }
+                    },
                 )
             }
 
@@ -59,16 +74,22 @@ class AddMedicineViewModel @Inject constructor(
                 strength = _state.value.strength,
                 price = _state.value.price.toDoubleOrNull() ?: 0.0,
                 stockQuantity = _state.value.stockQuantity.toIntOrNull() ?: 0,
-                imageUrl = imageUrl
+                imageUrl = imageUrl,
             )
 
             pharmaRepository.addMedicine(medicine, warehouseId).fold(
                 onSuccess = {
                     _state.update { it.copy(isUploading = false, isSuccess = true) }
                 },
-                onFailure = { e ->
-                    _state.update { it.copy(isUploading = false, errorMessage = "فشل إضافة الدواء: ${e.message}") }
-                }
+                onFailure = { error ->
+                    Log.e(TAG, "Failed to add medicine", error)
+                    _state.update {
+                        it.copy(
+                            isUploading = false,
+                            errorMessage = ADD_MEDICINE_SAFE_ERROR,
+                        )
+                    }
+                },
             )
         }
     }

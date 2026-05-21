@@ -1,6 +1,8 @@
 package com.pharmalink.feature.profile
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pharmalink.core.location.FacilityLocationService
@@ -26,6 +28,12 @@ sealed interface ProfileUpdateStatus {
     data class Error(val message: String) : ProfileUpdateStatus
 }
 
+private const val TAG = "ProfileViewModel"
+private const val PROFILE_UPDATE_SAFE_ERROR =
+    "\u062a\u0639\u0630\u0631 \u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
+private const val WAREHOUSE_LOCATION_SAFE_ERROR =
+    "\u062a\u0639\u0630\u0631 \u062a\u062d\u062f\u064a\u062b \u0645\u0648\u0642\u0639 \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
+
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -39,7 +47,7 @@ class ProfileViewModel @Inject constructor(
     private val _updateStatus = MutableStateFlow<ProfileUpdateStatus>(ProfileUpdateStatus.Idle)
     val updateStatus: StateFlow<ProfileUpdateStatus> = _updateStatus.asStateFlow()
 
-    private var currentProfileId: String? = null
+    private var currentProfile: PharmacyProfile? = null
 
     private fun buildSettingsOptions(): List<SettingItem> = listOf(
         SettingItem(
@@ -74,7 +82,7 @@ class ProfileViewModel @Inject constructor(
                 authRepository.observeUserSnapshot(),
                 pharmaRepository.observeProfile(),
             ) { snapshot, profile ->
-                currentProfileId = profile.id
+                currentProfile = profile
                 val userIdentity = snapshot?.toUserIdentity()
                 val displayName = userIdentity?.displayName ?: snapshot?.displayName.orEmpty()
                 val organizationNameFallback = when (snapshot?.accountType) {
@@ -89,6 +97,7 @@ class ProfileViewModel @Inject constructor(
                     },
                     userEmail = profile.contactEmail.ifBlank { snapshot?.email.orEmpty() },
                     userPhone = profile.contactPhone.ifBlank { snapshot?.phoneNumber.orEmpty() },
+                    profileImageUrl = profile.avatarUrl,
                     accountType = if (snapshot?.accountType == AccountType.PUBLIC_USER) {
                         context.getString(R.string.profile_account_type_public_user)
                     } else {
@@ -123,32 +132,33 @@ class ProfileViewModel @Inject constructor(
         pharmacy: String,
         phone: String,
         address: String,
+        avatarUri: Uri? = null,
     ) {
-        val profileId = currentProfileId ?: return
+        val profile = currentProfile ?: return
         
         viewModelScope.launch {
             _updateStatus.value = ProfileUpdateStatus.Loading
-            
-            val updatedProfile = PharmacyProfile(
-                id = profileId,
-                managerName = name,
-                pharmacyName = pharmacy,
-                contactPhone = phone,
-                addressLine = address,
-                contactEmail = _uiState.value.userEmail,
-                city = "",
-                district = "",
-                licenseStatusLabel = "",
-                licenseNumber = "",
-                licenseExpiryLabel = "",
-                operatingHoursLabel = "",
-                preferredLanguageLabel = "",
-                notificationsEnabled = _uiState.value.notificationsEnabled,
-                twoFactorEnabled = false,
-                linkedDevicesCount = 0,
-                totalOrders = 0,
-                completedOrders = 0,
-                activeOrders = 0,
+
+            var uploadedAvatarUrl: String? = null
+            val avatarUrl = if (avatarUri != null) {
+                pharmaRepository.uploadProfileAvatar(avatarUri)
+                    .onSuccess { uploadedAvatarUrl = it }
+                    .getOrElse { error ->
+                        Log.e(TAG, "Failed to upload profile avatar", error)
+                        _updateStatus.value = ProfileUpdateStatus.Error(PROFILE_UPDATE_SAFE_ERROR)
+                        return@launch
+                    }
+            } else {
+                profile.avatarUrl
+            }
+
+            val updatedProfile = buildRoleAwareProfileUpdate(
+                profile = profile,
+                name = name,
+                pharmacy = pharmacy,
+                phone = phone,
+                address = address,
+                avatarUrl = avatarUrl,
             )
             
             pharmaRepository.updateProfile(updatedProfile)
@@ -156,10 +166,40 @@ class ProfileViewModel @Inject constructor(
                     _updateStatus.value = ProfileUpdateStatus.Success
                 }
                 .onFailure { e ->
-                    _updateStatus.value = ProfileUpdateStatus.Error(
-                        e.message ?: context.getString(R.string.profile_update_error),
-                    )
+                    uploadedAvatarUrl?.let { uploadedUrl ->
+                        pharmaRepository.deleteProfileAvatar(uploadedUrl)
+                    }
+                    Log.e(TAG, "Failed to update profile", e)
+                    _updateStatus.value = ProfileUpdateStatus.Error(PROFILE_UPDATE_SAFE_ERROR)
                 }
+        }
+    }
+
+    private fun buildRoleAwareProfileUpdate(
+        profile: PharmacyProfile,
+        name: String,
+        pharmacy: String,
+        phone: String,
+        address: String,
+        avatarUrl: String?,
+    ): PharmacyProfile {
+        val common = profile.copy(
+            managerName = name,
+            contactPhone = phone,
+            contactEmail = _uiState.value.userEmail,
+            notificationsEnabled = _uiState.value.notificationsEnabled,
+            avatarUrl = avatarUrl,
+        )
+
+        return when (_uiState.value.accountTypeEnum) {
+            AccountType.PUBLIC_USER -> common.copy(addressLine = address)
+            AccountType.PHARMACY -> common.copy(
+                pharmacyName = pharmacy,
+                addressLine = address,
+            )
+            AccountType.ADMIN,
+            AccountType.WAREHOUSE,
+            null -> common
         }
     }
 
@@ -191,9 +231,10 @@ class ProfileViewModel @Inject constructor(
                             warehouseLocationSettingsAction = null,
                         )
                     }.onFailure { error ->
+                        Log.e(TAG, "Failed to update warehouse location", error)
                         _uiState.value = _uiState.value.copy(
                             isUpdatingWarehouseLocation = false,
-                            warehouseLocationMessage = error.message ?: context.getString(R.string.profile_update_error),
+                            warehouseLocationMessage = WAREHOUSE_LOCATION_SAFE_ERROR,
                             warehouseLocationMessageIsError = true,
                             warehouseLocationSettingsAction = null,
                         )

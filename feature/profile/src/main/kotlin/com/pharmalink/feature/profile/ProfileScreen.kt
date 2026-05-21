@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Person
@@ -49,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -69,6 +71,7 @@ import com.pharmalink.designsystem.theme.PharmaNeutral600
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
+import coil.compose.SubcomposeAsyncImage
 
 private data class SettingsGroup(
     val title: String,
@@ -139,6 +142,7 @@ private fun ProfileContent(
                 accountTypeEnum = uiState.accountTypeEnum,
                 pharmacyName = uiState.pharmacyName,
                 pharmacyAddress = uiState.pharmacyAddress,
+                profileImageUrl = uiState.profileImageUrl,
                 isPublicUser = isPublicUser,
                 onEditProfile = onEditProfile,
                 modifier = Modifier.padding(horizontal = d.spaceL),
@@ -216,6 +220,7 @@ private fun ProfileHeroSection(
     accountTypeEnum: com.pharmalink.domain.model.AccountType?,
     pharmacyName: String,
     pharmacyAddress: String,
+    profileImageUrl: String?,
     isPublicUser: Boolean,
     onEditProfile: () -> Unit,
     modifier: Modifier = Modifier,
@@ -239,15 +244,14 @@ private fun ProfileHeroSection(
                 modifier = Modifier.size(112.dp),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(3.dp, PharmaBlue500),
+                border = BorderStroke(1.dp, PharmaBlue500.copy(alpha = 0.45f)),
                 shadowElevation = d.cardElevation,
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
+                    PersistedAvatarImage(
+                        imageUrl = profileImageUrl,
                         contentDescription = stringResource(R.string.profile_picture_description),
-                        tint = PharmaBlue500,
-                        modifier = Modifier.size(62.dp),
+                        modifier = Modifier.size(112.dp),
                     )
                 }
             }
@@ -258,7 +262,7 @@ private fun ProfileHeroSection(
                 shape = CircleShape,
                 color = PharmaBlue500,
                 contentColor = Color.White,
-                border = BorderStroke(4.dp, ClinicalCanvas),
+                border = BorderStroke(2.dp, ClinicalCanvas.copy(alpha = 0.9f)),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -313,6 +317,41 @@ private fun ProfileHeroSection(
             Text(text = stringResource(R.string.edit_profile_button), fontWeight = FontWeight.Bold)
         }
     }
+}
+
+@Composable
+private fun PersistedAvatarImage(
+    imageUrl: String?,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+) {
+    val model = imageUrl?.takeIf { it.isNotBlank() }
+    if (model != null) {
+        SubcomposeAsyncImage(
+            model = model,
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(CircleShape),
+            loading = {
+                AvatarFallbackIcon(contentDescription = contentDescription)
+            },
+            error = {
+                AvatarFallbackIcon(contentDescription = contentDescription)
+            },
+        )
+    } else {
+        AvatarFallbackIcon(contentDescription = contentDescription)
+    }
+}
+
+@Composable
+private fun AvatarFallbackIcon(contentDescription: String?) {
+    Icon(
+        imageVector = Icons.Default.Person,
+        contentDescription = contentDescription,
+        tint = PharmaBlue500,
+        modifier = Modifier.size(62.dp),
+    )
 }
 
 @Composable
@@ -474,7 +513,7 @@ private fun ProfileSettingsSection(
             shape = RoundedCornerShape(d.radiusXL),
             color = MaterialTheme.colorScheme.surface,
             shadowElevation = 1.dp,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.36f)),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.14f)),
         ) {
             Column(
                 modifier = Modifier.padding(vertical = d.spaceXS),
@@ -618,7 +657,7 @@ private fun ProfileSettingRow(
                         .padding(start = d.spaceM + 44.dp + d.spaceM, end = d.spaceM)
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.28f)),
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.14f)),
                 )
             }
         }
@@ -637,7 +676,7 @@ private fun ProfileLogoutButton(
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface,
         contentColor = PremiumUrgent,
-        border = BorderStroke(1.dp, PremiumUrgent.copy(alpha = 0.35f)),
+        border = BorderStroke(1.dp, PremiumUrgent.copy(alpha = 0.2f)),
     ) {
         Row(
             modifier = Modifier

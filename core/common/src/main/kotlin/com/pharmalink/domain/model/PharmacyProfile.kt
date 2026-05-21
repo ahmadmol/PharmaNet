@@ -22,4 +22,5 @@ data class PharmacyProfile(
     val activeOrders: Int,
     val latitude: Double? = null,
     val longitude: Double? = null,
+    val avatarUrl: String? = null,
 )

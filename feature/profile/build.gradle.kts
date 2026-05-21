@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

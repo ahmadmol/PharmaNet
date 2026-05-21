@@ -3,6 +3,7 @@ package com.pharmalink.feature.admin.ui.facility
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pharmalink.core.common.validation.SyrianPhone
 import com.pharmalink.core.location.FacilityLocationService
 import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.model.CreateFacilityRequest
@@ -19,6 +20,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val TAG = "CreateFacilityVM"
+private const val CREATE_FACILITY_ERROR_MESSAGE =
+    "\u062a\u0639\u0630\u0631 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u0646\u0634\u0623\u0629. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
 
 sealed interface CreateFacilityEffect {
     data class ShowSuccess(val message: String) : CreateFacilityEffect
@@ -205,7 +208,7 @@ class CreateFacilityViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(isSubmitting = false)
                     }
-                    _effect.emit(CreateFacilityEffect.ShowError(error.message ?: "حدث خطأ أثناء إنشاء المنشأة"))
+                    _effect.emit(CreateFacilityEffect.ShowError(CREATE_FACILITY_ERROR_MESSAGE))
                 }
         }
     }
@@ -227,11 +230,15 @@ class CreateFacilityViewModel @Inject constructor(
             errors["address"] = "العنوان يجب أن يكون 5 أحرف على الأقل"
         }
 
-        // Phone validation (Saudi format: 05XXXXXXXX)
+        // Phone validation follows the same Syrian mobile rules used by auth flows.
         if (state.phone.isBlank()) {
             errors["phone"] = "رقم التواصل مطلوب"
-        } else if (!state.phone.matches(Regex("^05\\d{8}$"))) {
+        } else if (!SyrianPhone.isValid(state.phone)) {
             errors["phone"] = "رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام"
+        }
+
+        if (state.phone.isNotBlank() && !SyrianPhone.isValid(state.phone)) {
+            errors["phone"] = "أدخل رقم هاتف سوري صالح"
         }
 
         // License validation

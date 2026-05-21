@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.CameraAlt
@@ -57,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -75,6 +77,8 @@ import com.pharmalink.designsystem.theme.PharmaBlue500
 import com.pharmalink.designsystem.theme.PharmaGradients
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.domain.model.AccountType
+import coil.compose.SubcomposeAsyncImage
 
 @Composable
 fun EditProfileScreen(
@@ -84,6 +88,12 @@ fun EditProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val updateStatus by viewModel.updateStatus.collectAsState()
     val context = LocalContext.current
+    var selectedAvatarUri by remember { mutableStateOf<Uri?>(null) }
+    val avatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+    ) { uri ->
+        selectedAvatarUri = uri
+    }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
@@ -111,19 +121,19 @@ fun EditProfileScreen(
     var address by remember { mutableStateOf(uiState.pharmacyAddress) }
     var message by remember { mutableStateOf<String?>(null) }
     var isSuccess by remember { mutableStateOf(false) }
-    val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
-    val isWarehouse = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.WAREHOUSE
-    val organizationNameLabel = if (isWarehouse) {
-        stringResource(R.string.edit_profile_label_warehouse_name)
-    } else {
-        stringResource(R.string.edit_profile_label_pharmacy_name)
-    }
+    val accountType = uiState.accountTypeEnum
+    val isAdmin = accountType == AccountType.ADMIN
+    val isPublicUser = accountType == AccountType.PUBLIC_USER
+    val isPharmacy = accountType == AccountType.PHARMACY
+    val isWarehouse = accountType == AccountType.WAREHOUSE
+    val organizationNameLabel = stringResource(R.string.edit_profile_label_pharmacy_name)
     val organizationLocationLabel = when {
         isPublicUser -> stringResource(R.string.edit_profile_label_address_user)
         isWarehouse -> stringResource(R.string.edit_profile_label_warehouse_location)
         else -> stringResource(R.string.edit_profile_label_address)
     }
     val roleLabel = when {
+        isAdmin -> uiState.accountType
         isPublicUser -> stringResource(R.string.edit_profile_role_user)
         isWarehouse -> stringResource(R.string.edit_profile_role_warehouse)
         else -> stringResource(R.string.edit_profile_role_pharmacy)
@@ -142,6 +152,7 @@ fun EditProfileScreen(
             is ProfileUpdateStatus.Success -> {
                 message = context.getString(R.string.edit_profile_success)
                 isSuccess = true
+                selectedAvatarUri = null
             }
             is ProfileUpdateStatus.Error -> {
                 message = status.message
@@ -166,10 +177,16 @@ fun EditProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceL),
             ) {
-                AvatarEditor(name = name, roleLabel = roleLabel)
-                AccountSection(title = if (isPublicUser) stringResource(R.string.edit_profile_section_account_info) else organizationNameLabel) {
+                AvatarEditor(
+                    name = name,
+                    roleLabel = roleLabel,
+                    selectedAvatarUri = selectedAvatarUri,
+                    profileImageUrl = uiState.profileImageUrl,
+                    onPickAvatar = { avatarPickerLauncher.launch("image/*") },
+                )
+                AccountSection(title = if (isPharmacy) organizationNameLabel else stringResource(R.string.edit_profile_section_account_info)) {
                     AccountTextField(value = name, onValueChange = { name = it }, label = stringResource(R.string.edit_profile_label_full_name), icon = Icons.Outlined.Person)
-                    if (!isPublicUser) {
+                    if (isPharmacy) {
                         AccountTextField(value = pharmacy, onValueChange = { pharmacy = it }, label = organizationNameLabel, icon = Icons.Outlined.Store)
                     }
                 }
@@ -201,7 +218,7 @@ fun EditProfileScreen(
                                 context.openWarehouseLocationSettings(action)
                             },
                         )
-                    } else {
+                    } else if (isPublicUser || isPharmacy) {
                         AccountTextField(value = address, onValueChange = { address = it }, label = organizationLocationLabel, icon = Icons.Outlined.LocationOn, minLines = 3)
                     }
                 }
@@ -218,7 +235,13 @@ fun EditProfileScreen(
             ) {
                 StitchButton(
                     onClick = {
-                        viewModel.updateProfile(name, if (isPublicUser) "" else pharmacy, phone, if (isWarehouse) "" else address)
+                        viewModel.updateProfile(
+                            name = name,
+                            pharmacy = if (isPharmacy) pharmacy else uiState.pharmacyName,
+                            phone = phone,
+                            address = if (isPublicUser || isPharmacy) address else uiState.pharmacyAddress,
+                            avatarUri = selectedAvatarUri,
+                        )
                     },
                     modifier = Modifier.weight(1f),
                     isLoading = updateStatus is ProfileUpdateStatus.Loading,
@@ -375,19 +398,30 @@ private fun WarehouseLocationSection(
 }
 
 @Composable
-private fun AvatarEditor(name: String, roleLabel: String) {
+private fun AvatarEditor(
+    name: String,
+    roleLabel: String,
+    selectedAvatarUri: Uri?,
+    profileImageUrl: String?,
+    onPickAvatar: () -> Unit,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box {
             Surface(
                 modifier = Modifier.size(128.dp),
                 shape = CircleShape,
                 color = Color.Transparent,
+                onClick = onPickAvatar,
             ) {
                 Box(
                     modifier = Modifier.background(Brush.linearGradient(listOf(PharmaBlue500, MaterialTheme.colorScheme.primaryContainer))),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Outlined.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(64.dp))
+                    EditableAvatarImage(
+                        selectedAvatarUri = selectedAvatarUri,
+                        profileImageUrl = profileImageUrl,
+                        modifier = Modifier.size(128.dp),
+                    )
                 }
             }
             Surface(
@@ -397,6 +431,7 @@ private fun AvatarEditor(name: String, roleLabel: String) {
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                onClick = onPickAvatar,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(Icons.Outlined.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -407,6 +442,36 @@ private fun AvatarEditor(name: String, roleLabel: String) {
         Text(name.ifBlank { stringResource(R.string.edit_profile_label_full_name) }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = PharmaBlue500)
         Text(roleLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+}
+
+@Composable
+private fun EditableAvatarImage(
+    selectedAvatarUri: Uri?,
+    profileImageUrl: String?,
+    modifier: Modifier = Modifier,
+) {
+    val model = selectedAvatarUri ?: profileImageUrl?.takeIf { it.isNotBlank() }
+    if (model != null) {
+        SubcomposeAsyncImage(
+            model = model,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(CircleShape),
+            loading = {
+                EditableAvatarFallbackIcon()
+            },
+            error = {
+                EditableAvatarFallbackIcon()
+            },
+        )
+    } else {
+        EditableAvatarFallbackIcon()
+    }
+}
+
+@Composable
+private fun EditableAvatarFallbackIcon() {
+    Icon(Icons.Outlined.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(64.dp))
 }
 
 private fun Context.hasLocationPermission(): Boolean {
@@ -489,7 +554,7 @@ fun AccountTextField(
         shape = RoundedCornerShape(MaterialTheme.dimens.radiusL),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = PharmaBlue500.copy(alpha = 0.18f),
+            focusedBorderColor = PharmaBlue500.copy(alpha = 0.1f),
             unfocusedBorderColor = Color.Transparent,
             focusedContainerColor = MaterialTheme.colorScheme.surface,
             unfocusedContainerColor = PharmaBlue50.copy(alpha = 0.65f),

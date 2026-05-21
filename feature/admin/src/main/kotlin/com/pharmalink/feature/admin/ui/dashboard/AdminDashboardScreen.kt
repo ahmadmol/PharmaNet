@@ -1,9 +1,13 @@
 package com.pharmalink.feature.admin.ui.dashboard
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.pharmalink.designsystem.theme.StatusActive
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -186,8 +191,8 @@ private fun AdminDashboardContent(
                                     onClick = { onAction(AdminDashboardAction.OnProfileClicked) },
                                 )
                                 .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
                                     shape = CircleShape,
                                 )
                                 .background(MaterialTheme.colorScheme.primary),
@@ -206,7 +211,7 @@ private fun AdminDashboardContent(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
             }
         },
     ) { padding ->
@@ -400,8 +405,9 @@ private fun PrimaryActionsRow(
         )
         
         PharmaButton(
-            text = stringResource(R.string.admin_dashboard_generate_report),
-            onClick = { onAction(AdminDashboardAction.OnGenerateReportClicked) },
+            text = "التقارير قريبًا",
+            onClick = {},
+            enabled = false,
             modifier = Modifier.weight(1f),
             style = PharmaButtonStyle.Outlined,
         )
@@ -471,13 +477,25 @@ private fun StatCard(
     onClick: () -> Unit = {},
 ) {
     val d = MaterialTheme.dimens
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val cardScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(durationMillis = 120),
+        label = "admin_stat_card_press",
+    )
 
     PharmaCard(
-        modifier = modifier.clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = ripple(),
-            onClick = onClick,
-        ),
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = cardScale
+                scaleY = cardScale
+            }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(),
+                onClick = onClick,
+            ),
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         elevationDp = 2f,
     ) {
@@ -537,7 +555,9 @@ private fun PendingRequestsSection(
         requests.forEach { request ->
             PendingRequestCard(
                 request = request,
-                onClick = { onAction(AdminDashboardAction.OnPendingRequestClicked(request.id)) },
+                onClick = {
+                    onAction(AdminDashboardAction.OnPendingRequestClicked(request.id, request.type))
+                },
             )
         }
     }
@@ -550,15 +570,20 @@ private fun PendingRequestCard(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val isOrderRequest = request.type == RequestType.ORDER
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(),
-                onClick = onClick,
-            ),
+        modifier = if (isOrderRequest) {
+            modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(),
+                    onClick = onClick,
+                )
+        } else {
+            modifier.fillMaxWidth()
+        },
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -619,6 +644,11 @@ private fun SystemHealthCard(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val animatedProgress by animateFloatAsState(
+        targetValue = (healthPercent.coerceIn(0, 100) / 100f),
+        animationSpec = tween(durationMillis = 500),
+        label = "admin_system_health_progress",
+    )
 
     PharmaCard(
         modifier = modifier.fillMaxWidth(),
@@ -640,12 +670,18 @@ private fun SystemHealthCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = "$healthPercent%",
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Crossfade(
+                    targetState = healthPercent.coerceIn(0, 100),
+                    animationSpec = tween(durationMillis = 180),
+                    label = "admin_system_health_percent",
+                ) { percent ->
+                    Text(
+                        text = "$percent%",
+                        style = MaterialTheme.typography.displayMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
                 
                 Text(
                     text = healthStatus,
@@ -655,7 +691,7 @@ private fun SystemHealthCard(
             }
             
             LinearProgressIndicator(
-                progress = { healthPercent / 100f },
+                progress = { animatedProgress },
                 modifier = Modifier.fillMaxWidth(),
                 color = StatusActive,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -714,7 +750,7 @@ private fun RecentActivitiesSection(
                 activities.forEachIndexed { index, activity ->
                     ActivityRow(activity = activity)
                     if (index < activities.lastIndex) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.16f))
                     }
                 }
             }

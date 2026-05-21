@@ -1,9 +1,17 @@
 package com.pharmalink.feature.admin.ui.orders
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +63,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.pharmalink.designsystem.theme.StatusActive
 import com.pharmalink.designsystem.theme.StatusInfo
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -92,8 +101,8 @@ fun AdminOrdersScreen(
             }
             is AdminOrdersEffect.NavigateToOrderDetail -> {
                 onNavigateToOrderDetail(effect.orderId)
+                }
             }
-        }
     }
 
     AdminOrdersContent(
@@ -148,8 +157,8 @@ private fun AdminOrdersContent(
                                 .size(44.dp)
                                 .clip(CircleShape)
                                 .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
                                     shape = CircleShape,
                                 )
                                 .background(MaterialTheme.colorScheme.primary)
@@ -173,7 +182,7 @@ private fun AdminOrdersContent(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
             }
         },
     ) { padding ->
@@ -292,43 +301,49 @@ private fun SuccessContent(
 
         // Filter Chips
         item {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
-            ) {
+            Crossfade(
+                targetState = state.selectedFilter,
+                animationSpec = tween(durationMillis = 180),
+                label = "admin_orders_filter_content",
+            ) { selectedFilter ->
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                ) {
                 item {
                     FilterChip(
-                        selected = state.selectedFilter == OrderFilter.ALL,
+                        selected = selectedFilter == OrderFilter.ALL,
                         onClick = { onAction(AdminOrdersAction.OnFilterSelected(OrderFilter.ALL)) },
                         label = { Text("الكل") }
                     )
                 }
                 item {
                     FilterChip(
-                        selected = state.selectedFilter == OrderFilter.B2C,
+                        selected = selectedFilter == OrderFilter.B2C,
                         onClick = { onAction(AdminOrdersAction.OnFilterSelected(OrderFilter.B2C)) },
                         label = { Text("B2C") }
                     )
                 }
                 item {
                     FilterChip(
-                        selected = state.selectedFilter == OrderFilter.B2B,
+                        selected = selectedFilter == OrderFilter.B2B,
                         onClick = { onAction(AdminOrdersAction.OnFilterSelected(OrderFilter.B2B)) },
                         label = { Text("B2B") }
                     )
                 }
                 item {
                     FilterChip(
-                        selected = state.selectedFilter == OrderFilter.URGENT,
+                        selected = selectedFilter == OrderFilter.URGENT,
                         onClick = { onAction(AdminOrdersAction.OnFilterSelected(OrderFilter.URGENT)) },
                         label = { Text("مستعجل") }
                     )
                 }
                 item {
                     FilterChip(
-                        selected = state.selectedFilter == OrderFilter.PENDING,
+                        selected = selectedFilter == OrderFilter.PENDING,
                         onClick = { onAction(AdminOrdersAction.OnFilterSelected(OrderFilter.PENDING)) },
                         label = { Text("معلق") }
                     )
+                }
                 }
             }
         }
@@ -338,10 +353,16 @@ private fun SuccessContent(
             items = state.orders,
             key = { it.id },
         ) { order ->
-            OrderCard(
-                order = order,
-                onClick = { onAction(AdminOrdersAction.OnOrderClicked(order.id)) },
-            )
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(durationMillis = 180)) +
+                    slideInVertically(animationSpec = tween(durationMillis = 180)) { it / 12 },
+            ) {
+                OrderCard(
+                    order = order,
+                    onClick = { onAction(AdminOrdersAction.OnOrderClicked(order.id)) },
+                )
+            }
         }
 
         // Loading More Indicator
@@ -408,12 +429,24 @@ private fun OrderCard(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val cardScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.985f else 1f,
+        animationSpec = tween(durationMillis = 110),
+        label = "admin_order_card_press",
+    )
 
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = cardScale
+                scaleY = cardScale
+            }
+            .animateContentSize(animationSpec = tween(durationMillis = 180))
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = interactionSource,
                 indication = ripple(),
                 onClick = onClick,
             ),

@@ -453,6 +453,11 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     override suspend fun uploadMedicineImage(uri: android.net.Uri): Result<String> =
         Result.failure(UnsupportedOperationException("Mock not implemented"))
 
+    override suspend fun uploadProfileAvatar(uri: android.net.Uri): Result<String> =
+        Result.failure(UnsupportedOperationException("Mock not implemented"))
+
+    override suspend fun deleteProfileAvatar(avatarUrl: String): Result<Unit> = Result.success(Unit)
+
     override suspend fun cancelCustomerOrder(orderId: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun acceptCustomerOrderPrice(orderId: String): Result<Unit> = Result.success(Unit)

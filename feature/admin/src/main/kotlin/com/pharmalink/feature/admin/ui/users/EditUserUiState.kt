@@ -8,9 +8,13 @@ data class EditUserUiState(
     val userId: String = "",
     val fullName: String = "",
     val accountType: AccountType = AccountType.PHARMACY,
+    val originalAccountType: AccountType = AccountType.PHARMACY,
     val facilityId: String = "",
     val isActive: Boolean = true,
+    val originalIsActive: Boolean = true,
     val isSaving: Boolean = false,
+    val showSensitiveChangeConfirmation: Boolean = false,
+    val sensitiveChangeWarning: String = "",
     val fullNameError: String = "",
     val facilityIdError: String = "",
 )
@@ -21,6 +25,8 @@ sealed interface EditUserAction {
     data class OnFacilityIdChanged(val id: String) : EditUserAction
     data class OnActiveToggled(val isActive: Boolean) : EditUserAction
     data object OnSaveClicked : EditUserAction
+    data object OnConfirmSensitiveSave : EditUserAction
+    data object OnDismissSensitiveConfirmation : EditUserAction
     data object OnDismiss : EditUserAction
 }
 

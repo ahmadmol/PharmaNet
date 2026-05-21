@@ -1,5 +1,11 @@
 package com.pharmalink.feature.admin.ui.orders
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -132,8 +138,8 @@ private fun AdminOrderDetailContent(
                                 .size(44.dp)
                                 .clip(CircleShape)
                                 .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
                                     shape = CircleShape,
                                 )
                                 .background(MaterialTheme.colorScheme.primary)
@@ -157,7 +163,7 @@ private fun AdminOrderDetailContent(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.16f))
             }
         },
     ) { padding ->
@@ -360,24 +366,33 @@ private fun InfoCard(
 ) {
     val d = MaterialTheme.dimens
 
-    PharmaCard(
-        modifier = modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.surface,
-        elevationDp = 2f,
+    AnimatedVisibility(
+        visible = true,
+        enter = fadeIn(animationSpec = tween(durationMillis = 180)) +
+            slideInVertically(animationSpec = tween(durationMillis = 180)) { it / 12 },
+        exit = fadeOut(animationSpec = tween(durationMillis = 120)),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        PharmaCard(
+            modifier = modifier
+                .fillMaxWidth()
+                .animateContentSize(animationSpec = tween(durationMillis = 180)),
+            containerColor = MaterialTheme.colorScheme.surface,
+            elevationDp = 2f,
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            
-            content()
+            Column(
+                verticalArrangement = Arrangement.spacedBy(d.spaceM),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
+
+                content()
+            }
         }
     }
 }

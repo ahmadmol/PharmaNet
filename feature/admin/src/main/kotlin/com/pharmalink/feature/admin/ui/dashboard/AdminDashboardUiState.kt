@@ -49,6 +49,7 @@ enum class RequestType {
     FACILITY,
     USER,
     ORDER,
+    UNKNOWN,
 }
 
 @Immutable
@@ -78,7 +79,7 @@ sealed interface AdminDashboardAction {
     data object OnPharmaciesCardClicked : AdminDashboardAction
     data object OnWarehousesCardClicked : AdminDashboardAction
     data object OnOrdersCardClicked : AdminDashboardAction
-    data class OnPendingRequestClicked(val requestId: String) : AdminDashboardAction
+    data class OnPendingRequestClicked(val requestId: String, val requestType: RequestType) : AdminDashboardAction
     data object OnViewAllRequestsClicked : AdminDashboardAction
     data object OnViewAllActivitiesClicked : AdminDashboardAction
 }

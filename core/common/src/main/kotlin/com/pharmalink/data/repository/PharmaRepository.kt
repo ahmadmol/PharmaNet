@@ -156,6 +156,10 @@ interface PharmaRepository {
 
     suspend fun uploadMedicineImage(uri: android.net.Uri): Result<String>
 
+    suspend fun uploadProfileAvatar(uri: android.net.Uri): Result<String>
+
+    suspend fun deleteProfileAvatar(avatarUrl: String): Result<Unit>
+
     suspend fun cancelCustomerOrder(orderId: String): Result<Unit>
 
     suspend fun acceptCustomerOrderPrice(orderId: String): Result<Unit>

@@ -1,9 +1,17 @@
 package com.pharmalink.feature.admin.ui.users
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,10 +29,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -37,7 +41,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,6 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.pharmalink.designsystem.theme.StatusActive
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -179,8 +183,8 @@ private fun AdminUsersContent(
                                 .size(44.dp)
                                 .clip(CircleShape)
                                 .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
                                     shape = CircleShape,
                                 )
                                 .background(MaterialTheme.colorScheme.primary)
@@ -204,7 +208,7 @@ private fun AdminUsersContent(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
             }
         },
         // Note: Add User FAB removed - users can self-register
@@ -360,29 +364,35 @@ private fun SuccessContent(
 
         // Filter Chips Row
         item {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
-            ) {
-                item {
-                    FilterChip(
-                        selected = state.filterStatus == UserFilterStatus.ALL,
-                        onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.ALL)) },
-                        label = { Text(stringResource(R.string.admin_filter_all)) }
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = state.filterStatus == UserFilterStatus.ACTIVE,
-                        onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.ACTIVE)) },
-                        label = { Text(stringResource(R.string.admin_filter_active)) }
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = state.filterStatus == UserFilterStatus.INACTIVE,
-                        onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.INACTIVE)) },
-                        label = { Text(stringResource(R.string.admin_filter_inactive)) }
-                    )
+            Crossfade(
+                targetState = state.filterStatus,
+                animationSpec = tween(durationMillis = 180),
+                label = "admin_users_filter_content",
+            ) { selectedFilter ->
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                ) {
+                    item {
+                        FilterChip(
+                            selected = selectedFilter == UserFilterStatus.ALL,
+                            onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.ALL)) },
+                            label = { Text(stringResource(R.string.admin_filter_all)) }
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = selectedFilter == UserFilterStatus.ACTIVE,
+                            onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.ACTIVE)) },
+                            label = { Text(stringResource(R.string.admin_filter_active)) }
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = selectedFilter == UserFilterStatus.INACTIVE,
+                            onClick = { onAction(AdminUsersAction.OnFilterStatusChanged(UserFilterStatus.INACTIVE)) },
+                            label = { Text(stringResource(R.string.admin_filter_inactive)) }
+                        )
+                    }
                 }
             }
         }
@@ -414,12 +424,17 @@ private fun SuccessContent(
             items = state.users,
             key = { it.id },
         ) { user ->
-            UserCard(
-                user = user,
-                onCardClick = { onNavigateToUserDetail(user.id) },
-                onEditClick = { onAction(AdminUsersAction.OnEditUserClicked(user)) },
-                onDeleteClick = { onAction(AdminUsersAction.OnDeleteUserClicked(user.id)) },
-            )
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(durationMillis = 180)) +
+                    slideInVertically(animationSpec = tween(durationMillis = 180)) { it / 12 },
+            ) {
+                UserCard(
+                    user = user,
+                    onCardClick = { onNavigateToUserDetail(user.id) },
+                    onEditClick = { onAction(AdminUsersAction.OnEditUserClicked(user)) },
+                )
+            }
         }
     }
 }
@@ -468,6 +483,11 @@ private fun StatCard(
     progress: Float? = null,
 ) {
     val d = MaterialTheme.dimens
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress?.coerceIn(0f, 1f) ?: 0f,
+        animationSpec = tween(durationMillis = 450),
+        label = "admin_users_stat_progress",
+    )
 
     PharmaCard(
         modifier = modifier,
@@ -500,7 +520,7 @@ private fun StatCard(
             
             if (progress != null) {
                 LinearProgressIndicator(
-                    progress = { progress },
+                    progress = { animatedProgress },
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -515,16 +535,27 @@ private fun UserCard(
     user: UserItemModel,
     onCardClick: () -> Unit,
     onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val cardScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.985f else 1f,
+        animationSpec = tween(durationMillis = 110),
+        label = "admin_user_card_press",
+    )
 
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = cardScale
+                scaleY = cardScale
+            }
+            .animateContentSize(animationSpec = tween(durationMillis = 180))
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = interactionSource,
                 indication = ripple(),
                 onClick = onCardClick,
             ),
@@ -634,32 +665,33 @@ private fun UserCard(
                 )
             }
             
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.16f))
             
             // Actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 PharmaButton(
                     text = stringResource(R.string.admin_users_edit_button),
                     onClick = onEditClick,
                     modifier = Modifier.weight(1f),
                 )
-                
-                Spacer(Modifier.width(d.spaceS))
-                
-                IconButton(
-                    onClick = onDeleteClick,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)),
+
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.admin_users_delete_button),
-                        tint = MaterialTheme.colorScheme.error,
+                    Text(
+                        text = "التعطيل عبر التعديل",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = d.spaceS, vertical = d.spaceM),
                     )
                 }
             }

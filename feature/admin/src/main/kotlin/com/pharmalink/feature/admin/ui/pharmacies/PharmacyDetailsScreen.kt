@@ -130,7 +130,7 @@ private fun PharmacyDetailsContent(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
             }
         },
     ) { padding ->
@@ -424,7 +424,7 @@ private fun InfoCard(
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.16f))
 
             InfoRow(
                 icon = Icons.Outlined.LocationOn,
@@ -514,25 +514,25 @@ private fun ActionsCard(
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.16f))
 
             PharmaButton(
-                text = stringResource(R.string.pharmacy_details_manage_branch),
-                onClick = { onAction(PharmacyDetailsAction.OnManageBranchClicked) },
+                text = stringResource(R.string.pharmacy_details_manage_branch) + " - \u0642\u0631\u064a\u0628\u064b\u0627",
+                onClick = {},
                 enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             PharmaButton(
-                text = stringResource(R.string.pharmacy_details_view_orders),
-                onClick = { onAction(PharmacyDetailsAction.OnViewOrdersClicked) },
+                text = stringResource(R.string.pharmacy_details_view_orders) + " - \u0642\u0631\u064a\u0628\u064b\u0627",
+                onClick = {},
                 enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             PharmaButton(
-                text = stringResource(R.string.pharmacy_details_edit),
-                onClick = { onAction(PharmacyDetailsAction.OnEditClicked) },
+                text = stringResource(R.string.pharmacy_details_edit) + " - \u0642\u0631\u064a\u0628\u064b\u0627",
+                onClick = {},
                 enabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )

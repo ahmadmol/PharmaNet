@@ -29,6 +29,7 @@ data class ProfileUiState(
                 userName = snapshot?.displayName.orEmpty().ifBlank { "مستخدم" },
                 userEmail = snapshot?.email.orEmpty(),
                 userPhone = snapshot?.phoneNumber.orEmpty(),
+                // profileImageUrl is intentionally not hard-set here; it will be provided by the repository-driven Profile state.
                 accountType = snapshot?.accountType?.name?.replace('_', ' ') ?: "",
                 accountTypeEnum = snapshot?.accountType,
                 pharmacyName = when (snapshot?.accountType) {
