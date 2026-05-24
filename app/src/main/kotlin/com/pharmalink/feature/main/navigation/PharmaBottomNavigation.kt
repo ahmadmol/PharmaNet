@@ -26,6 +26,7 @@ fun PharmaBottomNavigation(
     selectedItem: Int,
     onTabSelected: (route: String, index: Int) -> Unit,
     modifier: Modifier = Modifier,
+    labelOverrides: Map<String, String> = emptyMap(),
 ) {
     val d = MaterialTheme.dimens
 
@@ -44,18 +45,19 @@ fun PharmaBottomNavigation(
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             items.forEachIndexed { index, item ->
+                val label = labelOverrides[item.route] ?: stringResource(item.labelRes)
                 NavigationBarItem(
                     selected = selectedItem == index,
                     onClick = { onTabSelected(item.route, index) },
                     icon = {
                         Icon(
                             imageVector = item.icon,
-                            contentDescription = stringResource(item.labelRes),
+                            contentDescription = label,
                         )
                     },
                     label = {
                         Text(
-                            text = stringResource(item.labelRes),
+                            text = label,
                             maxLines = 1,
                             softWrap = false,
                         )

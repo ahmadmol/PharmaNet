@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -471,16 +472,16 @@ private fun MedicineInventoryCard(
     Card(
         modifier = modifier
             .fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(d.radiusXL),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(d.spaceL),
+                .padding(d.spaceM),
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             Row(
@@ -495,50 +496,22 @@ private fun MedicineInventoryCard(
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+                    horizontalAlignment = Alignment.Start,
                 ) {
                     Text(
                         text = medicine.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = medicine.description.ifBlank { "لا توجد تفاصيل إضافية" },
+                        text = medicine.description.ifBlank { "\u0644\u0627 \u062a\u0648\u062c\u062f \u062a\u0641\u0627\u0635\u064a\u0644 \u0625\u0636\u0627\u0641\u064a\u0629" },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                
-                // Stock Status Badge
-                if (medicine.stockStatus != StockStatus.IN_STOCK) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = when (medicine.stockStatus) {
-                            StockStatus.LOW_STOCK -> PharmaWarning.copy(alpha = 0.15f)
-                            StockStatus.OUT_OF_STOCK -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                            else -> Color.Transparent
-                        },
-                    ) {
-                        Text(
-                            text = when (medicine.stockStatus) {
-                                StockStatus.LOW_STOCK -> stringResource(R.string.warehouse_inventory_low_stock)
-                                StockStatus.OUT_OF_STOCK -> stringResource(R.string.warehouse_inventory_out_of_stock)
-                                else -> ""
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = when (medicine.stockStatus) {
-                                StockStatus.LOW_STOCK -> PharmaWarning
-                                StockStatus.OUT_OF_STOCK -> MaterialTheme.colorScheme.error
-                                else -> Color.Transparent
-                            },
-                            modifier = Modifier.padding(
-                                horizontal = d.spaceS,
-                                vertical = d.spaceXS,
-                            ),
-                        )
-                    }
-                }
+
+                StockStatusChip(stockStatus = medicine.stockStatus)
             }
 
             ProductManagementMeta(
@@ -546,8 +519,7 @@ private fun MedicineInventoryCard(
                 isVisible = medicine.isVisible,
                 isActive = medicine.isActive,
             )
-             
-            // Quantity and Progress
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(d.spaceS),
             ) {
@@ -561,8 +533,8 @@ private fun MedicineInventoryCard(
                             medicine.currentQuantity,
                             medicine.unit,
                         ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
@@ -598,6 +570,43 @@ private fun MedicineInventoryCard(
 }
 
 @Composable
+private fun StockStatusChip(
+    stockStatus: StockStatus,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    val containerColor = when (stockStatus) {
+        StockStatus.IN_STOCK -> StatusActive.copy(alpha = 0.12f)
+        StockStatus.LOW_STOCK -> PharmaWarning.copy(alpha = 0.15f)
+        StockStatus.OUT_OF_STOCK -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.42f)
+    }
+    val contentColor = when (stockStatus) {
+        StockStatus.IN_STOCK -> StatusActive
+        StockStatus.LOW_STOCK -> PharmaWarning
+        StockStatus.OUT_OF_STOCK -> MaterialTheme.colorScheme.error
+    }
+    val label = when (stockStatus) {
+        StockStatus.IN_STOCK -> "\u0645\u062a\u0648\u0641\u0631"
+        StockStatus.LOW_STOCK -> stringResource(R.string.warehouse_inventory_low_stock)
+        StockStatus.OUT_OF_STOCK -> stringResource(R.string.warehouse_inventory_out_of_stock)
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(d.radiusM),
+        color = containerColor,
+        contentColor = contentColor,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = d.spaceS, vertical = d.spaceXS),
+        )
+    }
+}
+
+@Composable
 private fun ProductManagementMeta(
     priceLabel: String?,
     isVisible: Boolean,
@@ -615,16 +624,16 @@ private fun ProductManagementMeta(
             horizontalArrangement = Arrangement.spacedBy(d.spaceS),
         ) {
             ProductMetaChip(
-                label = priceLabel ?: "السعر غير محدد",
+                label = priceLabel ?: "\u0627\u0644\u0633\u0639\u0631 \u063a\u064a\u0631 \u0645\u062d\u062f\u062f",
                 modifier = Modifier.weight(1f),
             )
             ProductMetaChip(
-                label = if (isVisible) "ظاهر للصيدليات" else "مخفي",
+                label = if (isVisible) "\u0638\u0627\u0647\u0631 \u0644\u0644\u0635\u064a\u062f\u0644\u064a\u0627\u062a" else "\u0645\u062e\u0641\u064a",
                 modifier = Modifier.weight(1f),
             )
         }
         ProductMetaChip(
-            label = if (isActive) "نشط" else "غير نشط",
+            label = if (isActive) "\u0646\u0634\u0637" else "\u063a\u064a\u0631 \u0646\u0634\u0637",
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -639,7 +648,7 @@ private fun ProductMetaChip(
 
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
+        shape = RoundedCornerShape(d.radiusM),
         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f),
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
     ) {
@@ -660,9 +669,9 @@ private fun ProductImageThumb(
     val d = MaterialTheme.dimens
 
     Surface(
-        modifier = modifier.size(64.dp),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = modifier.size(76.dp),
+        shape = RoundedCornerShape(d.radiusL),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
     ) {
         if (imageUrl.isNotBlank()) {
             AsyncImage(
@@ -679,8 +688,8 @@ private fun ProductImageThumb(
                 Icon(
                     imageVector = Icons.Default.Image,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(d.iconM),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(d.iconL),
                 )
             }
         }

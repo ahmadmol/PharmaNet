@@ -308,6 +308,11 @@ fun PharmaNavigator(
                 PharmaBottomNavigation(
                     items = bottomBarTabs,
                     selectedItem = tabSelectedIndex,
+                    labelOverrides = if (accountType == AccountType.WAREHOUSE) {
+                        mapOf(AppDestination.RequestList.route to "\u0627\u0644\u0648\u0627\u0631\u062f\u0629")
+                    } else {
+                        emptyMap()
+                    },
                     onTabSelected = { route, _ ->
                         when (route) {
                             AppDestination.AdminDashboard.route -> navController.navigateToInnerTopLevel(AppDestination.AdminDashboard)

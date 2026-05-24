@@ -65,6 +65,7 @@ import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.Request
+import com.pharmalink.domain.model.RequestItem
 import com.pharmalink.domain.model.RequestStatus
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -157,6 +158,10 @@ private fun RequestDetailsContent(
         item {
             // Main Request Summary Card
             RequestSummaryCard(request = request)
+        }
+
+        item {
+            RequestItemsCard(request = request)
         }
 
         item {
@@ -594,6 +599,122 @@ private fun RequestSummaryCard(request: Request) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RequestItemsCard(request: Request) {
+    val d = MaterialTheme.dimens
+    val displayItems = request.items.ifEmpty {
+        listOf(
+            RequestItem(
+                lineNo = 1,
+                medicineId = request.medicineId.orEmpty(),
+                medicineName = request.medicineName,
+                medicineSubtitle = request.medicineSubtitle,
+                quantity = request.quantity,
+                unit = request.unit,
+            ),
+        )
+    }
+
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Inventory2,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    text = "\u0639\u0646\u0627\u0635\u0631 \u0627\u0644\u0637\u0644\u0628",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+
+            displayItems.forEachIndexed { index, item ->
+                RequestItemRow(
+                    item = item,
+                    displayLineNo = item.lineNo.takeIf { it > 0 } ?: (index + 1),
+                )
+                if (index != displayItems.lastIndex) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RequestItemRow(
+    item: RequestItem,
+    displayLineNo: Int,
+) {
+    val d = MaterialTheme.dimens
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(d.radiusM),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ) {
+            Text(
+                text = displayLineNo.toString(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = d.spaceS, vertical = d.spaceXS),
+            )
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = item.medicineName,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (item.medicineSubtitle.isNotBlank()) {
+                Text(
+                    text = item.medicineSubtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        Text(
+            text = "${item.quantity} ${item.unit}",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }
 

@@ -99,7 +99,7 @@ class AddMedicineViewModel @Inject constructor(
                     _state.update { it.copy(isUploading = false, isSuccess = true) }
                 },
                 onFailure = { error ->
-                    Log.e(TAG, "Failed to add medicine", error)
+                    Log.e(TAG, "Failed to add medicine for warehouseId=$warehouseId: ${error.message}", error)
                     _state.update {
                         it.copy(
                             isUploading = false,

@@ -1793,11 +1793,7 @@ class SupabasePharmaRepository @Inject constructor(
     override suspend fun uploadMedicineImage(uri: android.net.Uri): Result<String> = runCatching {
         val identity = resolveAccessContext()
         val ownerPath = when (identity.role) {
-            AccountType.WAREHOUSE -> {
-                val ownWarehouseId = identity.organizationId
-                    ?: throw UnauthorizedException("unauthorized: WAREHOUSE user missing organizationId")
-                "warehouse/$ownWarehouseId"
-            }
+            AccountType.WAREHOUSE -> "warehouse/${resolveRealWarehouseIdForMedicineWrite(identity)}"
             AccountType.ADMIN -> "admin/${identity.userId}"
             else -> throw UnauthorizedException("Only ADMIN or WAREHOUSE can upload medicine images")
         }
@@ -1863,24 +1859,20 @@ class SupabasePharmaRepository @Inject constructor(
     override suspend fun addMedicine(medicine: Medicine, warehouseId: String): Result<Unit> = runCatching {
         val identity = resolveAccessContext()
         val targetWarehouseId = when (identity.role) {
-            AccountType.ADMIN -> warehouseId
-            AccountType.WAREHOUSE -> {
-                val ownWarehouseId = identity.organizationId
-                    ?: throw UnauthorizedException("unauthorized: WAREHOUSE user missing organizationId")
-                require(warehouseId == ownWarehouseId) {
-                    "WAREHOUSE users can only add medicines to their own warehouse"
-                }
-                ownWarehouseId
-            }
+            AccountType.ADMIN -> warehouseId.takeIf { it.isNotBlank() }
+                ?: throw IllegalArgumentException("warehouseId is required for medicine creation")
+            AccountType.WAREHOUSE -> resolveRealWarehouseIdForMedicineWrite(
+                identity = identity,
+                requestedWarehouseId = warehouseId,
+            )
             else -> throw UnauthorizedException("Only ADMIN or WAREHOUSE can add medicines")
         }
 
-        val dto = MedicineDto(
-            id = "", // Supabase will generate this
+        val dto = MedicineInsertDto(
             name = medicine.name,
             brand = medicine.brand,
             strength = medicine.strength,
-            price = medicine.priceAmount ?: medicine.price,
+            price = medicine.priceAmount,
             description = medicine.description,
             specs = medicine.specs,
             stockQuantity = medicine.stockQuantity,
@@ -1894,6 +1886,7 @@ class SupabasePharmaRepository @Inject constructor(
         try {
             supabase.postgrest.from("medicines").insert(dto)
         } catch (error: Throwable) {
+            Log.e(TAG, "Medicine insert failed for warehouseId=$targetWarehouseId: ${error.message}", error)
             deleteUploadedMedicineImageIfOwned(
                 imageUrl = medicine.imageUrl,
                 identity = identity,
@@ -1902,6 +1895,42 @@ class SupabasePharmaRepository @Inject constructor(
             throw error
         }
     }.map { Unit }
+
+    private suspend fun resolveRealWarehouseIdForMedicineWrite(
+        identity: UserIdentity,
+        requestedWarehouseId: String? = null,
+    ): String {
+        require(identity.role == AccountType.WAREHOUSE) {
+            "Real warehouse ownership proof is only available for WAREHOUSE users"
+        }
+
+        val rows = supabase.postgrest.from("profiles").select(
+            columns = Columns.raw("account_type,is_active,warehouse_id"),
+        ) {
+            filter { eq("id", identity.userId) }
+        }.decodeList<WarehouseMedicineWriteProfileDto>()
+        val profile = requireSingleProfileRow(
+            rows = rows,
+            userId = identity.userId,
+            rowLabel = "Warehouse medicine write profile",
+        )
+        require(profile.accountType == AccountType.WAREHOUSE.name) {
+            "Authenticated profile is not a WAREHOUSE account"
+        }
+        require(profile.isActive == true) {
+            "WAREHOUSE profile is not active"
+        }
+        val realWarehouseId = profile.warehouseId?.takeIf { it.isNotBlank() }
+            ?: throw UnauthorizedException("unauthorized: WAREHOUSE user missing real profiles.warehouse_id")
+
+        requestedWarehouseId?.takeIf { it.isNotBlank() }?.let { requested ->
+            require(requested == realWarehouseId) {
+                "WAREHOUSE users can only add medicines to their own warehouse"
+            }
+        }
+
+        return realWarehouseId
+    }
 
     override suspend fun cancelCustomerOrder(orderId: String): Result<Unit> = runCatching {
         val identity = resolveAccessContext()
@@ -2839,6 +2868,22 @@ private data class WarehouseDto(
 }
 
 @Serializable
+private data class MedicineInsertDto(
+    val name: String,
+    val brand: String? = null,
+    val strength: String? = null,
+    val price: Double? = null,
+    val description: String? = null,
+    val specs: JsonElement? = null,
+    @SerialName("stock_quantity") val stockQuantity: Int? = null,
+    @SerialName("image_url") val imageUrl: String? = null,
+    @SerialName("warehouse_id") val warehouseId: String? = null,
+    @SerialName("is_visible") val isVisible: Boolean? = null,
+    @SerialName("is_active") val isActive: Boolean? = null,
+    val currency: String? = null,
+)
+
+@Serializable
 private data class MedicineDto(
     val id: String,
     val name: String,
@@ -2879,6 +2924,13 @@ private data class MedicineDto(
         )
     }
 }
+
+@Serializable
+private data class WarehouseMedicineWriteProfileDto(
+    @SerialName("account_type") val accountType: String? = null,
+    @SerialName("is_active") val isActive: Boolean? = null,
+    @SerialName("warehouse_id") val warehouseId: String? = null,
+)
 
 @Serializable
 private data class WarehouseProductsRpcParams(
