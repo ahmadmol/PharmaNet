@@ -98,7 +98,6 @@ class AdminPharmaciesViewModel @Inject constructor(
             AdminPharmaciesAction.OnAddPharmacyClicked -> {
                 // Handled in UI - navigate to create facility
             }
-            AdminPharmaciesAction.OnCoverageMapClicked -> navigateToCoverageMap()
         }
     }
 
@@ -117,11 +116,11 @@ class AdminPharmaciesViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل الصيدليات",
+                            contentError = PHARMACIES_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -177,12 +176,6 @@ class AdminPharmaciesViewModel @Inject constructor(
         }
     }
 
-    private fun navigateToCoverageMap() {
-        viewModelScope.launch {
-            _effect.emit(AdminPharmaciesEffect.NavigateToCoverageMap)
-        }
-    }
-
     private fun Pharmacy.toUiModel(): PharmacyItemModel {
         return PharmacyItemModel(
             id = id,
@@ -191,6 +184,10 @@ class AdminPharmaciesViewModel @Inject constructor(
             isActive = isActive,
             createdAt = createdAt ?: "",
         )
+    }
+
+    private companion object {
+        private const val PHARMACIES_ERROR_MESSAGE = "تعذر تحميل الصيدليات. حاول مرة أخرى."
     }
 }
 

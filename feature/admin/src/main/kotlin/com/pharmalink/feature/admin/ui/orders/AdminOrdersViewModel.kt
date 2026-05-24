@@ -116,14 +116,18 @@ class AdminOrdersViewModel @Inject constructor(
                         currentOffset = newOrders.size
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل الطلبات",
+                            contentError = ORDERS_LOAD_ERROR_MESSAGE,
                         )
                     }
                 }
         }
+    }
+
+    private companion object {
+        private const val ORDERS_LOAD_ERROR_MESSAGE = "تعذر تحميل الطلبات. حاول مرة أخرى."
     }
 }

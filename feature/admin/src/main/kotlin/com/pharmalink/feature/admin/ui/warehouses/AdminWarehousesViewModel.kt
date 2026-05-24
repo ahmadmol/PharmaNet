@@ -103,11 +103,11 @@ class AdminWarehousesViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل المستودعات",
+                            contentError = WAREHOUSES_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -171,6 +171,10 @@ class AdminWarehousesViewModel @Inject constructor(
             inventoryCount = inStockPercent, // real field: % of items in stock
             lastUpdatedLabel = lastUpdatedLabel ?: "",
         )
+    }
+
+    private companion object {
+        private const val WAREHOUSES_ERROR_MESSAGE = "تعذر تحميل المستودعات. حاول مرة أخرى."
     }
 }
 

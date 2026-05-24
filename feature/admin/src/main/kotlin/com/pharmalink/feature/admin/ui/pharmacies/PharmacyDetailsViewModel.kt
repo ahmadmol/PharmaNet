@@ -86,11 +86,11 @@ class PharmacyDetailsViewModel @Inject constructor(
                         }
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل بيانات الصيدلية",
+                            contentError = PHARMACY_DETAILS_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -109,5 +109,9 @@ class PharmacyDetailsViewModel @Inject constructor(
             isActive = isActive,
             createdAt = createdAt,
         )
+    }
+
+    private companion object {
+        private const val PHARMACY_DETAILS_ERROR_MESSAGE = "تعذر تحميل بيانات الصيدلية. حاول مرة أخرى."
     }
 }

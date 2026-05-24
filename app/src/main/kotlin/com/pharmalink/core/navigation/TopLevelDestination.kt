@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.LocalPharmacy
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NotificationsNone
@@ -25,6 +26,7 @@ val topLevelDestinations = listOf(
     TopLevelDestination(AppDestination.Home.route, AppDestination.Home.route, Icons.Outlined.Home, R.string.home_screen),
     TopLevelDestination(AppDestination.PharmacyDashboard.route, AppDestination.PharmacyDashboard.route, Icons.Outlined.LocalPharmacy, R.string.pharmacy_dashboard_tab),
     TopLevelDestination(AppDestination.PharmacyRadar.route, AppDestination.PharmacyRadar.route, Icons.Outlined.LocationOn, R.string.pharmacy_radar_tab),
+    TopLevelDestination(AppDestination.WarehouseDashboard.route, AppDestination.WarehouseDashboard.route, Icons.Outlined.Inventory2, R.string.warehouse_dashboard_tab),
     TopLevelDestination(AppDestination.Resources.route, AppDestination.Resources.route, Icons.Outlined.GridView, R.string.resources),
     TopLevelDestination(AppDestination.PharmacyCustomerOrders.route, AppDestination.PharmacyCustomerOrders.route, Icons.AutoMirrored.Outlined.ReceiptLong, R.string.orders_screen_title),
     TopLevelDestination(AppDestination.RequestList.route, AppDestination.RequestList.route, Icons.Outlined.ShoppingCart, R.string.my_orders),

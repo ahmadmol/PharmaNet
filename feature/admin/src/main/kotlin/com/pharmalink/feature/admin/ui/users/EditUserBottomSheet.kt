@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -219,7 +221,11 @@ private fun EditUserBottomSheetContent(
 
         Spacer(Modifier.height(d.spaceM))
 
-        if (showFacilityField) {
+        AnimatedVisibility(
+            visible = showFacilityField,
+            enter = fadeIn(animationSpec = tween(durationMillis = 180)) + expandVertically(),
+            exit = fadeOut(animationSpec = tween(durationMillis = 140)) + shrinkVertically(),
+        ) {
             PharmaTextField(
                 value = state.facilityId,
                 onValueChange = { onAction(EditUserAction.OnFacilityIdChanged(it)) },
@@ -228,7 +234,12 @@ private fun EditUserBottomSheetContent(
                 errorMessage = state.facilityIdError,
                 enabled = !state.isSaving,
             )
-
+        }
+        AnimatedVisibility(
+            visible = showFacilityField,
+            enter = fadeIn(animationSpec = tween(durationMillis = 180)) + expandVertically(),
+            exit = fadeOut(animationSpec = tween(durationMillis = 140)) + shrinkVertically(),
+        ) {
             Spacer(Modifier.height(d.spaceL))
         }
 
@@ -282,16 +293,22 @@ private fun EditUserBottomSheetContent(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (state.isSaving) {
-            Spacer(Modifier.height(d.spaceM))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
-                )
+        AnimatedVisibility(
+            visible = state.isSaving,
+            enter = fadeIn(animationSpec = tween(durationMillis = 160)) + expandVertically(),
+            exit = fadeOut(animationSpec = tween(durationMillis = 120)) + shrinkVertically(),
+        ) {
+            Column {
+                Spacer(Modifier.height(d.spaceM))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
             }
         }
     }

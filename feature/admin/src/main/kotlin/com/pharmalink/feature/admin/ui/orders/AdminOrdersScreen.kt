@@ -77,6 +77,7 @@ import com.pharmalink.designsystem.components.PharmaStateTone
 import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarButton
 import com.pharmalink.domain.model.AdminOrder
 import com.pharmalink.domain.model.FulfillmentType
 import com.pharmalink.domain.model.OrderStatus
@@ -88,6 +89,7 @@ fun AdminOrdersScreen(
     onBackClick: () -> Unit,
     onNavigateToOrderDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: AdminOrdersViewModel = hiltViewModel(),
 ) {
@@ -110,6 +112,7 @@ fun AdminOrdersScreen(
         onAction = viewModel::onAction,
         onBackClick = onBackClick,
         onNavigateToProfile = onNavigateToProfile,
+        profileImageUrl = profileImageUrl,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -122,6 +125,7 @@ private fun AdminOrdersContent(
     onAction: (AdminOrdersAction) -> Unit,
     onBackClick: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    profileImageUrl: String? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -152,30 +156,11 @@ private fun AdminOrdersContent(
                         }
                     },
                     actions = {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
-                                    shape = CircleShape,
-                                )
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(),
-                                    onClick = onNavigateToProfile,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = "الملف الشخصي",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
+                        AdminProfileAvatarButton(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = stringResource(R.string.admin_profile_cd),
+                            onClick = onNavigateToProfile,
+                        )
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -357,6 +342,7 @@ private fun SuccessContent(
                 visible = true,
                 enter = fadeIn(animationSpec = tween(durationMillis = 180)) +
                     slideInVertically(animationSpec = tween(durationMillis = 180)) { it / 12 },
+                modifier = Modifier.animateItem(),
             ) {
                 OrderCard(
                     order = order,
@@ -432,7 +418,7 @@ private fun OrderCard(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val cardScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.985f else 1f,
+        targetValue = if (isPressed) 0.96f else 1f,
         animationSpec = tween(durationMillis = 110),
         label = "admin_order_card_press",
     )
@@ -655,6 +641,7 @@ private fun PreviewAdminOrdersScreen() {
             onAction = {},
             onBackClick = {},
             onNavigateToProfile = {},
+            profileImageUrl = null,
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

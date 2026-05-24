@@ -156,7 +156,6 @@ class AdminDashboardViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            adminName = "",  // resolved in Screen via stringResource
                             totalUsers = stats.totalUsers,
                             totalPharmacies = stats.totalPharmacies,
                             totalWarehouses = stats.totalWarehouses,
@@ -177,11 +176,11 @@ class AdminDashboardViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message.orEmpty(),
+                            contentError = DASHBOARD_LOAD_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -268,4 +267,7 @@ class AdminDashboardViewModel @Inject constructor(
         }
     }
 
+    private companion object {
+        private const val DASHBOARD_LOAD_ERROR_MESSAGE = "تعذر تحميل لوحة التحكم. حاول مرة أخرى."
+    }
 }

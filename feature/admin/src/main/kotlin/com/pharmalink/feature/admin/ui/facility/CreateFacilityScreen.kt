@@ -62,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -72,6 +73,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.pharmalink.designsystem.utils.CollectEffect
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarButton
 import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.components.PharmaButtonSize
 import com.pharmalink.designsystem.components.PharmaCard
@@ -79,6 +81,7 @@ import com.pharmalink.designsystem.components.PharmaSwitch
 import com.pharmalink.designsystem.components.PharmaTextField
 import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.feature.admin.R
 import com.pharmalink.domain.model.FacilityType
 import java.util.Locale
 
@@ -88,6 +91,7 @@ fun CreateFacilityScreen(
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: CreateFacilityViewModel = hiltViewModel(),
 ) {
@@ -116,6 +120,7 @@ fun CreateFacilityScreen(
         uiState = uiState,
         onBackClick = onBackClick,
         onNavigateToProfile = onNavigateToProfile,
+        profileImageUrl = profileImageUrl,
         onFacilityTypeChange = viewModel::onFacilityTypeChange,
         onNameChange = viewModel::onNameChange,
         onAddressChange = viewModel::onAddressChange,
@@ -141,6 +146,7 @@ private fun CreateFacilityContent(
     uiState: CreateFacilityUiState,
     onBackClick: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    profileImageUrl: String? = null,
     onFacilityTypeChange: (FacilityType) -> Unit,
     onNameChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
@@ -179,30 +185,11 @@ private fun CreateFacilityContent(
                         }
                     },
                     actions = {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
-                                    shape = CircleShape,
-                                )
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(),
-                                    onClick = onNavigateToProfile,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "A",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
+                        AdminProfileAvatarButton(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = stringResource(R.string.admin_profile_cd),
+                            onClick = onNavigateToProfile,
+                        )
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

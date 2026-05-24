@@ -121,7 +121,7 @@ class PharmacyCustomerOrderDetailViewModel @Inject constructor(
                 onFailure = { error ->
                     _uiState.update {
                         it.copy(
-                            screenState = ScreenState.Error(error.message ?: "تعذر تحميل الطلب"),
+                            screenState = ScreenState.Error(mapOrderErrorToMessage(error)),
                             isActionInProgress = false,
                         )
                     }
@@ -157,11 +157,35 @@ class PharmacyCustomerOrderDetailViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isActionInProgress = false,
-                            actionErrorMessage = error.message ?: "تعذر تنفيذ الإجراء",
+                            actionErrorMessage = mapOrderErrorToMessage(error),
                         )
                     }
                 },
             )
+        }
+    }
+
+    private fun mapOrderErrorToMessage(error: Throwable): String {
+        val msg = error.message.orEmpty()
+        return when {
+            msg.contains("not found", ignoreCase = true) ||
+                msg.contains("404", ignoreCase = true) ->
+                "الطلب غير موجود"
+            msg.contains("permission", ignoreCase = true) ||
+                msg.contains("unauthorized", ignoreCase = true) ||
+                msg.contains("only pharmacy", ignoreCase = true) ->
+                "ليس لديك صلاحية لتنفيذ هذا الإجراء"
+            msg.contains("network", ignoreCase = true) ||
+                msg.contains("connection", ignoreCase = true) ||
+                msg.contains("timeout", ignoreCase = true) ->
+                "تعذر الاتصال بالخادم، يرجى المحاولة مجدداً"
+            msg.contains("pending", ignoreCase = true) ->
+                "لا يمكن تنفيذ هذا الإجراء على الطلب الحالي"
+            msg.contains("confirmed", ignoreCase = true) ->
+                "الطلب مؤكد بالفعل"
+            msg.contains("price", ignoreCase = true) ->
+                "السعر المدخل غير صالح"
+            else -> "تعذر تنفيذ الإجراء، يرجى المحاولة مجدداً"
         }
     }
 }

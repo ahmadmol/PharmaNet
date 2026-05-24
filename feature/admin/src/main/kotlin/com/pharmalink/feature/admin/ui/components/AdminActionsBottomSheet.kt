@@ -59,6 +59,7 @@ private data class AdminActionItem(
 @Composable
 fun AdminActionsBottomSheet(
     onDismiss: () -> Unit,
+    profileImageUrl: String? = null,
     onActionClick: (AdminActionDestination) -> Unit,
 ) {
     val items = listOf(
@@ -72,18 +73,24 @@ fun AdminActionsBottomSheet(
     )
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        ModalBottomSheet(onDismissRequest = onDismiss) {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = stringResource(R.string.admin_actions_sheet_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 4.dp),
                 )
 
                 items.forEach { item ->
@@ -93,14 +100,14 @@ fun AdminActionsBottomSheet(
                             .clickable { onActionClick(item.destination) },
                         shape = MaterialTheme.shapes.large,
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                                .padding(horizontal = 14.dp, vertical = 11.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
@@ -108,17 +115,26 @@ fun AdminActionsBottomSheet(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .background(
-                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
                                         shape = CircleShape,
                                     ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(18.dp),
-                                )
+                                if (item.destination == AdminActionDestination.PROFILE) {
+                                    AdminProfileAvatarIcon(
+                                        profileImageUrl = profileImageUrl,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(36.dp),
+                                        fallbackTint = MaterialTheme.colorScheme.primary,
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
                             }
 
                             Text(
@@ -131,7 +147,7 @@ fun AdminActionsBottomSheet(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
                                 modifier = Modifier.size(14.dp),
                             )
                         }

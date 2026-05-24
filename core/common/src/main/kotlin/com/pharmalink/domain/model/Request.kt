@@ -40,6 +40,7 @@ data class Request(
     val rejectionReason: String? = null,
     val attachmentUrl: String? = null,
     val medicineImageUrl: String? = null,
+    val items: List<RequestItem> = emptyList(),
 )
 
 /**
@@ -52,6 +53,7 @@ data class RequestUpdate(
     val warehouseName: String? = null,
     val rejectionReason: String? = null,
     val notes: String? = null,
+    val items: List<RequestItem>? = null,
 )
 
 /**

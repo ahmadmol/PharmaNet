@@ -104,7 +104,8 @@
     <string name="error_pharmacy_name_required">اسم الصيدلية مطلوب</string>
     <string name="error_warehouse_name_required">اسم المستودع مطلوب</string>
     <string name="error_warehouse_location_required">موقع المستودع مطلوب</string>
-    <string name="auth_error_warehouse_map_location_required">اختر موقع المستودع من الخريطة</string>
+    <string name="auth_error_pharmacy_map_location_required">اختر موقع الصيدلية من GPS قبل إنشاء الحساب</string>
+    <string name="auth_error_warehouse_map_location_required">اختر موقع المستودع من GPS قبل إنشاء الحساب</string>
 </resources>
 
 

@@ -12,4 +12,9 @@ data class InventoryItem(
     val unit: String,
     val stockStatus: StockStatus,
     val lastUpdated: Instant,
+    val description: String? = null,
+    val priceAmount: Double? = null,
+    val currency: String = "SYP",
+    val isVisible: Boolean = true,
+    val isActive: Boolean = true,
 )

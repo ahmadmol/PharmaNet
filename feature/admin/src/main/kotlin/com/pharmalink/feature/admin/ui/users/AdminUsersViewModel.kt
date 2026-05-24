@@ -147,11 +147,11 @@ class AdminUsersViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل المستخدمين",
+                            contentError = USERS_LOAD_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -242,6 +242,9 @@ class AdminUsersViewModel @Inject constructor(
             avatarUrl = "",
             createdAt = createdAt,
         )
+    }
+    private companion object {
+        private const val USERS_LOAD_ERROR_MESSAGE = "تعذر تحميل المستخدمين. حاول مرة أخرى."
     }
 }
 

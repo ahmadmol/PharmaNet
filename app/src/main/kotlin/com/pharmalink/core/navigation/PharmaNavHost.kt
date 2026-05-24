@@ -212,7 +212,7 @@ fun PharmaNavHost(
 
         composable(AppDestination.MainTabs.route) {
             val mainTabsStartDestination = when (accountType) {
-                AccountType.WAREHOUSE -> AppDestination.Resources.route
+                AccountType.WAREHOUSE -> AppDestination.WarehouseDashboard.route
                 AccountType.ADMIN -> AppDestination.AdminDashboard.route
                 else -> AppDestination.Home.route
             }

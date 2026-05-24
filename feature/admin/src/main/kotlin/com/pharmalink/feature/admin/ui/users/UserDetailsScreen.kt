@@ -62,11 +62,13 @@ import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.feature.admin.R
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDetailsScreen(
     onBackClick: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: UserDetailsViewModel = hiltViewModel(),
     editUserViewModel: EditUserViewModel = hiltViewModel(),
@@ -92,6 +94,7 @@ fun UserDetailsScreen(
         state = state,
         onAction = viewModel::onAction,
         onBackClick = onBackClick,
+        profileImageUrl = profileImageUrl,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -120,6 +123,7 @@ private fun UserDetailsContent(
     state: UserDetailsUiState,
     onAction: (UserDetailsAction) -> Unit,
     onBackClick: () -> Unit,
+    profileImageUrl: String? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -149,6 +153,16 @@ private fun UserDetailsContent(
                             )
                         }
                     },
+                    actions = {
+                        AdminProfileAvatarIcon(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(44.dp),
+                            fallbackSize = 24.dp,
+                            fallbackTint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(d.spaceM))
+                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
@@ -167,6 +181,7 @@ private fun UserDetailsContent(
             state.user == null -> EmptyContent(modifier = Modifier.padding(padding))
             else -> SuccessContent(
                 user = state.user,
+                profileImageUrl = profileImageUrl,
                 onAction = onAction,
                 modifier = Modifier.padding(padding),
             )
@@ -230,6 +245,7 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
 @Composable
 private fun SuccessContent(
     user: UserDetailModel,
+    profileImageUrl: String? = null,
     onAction: (UserDetailsAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -242,7 +258,10 @@ private fun SuccessContent(
     ) {
         // Header Card
         item {
-            HeaderCard(user = user)
+            HeaderCard(
+                user = user,
+                profileImageUrl = profileImageUrl,
+            )
         }
 
         // Note: Secondary statistics (orders, requests) hidden
@@ -263,6 +282,7 @@ private fun SuccessContent(
 @Composable
 private fun HeaderCard(
     user: UserDetailModel,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
@@ -285,11 +305,11 @@ private fun HeaderCard(
                     .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Person,
+                AdminProfileAvatarIcon(
+                    profileImageUrl = profileImageUrl,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier.size(72.dp),
+                    fallbackSize = 36.dp,
                 )
             }
 

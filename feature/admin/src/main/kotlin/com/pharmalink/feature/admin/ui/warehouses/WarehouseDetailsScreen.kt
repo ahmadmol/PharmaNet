@@ -1,15 +1,21 @@
 package com.pharmalink.feature.admin.ui.warehouses
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -58,11 +64,13 @@ import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
 import com.pharmalink.feature.admin.R
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarIcon
 
 @Composable
 fun WarehouseDetailsScreen(
     onBackClick: () -> Unit,
     onNavigateToInventory: (String) -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: WarehouseDetailsViewModel = hiltViewModel(),
 ) {
@@ -87,6 +95,7 @@ fun WarehouseDetailsScreen(
         state = state,
         onAction = viewModel::onAction,
         onBackClick = onBackClick,
+        profileImageUrl = profileImageUrl,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -98,6 +107,7 @@ private fun WarehouseDetailsContent(
     state: WarehouseDetailsUiState,
     onAction: (WarehouseDetailsAction) -> Unit,
     onBackClick: () -> Unit,
+    profileImageUrl: String? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -126,6 +136,16 @@ private fun WarehouseDetailsContent(
                                 tint = MaterialTheme.colorScheme.onSurface,
                             )
                         }
+                    },
+                    actions = {
+                        AdminProfileAvatarIcon(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(44.dp),
+                            fallbackSize = 24.dp,
+                            fallbackTint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
@@ -223,7 +243,9 @@ private fun SuccessContent(
     ) {
         // Header Card
         item {
-            HeaderCard(warehouse = warehouse)
+            AdminDetailSectionEntrance {
+                HeaderCard(warehouse = warehouse)
+            }
         }
 
         // Note: Secondary statistics (inventory items, shipments, orders) hidden
@@ -231,18 +253,39 @@ private fun SuccessContent(
 
         // Stock Status Card
         item {
-            StockStatusCard(warehouse = warehouse)
+            AdminDetailSectionEntrance {
+                StockStatusCard(warehouse = warehouse)
+            }
         }
 
         // Warehouse Information
         item {
-            InfoCard(warehouse = warehouse)
+            AdminDetailSectionEntrance {
+                InfoCard(warehouse = warehouse)
+            }
         }
 
         // Actions
         item {
-            ActionsCard(onAction = onAction)
+            AdminDetailSectionEntrance {
+                ActionsCard(onAction = onAction)
+            }
         }
+    }
+}
+
+@Composable
+private fun AdminDetailSectionEntrance(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = true,
+        enter = fadeIn(animationSpec = tween(durationMillis = 220)) +
+            slideInVertically(animationSpec = tween(durationMillis = 220)) { it / 5 },
+        modifier = modifier,
+    ) {
+        content()
     }
 }
 

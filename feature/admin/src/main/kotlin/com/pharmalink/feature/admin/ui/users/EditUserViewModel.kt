@@ -171,9 +171,9 @@ class EditUserViewModel @Inject constructor(
                     _effect.emit(EditUserEffect.ShowMessage("تم حفظ التغييرات بنجاح"))
                     _effect.emit(EditUserEffect.Dismiss)
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update { it.copy(isSaving = false) }
-                    _effect.emit(EditUserEffect.ShowMessage(e.message ?: "فشل حفظ التغييرات"))
+                    _effect.emit(EditUserEffect.ShowMessage(SAVE_USER_ERROR_MESSAGE))
                 }
         }
     }
@@ -182,5 +182,8 @@ class EditUserViewModel @Inject constructor(
         viewModelScope.launch {
             _effect.emit(EditUserEffect.Dismiss)
         }
+    }
+    private companion object {
+        private const val SAVE_USER_ERROR_MESSAGE = "تعذر حفظ التغييرات. حاول مرة أخرى."
     }
 }

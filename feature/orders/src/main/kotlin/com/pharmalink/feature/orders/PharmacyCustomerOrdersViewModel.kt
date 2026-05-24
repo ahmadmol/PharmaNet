@@ -85,7 +85,7 @@ class PharmacyCustomerOrdersViewModel @Inject constructor(
                 onFailure = { error ->
                     _uiState.update {
                         it.copy(
-                            screenState = ScreenState.Error(error.message ?: "تعذر تحميل طلبات العملاء"),
+                            screenState = ScreenState.Error(mapOrdersErrorToMessage(error)),
                             isRefreshing = false,
                         )
                     }
@@ -106,6 +106,20 @@ class PharmacyCustomerOrdersViewModel @Inject constructor(
                 pendingCount = allOrders.count { order -> order.status == com.pharmalink.domain.model.OrderStatus.PENDING },
                 isRefreshing = isRefreshing,
             )
+        }
+    }
+
+    private fun mapOrdersErrorToMessage(error: Throwable): String {
+        val msg = error.message.orEmpty()
+        return when {
+            msg.contains("permission", ignoreCase = true) ||
+                msg.contains("unauthorized", ignoreCase = true) ->
+                "ليس لديك صلاحية لعرض طلبات العملاء"
+            msg.contains("network", ignoreCase = true) ||
+                msg.contains("connection", ignoreCase = true) ||
+                msg.contains("timeout", ignoreCase = true) ->
+                "تعذر الاتصال بالخادم، يرجى المحاولة مجدداً"
+            else -> "تعذر تحميل طلبات العملاء، يرجى المحاولة مجدداً"
         }
     }
 }

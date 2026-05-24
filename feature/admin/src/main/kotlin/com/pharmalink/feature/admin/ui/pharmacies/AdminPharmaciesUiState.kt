@@ -45,7 +45,6 @@ sealed interface AdminPharmaciesAction {
     data class OnPharmacyClicked(val pharmacyId: String) : AdminPharmaciesAction
     data class OnManageBranchClicked(val pharmacyId: String) : AdminPharmaciesAction
     data object OnAddPharmacyClicked : AdminPharmaciesAction
-    data object OnCoverageMapClicked : AdminPharmaciesAction
 }
 
 sealed interface AdminPharmaciesEffect {
@@ -53,5 +52,4 @@ sealed interface AdminPharmaciesEffect {
     data object ShowAdminMenu : AdminPharmaciesEffect
     data class NavigateToPharmacyDetail(val pharmacyId: String) : AdminPharmaciesEffect
     data class NavigateToBranchManagement(val pharmacyId: String) : AdminPharmaciesEffect
-    data object NavigateToCoverageMap : AdminPharmaciesEffect
 }

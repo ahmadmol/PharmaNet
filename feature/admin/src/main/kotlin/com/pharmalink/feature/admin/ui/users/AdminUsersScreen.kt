@@ -81,6 +81,7 @@ import com.pharmalink.designsystem.components.PharmaStateTone
 import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarButton
 import com.pharmalink.domain.model.AccountType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,6 +91,7 @@ fun AdminUsersScreen(
     onNavigateToUserDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     onShowAdminMenu: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: AdminUsersViewModel = hiltViewModel(),
     editUserViewModel: EditUserViewModel = hiltViewModel(),
@@ -115,6 +117,7 @@ fun AdminUsersScreen(
         onNavigateToCreateUser = onNavigateToCreateUser,
         onNavigateToUserDetail = onNavigateToUserDetail,
         onNavigateToProfile = onNavigateToProfile,
+        profileImageUrl = profileImageUrl,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -148,6 +151,7 @@ private fun AdminUsersContent(
     onNavigateToCreateUser: () -> Unit,
     onNavigateToUserDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
+    profileImageUrl: String? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -178,30 +182,11 @@ private fun AdminUsersContent(
                         }
                     },
                     actions = {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
-                                    shape = CircleShape,
-                                )
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(),
-                                    onClick = onNavigateToProfile,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = stringResource(R.string.admin_profile_cd),
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
+                        AdminProfileAvatarButton(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = stringResource(R.string.admin_profile_cd),
+                            onClick = onNavigateToProfile,
+                        )
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -428,6 +413,7 @@ private fun SuccessContent(
                 visible = true,
                 enter = fadeIn(animationSpec = tween(durationMillis = 180)) +
                     slideInVertically(animationSpec = tween(durationMillis = 180)) { it / 12 },
+                modifier = Modifier.animateItem(),
             ) {
                 UserCard(
                     user = user,
@@ -541,7 +527,7 @@ private fun UserCard(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val cardScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.985f else 1f,
+        targetValue = if (isPressed) 0.96f else 1f,
         animationSpec = tween(durationMillis = 110),
         label = "admin_user_card_press",
     )
@@ -741,6 +727,7 @@ private fun PreviewAdminUsersScreen() {
             onNavigateToCreateUser = {},
             onNavigateToUserDetail = {},
             onNavigateToProfile = {},
+            profileImageUrl = null,
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

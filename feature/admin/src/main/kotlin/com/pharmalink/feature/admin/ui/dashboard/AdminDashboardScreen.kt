@@ -4,7 +4,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -32,7 +31,6 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pending
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -57,7 +55,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -68,16 +65,18 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.components.DashboardWelcomeCard
+import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.components.PharmaCard
 import com.pharmalink.designsystem.components.PharmaButtonStyle
 import com.pharmalink.designsystem.components.PharmaSkeletonLine
 import com.pharmalink.designsystem.components.PharmaStateView
 import com.pharmalink.designsystem.components.PharmaStateTone
 import com.pharmalink.designsystem.theme.PharmaTheme
+import com.pharmalink.designsystem.theme.StatusActive
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarButton
 import com.pharmalink.feature.admin.R
 import com.pharmalink.designsystem.R as DsR
 
@@ -95,6 +94,7 @@ fun AdminDashboardScreen(
     onNavigateToOrderDetail: (String) -> Unit,
     onShowAdminMenu: () -> Unit,
     onShowReportDialog: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: AdminDashboardViewModel = hiltViewModel(),
 ) {
@@ -125,6 +125,7 @@ fun AdminDashboardScreen(
             state = state,
             onAction = viewModel::onAction,
             snackbarHostState = snackbarHostState,
+            profileImageUrl = profileImageUrl,
             modifier = modifier,
         )
     }
@@ -136,6 +137,7 @@ private fun AdminDashboardContent(
     state: AdminDashboardUiState,
     onAction: (AdminDashboardAction) -> Unit,
     snackbarHostState: SnackbarHostState,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
@@ -150,9 +152,9 @@ private fun AdminDashboardContent(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(
-                                painter = painterResource(id = DsR.drawable.sydaliti_logo_icon),
+                                painter = painterResource(id = DsR.drawable.ic_sydaliti_mark),
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = Color.Unspecified,
                                 modifier = Modifier.size(20.dp),
                             )
                             Text(
@@ -181,30 +183,11 @@ private fun AdminDashboardContent(
                             )
                         }
                         
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(),
-                                    onClick = { onAction(AdminDashboardAction.OnProfileClicked) },
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
-                                    shape = CircleShape,
-                                )
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = stringResource(R.string.admin_profile_cd),
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
+                        AdminProfileAvatarButton(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = stringResource(R.string.admin_profile_cd),
+                            onClick = { onAction(AdminDashboardAction.OnProfileClicked) },
+                        )
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

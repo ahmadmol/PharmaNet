@@ -83,11 +83,11 @@ class UserDetailsViewModel @Inject constructor(
                         }
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل بيانات المستخدم",
+                            contentError = USER_DETAILS_LOAD_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -114,5 +114,8 @@ class UserDetailsViewModel @Inject constructor(
             isActive = isActive,
             createdAt = createdAt,
         )
+    }
+    private companion object {
+        private const val USER_DETAILS_LOAD_ERROR_MESSAGE = "تعذر تحميل بيانات المستخدم. حاول مرة أخرى."
     }
 }

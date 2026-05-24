@@ -10,7 +10,6 @@ data class AdminWarehousesUiState(
     val warehouses: List<WarehouseItemModel> = emptyList(),
     val searchQuery: String = "",
     val sortBy: WarehouseSortBy = WarehouseSortBy.NAME,
-    val totalCapacityPercent: Int = 0,
     // Note: activeShipments removed - endpoint not available yet
 )
 

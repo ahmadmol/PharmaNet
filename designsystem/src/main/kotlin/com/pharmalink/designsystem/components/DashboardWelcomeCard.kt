@@ -16,7 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,8 +60,9 @@ fun DashboardWelcomeCard(
                     )
                 }
                 Icon(
-                    painter = painterResource(id = R.drawable.sydaliti_logo_icon),
+                    painter = painterResource(id = R.drawable.ic_sydaliti_mark),
                     contentDescription = null,
+                    tint = Color.Unspecified,
                     modifier = Modifier.size(52.dp),
                 )
             }

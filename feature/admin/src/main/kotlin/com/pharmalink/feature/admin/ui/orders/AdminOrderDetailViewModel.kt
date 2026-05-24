@@ -60,14 +60,18 @@ class AdminOrderDetailViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل تفاصيل الطلب",
+                            contentError = ORDER_DETAIL_LOAD_ERROR_MESSAGE,
                         )
                     }
                 }
         }
+    }
+
+    private companion object {
+        private const val ORDER_DETAIL_LOAD_ERROR_MESSAGE = "تعذر تحميل تفاصيل الطلب. حاول مرة أخرى."
     }
 }

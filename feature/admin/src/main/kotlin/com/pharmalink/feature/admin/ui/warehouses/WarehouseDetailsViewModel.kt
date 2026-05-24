@@ -86,11 +86,11 @@ class WarehouseDetailsViewModel @Inject constructor(
                         }
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل بيانات المستودع",
+                            contentError = WAREHOUSE_DETAILS_LOAD_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -114,5 +114,8 @@ class WarehouseDetailsViewModel @Inject constructor(
             distanceLabel = distanceLabel,
             lastUpdatedLabel = lastUpdatedLabel,
         )
+    }
+    private companion object {
+        private const val WAREHOUSE_DETAILS_LOAD_ERROR_MESSAGE = "تعذر تحميل بيانات المستودع. حاول مرة أخرى."
     }
 }

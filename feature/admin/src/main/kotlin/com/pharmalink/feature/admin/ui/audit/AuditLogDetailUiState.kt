@@ -15,11 +15,14 @@ data class AuditLogDetailModel(
     val targetEntityName: String,
     val targetWarehouseName: String?,
     val targetSku: String?,
+    val changedFields: List<AuditChangedFieldModel>,
+)
+
+@Immutable
+data class AuditChangedFieldModel(
+    val label: String,
     val oldValue: String,
     val newValue: String,
-    val ipAddress: String?,
-    val userAgent: String?,
-    val transactionId: String?,
 )
 
 sealed interface AuditLogDetailUiState {

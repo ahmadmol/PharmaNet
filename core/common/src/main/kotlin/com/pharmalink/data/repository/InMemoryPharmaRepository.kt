@@ -29,6 +29,7 @@ import com.pharmalink.domain.model.PharmacyCustomerOrder
 import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Request
+import com.pharmalink.domain.model.RequestItem
 import com.pharmalink.domain.model.RequestPriority
 import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.SupplierComplianceItem
@@ -96,6 +97,13 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     override suspend fun fetchMedicines(): Result<List<Medicine>> =
         Result.success(sampleMedicines())
 
+    override suspend fun getWarehouseProducts(warehouseId: String): Result<List<Medicine>> =
+        Result.success(
+            sampleMedicines().filter { medicine ->
+                medicine.warehouseId == warehouseId && medicine.isActive && medicine.isVisible
+            },
+        )
+
     override suspend fun addMedicine(medicine: Medicine, warehouseId: String): Result<Unit> =
         Result.failure(
             UnsupportedOperationException("addMedicine is not supported in InMemoryPharmaRepository.")
@@ -134,16 +142,32 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     override suspend fun createRequest(request: Request): Result<Request> {
         val warehouse = warehouses.value.firstOrNull { it.id == request.warehouseId } ?: warehouses.value.first()
         val requestId = "REQ-${1280 + requests.value.size + 1}"
+        val requestItems = request.items.ifEmpty {
+            listOf(request.toLegacyRequestItem(requestId = requestId, lineNo = 1))
+        }.mapIndexed { index, item ->
+            item.copy(
+                id = item.id.ifBlank { "$requestId-ITEM-${index + 1}" },
+                requestId = requestId,
+                lineNo = index + 1,
+            )
+        }
+        val firstItem = requestItems.first()
 
         val createdRequest = request.copy(
             id = requestId,
             warehouseId = warehouse.id,
             warehouseName = warehouse.name,
             supplierName = warehouse.name,
+            medicineId = firstItem.medicineId,
+            medicineName = firstItem.medicineName,
+            medicineSubtitle = firstItem.medicineSubtitle,
+            quantity = firstItem.quantity,
+            unit = firstItem.unit,
             status = RequestStatus.DRAFT,
             createdAtLabel = "الآن",
             updatedAtLabel = "تم الإرسال الآن",
             relatedOrderId = null,
+            items = requestItems,
         )
 
         requests.value = listOf(createdRequest) + requests.value
@@ -192,12 +216,32 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         val idx = requests.value.indexOfFirst { it.id == requestId }
         return if (idx >= 0) {
             val current = requests.value[idx]
+            val nextItems = updates.items?.let { items ->
+                require(items.isNotEmpty()) { "Request basket must contain at least one item" }
+                require(current.status == RequestStatus.DRAFT) {
+                    "Replacing request basket items is allowed only for DRAFT requests."
+                }
+                items.mapIndexed { index, item ->
+                    item.copy(
+                        id = item.id.ifBlank { "$requestId-ITEM-${index + 1}" },
+                        requestId = requestId,
+                        lineNo = index + 1,
+                    )
+                }
+            }
+            val firstItem = nextItems?.first()
             val updated = current.copy(
                 status = updates.status ?: current.status,
                 warehouseId = updates.warehouseId ?: current.warehouseId,
                 warehouseName = updates.warehouseName ?: current.warehouseName,
                 notes = updates.notes ?: current.notes,
-                updatedAtLabel = "الآن"
+                medicineId = firstItem?.medicineId ?: current.medicineId,
+                medicineName = firstItem?.medicineName ?: current.medicineName,
+                medicineSubtitle = firstItem?.medicineSubtitle ?: current.medicineSubtitle,
+                quantity = firstItem?.quantity ?: current.quantity,
+                unit = firstItem?.unit ?: current.unit,
+                items = nextItems ?: current.items,
+                updatedAtLabel = "ط§ظ„ط¢ظ†",
             )
             val mutable = requests.value.toMutableList()
             mutable[idx] = updated
@@ -207,6 +251,15 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             Result.failure(IllegalArgumentException("Request not found"))
         }
     }
+
+    override suspend fun getRequestItems(requestId: String): Result<List<RequestItem>> =
+        Result.success(requests.value.firstOrNull { it.id == requestId }?.items.orEmpty())
+
+    override suspend fun replaceRequestItems(requestId: String, items: List<RequestItem>): Result<List<RequestItem>> =
+        runCatching {
+            require(items.isNotEmpty()) { "Request basket must contain at least one item" }
+            updateRequest(requestId, com.pharmalink.domain.model.RequestUpdate(items = items)).getOrThrow().items
+        }
 
     override suspend fun deleteRequest(requestId: String): Result<Unit> {
         val before = requests.value.size
@@ -227,19 +280,29 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             require(orders.value.none { it.requestId == requestId && it.orderType == OrderType.PHARMACY_WAREHOUSE }) {
                 "Order already exists for request"
             }
+            val requestItems = current.items.ifEmpty {
+                listOf(current.toLegacyRequestItem(requestId = requestId, lineNo = 1))
+            }
+            val firstItem = requestItems.first()
             val orderId = "ORD-${880 + orders.value.size + 1}"
             val now = Instant.now()
             val updatedRequest = current.copy(
                 status = RequestStatus.PENDING,
                 updatedAtLabel = "now",
                 relatedOrderId = orderId,
+                medicineId = firstItem.medicineId,
+                medicineName = firstItem.medicineName,
+                medicineSubtitle = firstItem.medicineSubtitle,
+                quantity = firstItem.quantity,
+                unit = firstItem.unit,
+                items = requestItems,
             )
             val createdOrder = Order(
                 id = orderId,
-                medicineId = current.medicineId,
-                medicineName = current.medicineName,
-                quantity = current.quantity,
-                unit = current.unit,
+                medicineId = firstItem.medicineId,
+                medicineName = firstItem.medicineName,
+                quantity = firstItem.quantity,
+                unit = firstItem.unit,
                 status = OrderStatus.PENDING,
                 orderType = OrderType.PHARMACY_WAREHOUSE,
                 fulfillmentType = FulfillmentType.DELIVERY,
@@ -775,10 +838,25 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
         }
     }
 
+    private fun Request.toLegacyRequestItem(requestId: String, lineNo: Int): RequestItem =
+        RequestItem(
+            requestId = requestId,
+            lineNo = lineNo,
+            medicineId = requireNotNull(medicineId?.takeIf { it.isNotBlank() }) {
+                "medicineId is required for B2B pharmacy requests"
+            },
+            medicineName = medicineName,
+            medicineSubtitle = medicineSubtitle,
+            quantity = quantity,
+            unit = unit,
+            createdAt = createdAtLabel,
+            updatedAt = updatedAtLabel,
+        )
+
     private fun sampleMedicines(): List<Medicine> = listOf(
-        Medicine("m1", "باراسيتامول", "جنريك", "500 ملغ", 12.0, 0, null),
-        Medicine("m2", "أموكسيسيلين", "سبيكترا", "شراب", 45.0, 0, null),
-        Medicine("m3", "فيتامين د3", "نيوتري", "1000 وحدة", 28.5, 0, null),
+        Medicine("m1", "باراسيتامول", "جنريك", "500 ملغ", 12.0, 0, null, 12.0, "w1"),
+        Medicine("m2", "أموكسيسيلين", "سبيكترا", "شراب", 45.0, 0, null, 45.0, "w1"),
+        Medicine("m3", "فيتامين د3", "نيوتري", "1000 وحدة", 28.5, 0, null, 28.5, "w2"),
     )
 
     private fun sampleWarehouses(): List<Warehouse> = listOf(

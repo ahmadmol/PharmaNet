@@ -64,11 +64,11 @@ class AdminAuditLogViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل السجل",
+                            contentError = AUDIT_LIST_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -105,11 +105,11 @@ class AdminAuditLogViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e ->
+                .onFailure {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            contentError = e.message ?: "فشل تحميل السجل",
+                            contentError = AUDIT_LIST_ERROR_MESSAGE,
                         )
                     }
                 }
@@ -212,5 +212,9 @@ class AdminAuditLogViewModel @Inject constructor(
     private fun formatDate(instant: Instant): String {
         val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.forLanguageTag("ar"))
         return instant.atZone(ZoneId.systemDefault()).format(formatter)
+    }
+
+    private companion object {
+        private const val AUDIT_LIST_ERROR_MESSAGE = "تعذر تحميل السجل. حاول مرة أخرى."
     }
 }

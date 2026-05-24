@@ -13,6 +13,7 @@ data class WarehouseInventoryUiState(
     val capacityPercent: Int = 0,
     val lastUpdated: String = "",
     val searchQuery: String = "",
+    val selectedFilter: InventoryProductFilter = InventoryProductFilter.ALL,
     val medicines: List<MedicineInventoryModel> = emptyList(),
 )
 
@@ -26,6 +27,9 @@ data class MedicineInventoryModel(
     val unit: String = "علبة",
     val imageUrl: String = "",
     val stockStatus: StockStatus = StockStatus.IN_STOCK,
+    val priceLabel: String? = null,
+    val isVisible: Boolean = true,
+    val isActive: Boolean = true,
 )
 
 enum class StockStatus {
@@ -34,12 +38,19 @@ enum class StockStatus {
     OUT_OF_STOCK,
 }
 
+enum class InventoryProductFilter {
+    ALL,
+    AVAILABLE,
+    LOW_STOCK,
+    HIDDEN,
+}
+
 sealed interface WarehouseInventoryAction {
     data object OnRetryClicked : WarehouseInventoryAction
     data object OnRefreshTriggered : WarehouseInventoryAction
     data object OnBackClicked : WarehouseInventoryAction
     data class OnSearchQueryChanged(val query: String) : WarehouseInventoryAction
-    data object OnFilterClicked : WarehouseInventoryAction
+    data class OnFilterSelected(val filter: InventoryProductFilter) : WarehouseInventoryAction
     data object OnAddMedicineClicked : WarehouseInventoryAction
 }
 

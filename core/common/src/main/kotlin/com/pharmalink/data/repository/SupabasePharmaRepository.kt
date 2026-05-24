@@ -46,6 +46,7 @@ import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.PublicPharmacyAvailabilityStatus
 import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Request
+import com.pharmalink.domain.model.RequestItem
 import com.pharmalink.domain.model.RequestPriority
 import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.UserIdentity
@@ -175,6 +176,15 @@ class SupabasePharmaRepository @Inject constructor(
     override suspend fun fetchMedicines(): Result<List<Medicine>> = runCatching {
         supabase.postgrest.from("medicines").select(columns = Columns.ALL)
             .decodeList<MedicineDto>()
+            .mapNotNull { it.toDomain().getOrNull() }
+    }
+
+    override suspend fun getWarehouseProducts(warehouseId: String): Result<List<Medicine>> = runCatching {
+        require(warehouseId.isNotBlank()) { "warehouseId must not be blank" }
+        supabase.postgrest.rpc(
+            "get_warehouse_visible_products",
+            WarehouseProductsRpcParams(warehouseId = warehouseId),
+        ).decodeList<MedicineDto>()
             .mapNotNull { it.toDomain().getOrNull() }
     }
 
@@ -632,6 +642,7 @@ class SupabasePharmaRepository @Inject constructor(
                     filter { eq("pharmacy_id", orgId) }
                 }.decodeList<RequestDto>()
                     .map { it.toDomain().getOrThrow() }
+                    .let { hydrateRequestsWithItems(it) }
             }
             AccountType.WAREHOUSE -> {
                 val orgId = identity.organizationId
@@ -640,12 +651,14 @@ class SupabasePharmaRepository @Inject constructor(
                     filter { eq("warehouse_id", orgId) }
                 }.decodeList<RequestDto>()
                     .map { it.toDomain().getOrThrow() }
+                    .let { hydrateRequestsWithItems(it) }
             }
             AccountType.ADMIN -> {
                 // ADMIN sees all requests (no filter)
                 supabase.postgrest.from("requests").select(columns = Columns.ALL)
                     .decodeList<RequestDto>()
                     .map { it.toDomain().getOrThrow() }
+                    .let { hydrateRequestsWithItems(it) }
             }
             AccountType.PUBLIC_USER -> {
                 // PUBLIC_USER has no request access
@@ -659,6 +672,7 @@ class SupabasePharmaRepository @Inject constructor(
             filter { eq("warehouse_id", warehouseId) }
         }.decodeList<RequestDto>()
             .map { it.toDomain().getOrThrow() }
+            .let { hydrateRequestsWithItems(it) }
     }
 
     private suspend fun fetchNotifications(): Result<List<AppNotification>> = runCatching {
@@ -836,7 +850,9 @@ class SupabasePharmaRepository @Inject constructor(
                             eq("id", requestId)
                             eq("pharmacy_id", orgId)  // Ownership check
                         }
-                    }.decodeList<RequestDto>().firstOrNull()?.toDomain()?.getOrThrow()
+                    }.decodeList<RequestDto>().firstOrNull()
+                        ?.toDomain(fetchRequestItems(requestId).getOrThrow())
+                        ?.getOrThrow()
                 }
                 AccountType.WAREHOUSE -> {
                     val orgId = identity.organizationId
@@ -846,13 +862,17 @@ class SupabasePharmaRepository @Inject constructor(
                             eq("id", requestId)
                             eq("warehouse_id", orgId)  // Ownership check
                         }
-                    }.decodeList<RequestDto>().firstOrNull()?.toDomain()?.getOrThrow()
+                    }.decodeList<RequestDto>().firstOrNull()
+                        ?.toDomain(fetchRequestItems(requestId).getOrThrow())
+                        ?.getOrThrow()
                 }
                 AccountType.ADMIN -> {
                     // ADMIN can view any request by ID
                     supabase.postgrest.from("requests").select {
                         filter { eq("id", requestId) }
-                    }.decodeList<RequestDto>().firstOrNull()?.toDomain()?.getOrThrow()
+                    }.decodeList<RequestDto>().firstOrNull()
+                        ?.toDomain(fetchRequestItems(requestId).getOrThrow())
+                        ?.getOrThrow()
                 }
                 AccountType.PUBLIC_USER -> {
                     null // PUBLIC_USER cannot view requests
@@ -892,17 +912,23 @@ class SupabasePharmaRepository @Inject constructor(
             // Force status to DRAFT - initial state for all new requests
             val initialStatus = RequestStatus.DRAFT.name
             Log.d(TAG, "Initial status: $initialStatus (forced to DRAFT)")
+            val requestItems = normalizeRequestItems(
+                requestId = "",
+                items = request.items.ifEmpty {
+                    listOf(request.toLegacyRequestItem(requestId = "", lineNo = 1))
+                },
+            )
+            val firstItem = requestItems.first()
 
             val reqInsert = RequestInsertDto(
                 pharmacyId = pharmacyId,
                 warehouseId = request.warehouseId,
-                medicineId = request.medicineId?.takeIf { it.isNotBlank() }
-                    ?: error("medicineId is required for B2B pharmacy requests."),
-                medicineName = request.medicineName.trim(),
-                quantity = request.quantity,
-                unit = request.unit,
+                medicineId = firstItem.medicineId,
+                medicineName = firstItem.medicineName.trim(),
+                quantity = firstItem.quantity,
+                unit = firstItem.unit,
                 totalPrice = request.totalPrice,
-                medicineSubtitle = request.medicineSubtitle,
+                medicineSubtitle = firstItem.medicineSubtitle,
                 priority = request.priority.name,
                 warehouseName = request.warehouseName,
                 supplierName = request.supplierName,
@@ -921,7 +947,27 @@ class SupabasePharmaRepository @Inject constructor(
             Log.d(TAG, "Returned request warehouse: ${insertedRequest.warehouseName}")
             Log.d(TAG, "Returned request supplier: ${insertedRequest.supplierName}")
 
-            val domainRequest = insertedRequest.toDomain().getOrThrow()
+            val insertedItems = runCatching {
+                insertRequestItems(
+                    requestId = insertedRequest.id,
+                    items = requestItems,
+                )
+            }.getOrElse { itemInsertError ->
+                runCatching {
+                    supabase.postgrest.from("requests").delete {
+                        filter {
+                            eq("id", insertedRequest.id)
+                            eq("pharmacy_id", pharmacyId)
+                            eq("status", RequestStatus.DRAFT.name)
+                        }
+                    }
+                }.onFailure { cleanupError ->
+                    Log.e(TAG, "Failed to cleanup DRAFT request ${insertedRequest.id} after item insert failure", cleanupError)
+                }
+                throw itemInsertError
+            }
+
+            val domainRequest = insertedRequest.toDomain(insertedItems).getOrThrow()
             Log.d(TAG, "أ¢إ“â€¦ CREATE REQUEST FLOW COMPLETED")
             Log.d(TAG, "Final domain request ID: ${domainRequest.id}")
             Log.d(TAG, "Final domain request status: ${domainRequest.status}")
@@ -1093,12 +1139,29 @@ class SupabasePharmaRepository @Inject constructor(
                 Log.d(TAG, "Status transition valid: ${currentRequest.status} -> ${updates.status}")
             }
 
+            val normalizedUpdateItems = updates.items?.let { items ->
+                require(items.isNotEmpty()) { "Request basket must contain at least one item" }
+                require(currentRequest.status == RequestStatus.DRAFT) {
+                    "Replacing request basket items is allowed only for DRAFT requests."
+                }
+                normalizeRequestItems(requestId, items)
+            }
+            val firstUpdateItem = normalizedUpdateItems?.firstOrNull()
+            val replacedItems = normalizedUpdateItems?.let { items ->
+                replaceRequestItems(requestId, items).getOrThrow()
+            }
+
             // Build update DTO
             val updateDto = RequestUpdateDto(
                 status = updates.status?.name,
                 warehouseId = updates.warehouseId,
                 warehouseName = updates.warehouseName,
                 notes = updates.notes,
+                medicineId = firstUpdateItem?.medicineId,
+                medicineName = firstUpdateItem?.medicineName,
+                medicineSubtitle = firstUpdateItem?.medicineSubtitle,
+                quantity = firstUpdateItem?.quantity,
+                unit = firstUpdateItem?.unit,
             )
 
             // Apply update via Supabase
@@ -1108,9 +1171,56 @@ class SupabasePharmaRepository @Inject constructor(
             }.decodeSingle<RequestDto>()
 
             Log.d(TAG, "أ¢إ“â€¦ REQUEST UPDATE SUCCESS")
-            updatedRequest.toDomain().getOrThrow()
+            updatedRequest.toDomain(replacedItems ?: fetchRequestItems(requestId).getOrThrow()).getOrThrow()
         }.onFailure { exception ->
             Log.e(TAG, "أ¢â€Œإ’ UPDATE REQUEST FAILED", exception)
+        }
+
+    override suspend fun getRequestItems(requestId: String): Result<List<RequestItem>> =
+        fetchRequestItems(requestId)
+
+    override suspend fun replaceRequestItems(requestId: String, items: List<RequestItem>): Result<List<RequestItem>> =
+        runCatching {
+            require(items.isNotEmpty()) { "Request basket must contain at least one item" }
+
+            val ownedRequest = getOwnedRequestForPharmacy(
+                requestId = requestId,
+                actionName = "Replacing request basket items",
+            )
+            require(ownedRequest.status == RequestStatus.DRAFT) {
+                "Replacing request basket items is allowed only for DRAFT requests."
+            }
+
+            val normalizedItems = normalizeRequestItems(requestId, items)
+            val firstItem = normalizedItems.first()
+
+            supabase.postgrest.from("request_items").delete {
+                filter { eq("request_id", requestId) }
+            }
+
+            val insertedItems = insertRequestItems(
+                requestId = requestId,
+                items = normalizedItems,
+            )
+
+            supabase.postgrest.from("requests").update(
+                RequestUpdateDto(
+                    medicineId = firstItem.medicineId,
+                    medicineName = firstItem.medicineName,
+                    medicineSubtitle = firstItem.medicineSubtitle,
+                    quantity = firstItem.quantity,
+                    unit = firstItem.unit,
+                    updatedAt = Instant.now().toString(),
+                )
+            ) {
+                filter {
+                    eq("id", requestId)
+                    eq("pharmacy_id", ownedRequest.pharmacyId)
+                    eq("status", RequestStatus.DRAFT.name)
+                }
+            }
+
+            insertedItems
         }
 
     override suspend fun deleteRequest(requestId: String): Result<Unit> =
@@ -1277,15 +1387,109 @@ class SupabasePharmaRepository @Inject constructor(
     }
 
 
+    private suspend fun fetchRequestItems(requestId: String): Result<List<RequestItem>> =
+        runCatching {
+            supabase.postgrest.from("request_items").select(columns = Columns.ALL) {
+                filter { eq("request_id", requestId) }
+            }.decodeList<RequestItemDto>()
+                .sortedWith(compareBy<RequestItemDto> { it.lineNo }.thenBy { it.createdAt.orEmpty() }.thenBy { it.id })
+                .map { it.toDomain() }
+        }
+
+    private suspend fun fetchRequestItemsByRequestIds(requestIds: List<String>): Map<String, List<RequestItem>> {
+        val ids = requestIds.filter { it.isNotBlank() }.distinct()
+        if (ids.isEmpty()) return emptyMap()
+
+        return supabase.postgrest.from("request_items").select(columns = Columns.ALL) {
+            filter { isIn("request_id", ids) }
+        }.decodeList<RequestItemDto>()
+            .sortedWith(compareBy<RequestItemDto> { it.requestId }.thenBy { it.lineNo }.thenBy { it.createdAt.orEmpty() }.thenBy { it.id })
+            .map { it.toDomain() }
+            .groupBy { it.requestId }
+    }
+
+    private suspend fun hydrateRequestsWithItems(requests: List<Request>): List<Request> {
+        if (requests.isEmpty()) return requests
+        val itemsByRequestId = fetchRequestItemsByRequestIds(requests.map { it.id })
+        return requests.map { request ->
+            val items = itemsByRequestId[request.id].orEmpty()
+            if (items.isEmpty()) {
+                request
+            } else {
+                val firstItem = items.first()
+                request.copy(
+                    medicineId = firstItem.medicineId,
+                    medicineName = firstItem.medicineName,
+                    medicineSubtitle = firstItem.medicineSubtitle,
+                    quantity = firstItem.quantity,
+                    unit = firstItem.unit,
+                    items = items,
+                )
+            }
+        }
+    }
+
+    private fun normalizeRequestItems(requestId: String, items: List<RequestItem>): List<RequestItem> {
+        require(items.isNotEmpty()) { "Request basket must contain at least one item" }
+        return items.mapIndexed { index, item ->
+            require(item.medicineId.isNotBlank()) { "medicineId is required for request item ${index + 1}" }
+            require(item.medicineName.isNotBlank()) { "medicineName is required for request item ${index + 1}" }
+            require(item.quantity > 0) { "quantity must be greater than zero for request item ${index + 1}" }
+            require(item.unit.isNotBlank()) { "unit is required for request item ${index + 1}" }
+            item.copy(
+                requestId = requestId,
+                lineNo = index + 1,
+                medicineName = item.medicineName.trim(),
+                medicineSubtitle = item.medicineSubtitle.trim(),
+                unit = item.unit.trim(),
+            )
+        }
+    }
+
+    private suspend fun insertRequestItems(requestId: String, items: List<RequestItem>): List<RequestItem> {
+        val insertDtos = normalizeRequestItems(requestId, items).map { item ->
+            RequestItemInsertDto(
+                requestId = requestId,
+                lineNo = item.lineNo,
+                medicineId = item.medicineId,
+                medicineName = item.medicineName,
+                medicineSubtitle = item.medicineSubtitle,
+                quantity = item.quantity,
+                unit = item.unit,
+            )
+        }
+
+        return supabase.postgrest.from("request_items").insert(insertDtos) {
+            select(Columns.ALL)
+        }.decodeList<RequestItemDto>()
+            .sortedWith(compareBy<RequestItemDto> { it.lineNo }.thenBy { it.createdAt.orEmpty() }.thenBy { it.id })
+            .map { it.toDomain() }
+    }
+
+    private fun Request.toLegacyRequestItem(requestId: String, lineNo: Int): RequestItem =
+        RequestItem(
+            requestId = requestId,
+            lineNo = lineNo,
+            medicineId = requireNotNull(medicineId?.takeIf { it.isNotBlank() }) {
+                "medicineId is required for B2B pharmacy requests."
+            },
+            medicineName = medicineName,
+            medicineSubtitle = medicineSubtitle,
+            quantity = quantity,
+            unit = unit,
+            createdAt = createdAtLabel,
+            updatedAt = updatedAtLabel,
+        )
+
     private suspend inline fun <reified T : Any> callB2bRequestRpc(
         functionName: String,
         params: T,
     ): Result<Request> =
         runCatching {
-            supabase.postgrest.rpc(functionName, params)
-                .decodeSingle<B2bRequestRpcResponse>()
-                .request
-                .toDomain()
+            val response = supabase.postgrest.rpc(functionName, params)
+                .decodeAs<B2bRequestRpcResponse>()
+            response.request
+                .toDomain(response.items.map { it.toDomain() })
                 .getOrThrow()
         }.onFailure { error ->
             Log.e(TAG, "B2B RPC $functionName failed", error)
@@ -1541,8 +1745,23 @@ class SupabasePharmaRepository @Inject constructor(
             )
             throw error
         }
-        
-        result.toOrderDomain().getOrThrow()
+
+        val order = result.toOrderDomain().getOrThrow()
+
+        // 6. Notify pharmacy of new customer order (best-effort, non-blocking)
+        val targetPharmacyId = order.pharmacyId?.takeIf { it.isNotBlank() }
+        if (targetPharmacyId != null) {
+            sendAppNotification(
+                recipientPharmacyId = targetPharmacyId,
+                title = "طلب عميل جديد",
+                content = "وصل طلب جديد من عميل بانتظار مراجعتك.",
+                type = NotificationType.ORDER_UPDATE,
+                destination = NotificationDestination.PHARMACY_CUSTOMER_ORDER,
+                destinationArgs = mapOf("orderId" to order.id),
+            )
+        }
+
+        order
     }
 
     override suspend fun uploadPrescription(uri: android.net.Uri): Result<String> = runCatching {
@@ -1661,10 +1880,15 @@ class SupabasePharmaRepository @Inject constructor(
             name = medicine.name,
             brand = medicine.brand,
             strength = medicine.strength,
-            price = medicine.price,
+            price = medicine.priceAmount ?: medicine.price,
+            description = medicine.description,
+            specs = medicine.specs,
             stockQuantity = medicine.stockQuantity,
             imageUrl = medicine.imageUrl,
-            warehouseId = targetWarehouseId
+            warehouseId = targetWarehouseId,
+            isVisible = medicine.isVisible,
+            isActive = medicine.isActive,
+            currency = medicine.currency,
         )
         
         try {
@@ -1699,6 +1923,18 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "customer_accept_order_price",
             params = OrderIdRpcParams(orderId),
         )
+    }.onSuccess { order ->
+        val pharmacyId = order.pharmacyId?.takeIf { it.isNotBlank() }
+        if (pharmacyId != null) {
+            sendAppNotification(
+                recipientPharmacyId = pharmacyId,
+                title = "قبل العميل السعر",
+                content = "وافق العميل على السعر المؤكد. يمكنك الآن متابعة تنفيذ الطلب.",
+                type = NotificationType.ORDER_UPDATE,
+                destination = NotificationDestination.PHARMACY_CUSTOMER_ORDER,
+                destinationArgs = mapOf("orderId" to order.id),
+            )
+        }
     }.map { }
 
     override suspend fun rejectCustomerOrderPrice(orderId: String): Result<Unit> = runCatching {
@@ -1710,6 +1946,18 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "customer_reject_order_price",
             params = OrderIdRpcParams(orderId),
         )
+    }.onSuccess { order ->
+        val pharmacyId = order.pharmacyId?.takeIf { it.isNotBlank() }
+        if (pharmacyId != null) {
+            sendAppNotification(
+                recipientPharmacyId = pharmacyId,
+                title = "رفض العميل السعر",
+                content = "رفض العميل السعر المؤكد. تم إلغاء الطلب.",
+                type = NotificationType.ORDER_UPDATE,
+                destination = NotificationDestination.PHARMACY_CUSTOMER_ORDER,
+                destinationArgs = mapOf("orderId" to order.id),
+            )
+        }
     }.map { }
 
     override suspend fun confirmOrder(orderId: String, totalPriceCents: Long): Result<DomainOrder> = runCatching {
@@ -2050,6 +2298,12 @@ class SupabasePharmaRepository @Inject constructor(
                 orderId = orderId,
                 totalPriceCents = totalPriceCents,
             ),
+        )
+    }.onSuccess { order ->
+        sendCustomerOrderNotification(
+            order = order,
+            title = "تم تأكيد سعر طلبك",
+            content = "قامت الصيدلية بتأكيد سعر طلبك. يرجى مراجعة التفاصيل والموافقة أو الرفض.",
         )
     }.map { Unit }
 
@@ -2592,10 +2846,13 @@ private data class MedicineDto(
     val strength: String? = null,
     val price: Double? = null,
     val description: String? = null,
-    val specs: String? = null,
+    val specs: JsonElement? = null,
     @SerialName("stock_quantity") val stockQuantity: Int? = null,
     @SerialName("image_url") val imageUrl: String? = null,
-    @SerialName("warehouse_id") val warehouseId: String? = null
+    @SerialName("warehouse_id") val warehouseId: String? = null,
+    @SerialName("is_visible") val isVisible: Boolean? = null,
+    @SerialName("is_active") val isActive: Boolean? = null,
+    val currency: String? = null,
 ) {
     fun toDomain(): Result<Medicine> = runCatching {
         if (id.isBlank()) {
@@ -2611,10 +2868,22 @@ private data class MedicineDto(
             strength = strength.orEmpty(),
             price = price ?: 0.0,
             stockQuantity = stockQuantity ?: 0,
-            imageUrl = imageUrl
+            imageUrl = imageUrl,
+            priceAmount = price,
+            warehouseId = warehouseId,
+            description = description,
+            specs = specs,
+            isVisible = isVisible ?: true,
+            isActive = isActive ?: true,
+            currency = currency ?: "SYP",
         )
     }
 }
+
+@Serializable
+private data class WarehouseProductsRpcParams(
+    @SerialName("p_warehouse_id") val warehouseId: String,
+)
 
 @Serializable
 private data class PublicPharmaciesForMedicineRpcParams(
@@ -2842,21 +3111,22 @@ private data class RequestDto(
     @SerialName("attachment_url") val attachmentUrl: String? = null,
     @SerialName("medicine_image_url") val medicineImageUrl: String? = null,
 ) {
-    fun toDomain(): Result<Request> = runCatching {
+    fun toDomain(items: List<RequestItem> = emptyList()): Result<Request> = runCatching {
         val priorityEnum = priority.toRequestPriority()
         val statusEnum = status.toRequestStatus()
 
         val createdAtLabel = isoStringToDisplayLabel(createdAt)
         val updatedAtLabel = isoStringToDisplayLabel(updatedAt).ifBlank { createdAtLabel }
+        val firstItem = items.firstOrNull()
 
         Request(
             id = id,
             pharmacyId = pharmacyId,
-            medicineId = medicineId,
-            medicineName = medicineName,
-            medicineSubtitle = medicineSubtitle,
-            quantity = quantity,
-            unit = unit,
+            medicineId = firstItem?.medicineId ?: medicineId,
+            medicineName = firstItem?.medicineName ?: medicineName,
+            medicineSubtitle = firstItem?.medicineSubtitle ?: medicineSubtitle,
+            quantity = firstItem?.quantity ?: quantity,
+            unit = firstItem?.unit ?: unit,
             notes = notes,
             storageNotes = storageNotes,
             totalPrice = totalPrice,
@@ -2872,8 +3142,37 @@ private data class RequestDto(
             rejectionReason = rejectionReason,
             attachmentUrl = attachmentUrl,
             medicineImageUrl = medicineImageUrl,
+            items = items,
         )
     }
+}
+
+@Serializable
+private data class RequestItemDto(
+    val id: String,
+    @SerialName("request_id") val requestId: String,
+    @SerialName("line_no") val lineNo: Int,
+    @SerialName("medicine_id") val medicineId: String,
+    @SerialName("medicine_name") val medicineName: String,
+    @SerialName("medicine_subtitle") val medicineSubtitle: String = "",
+    val quantity: Int,
+    val unit: String,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+) {
+    fun toDomain(): RequestItem =
+        RequestItem(
+            id = id,
+            requestId = requestId,
+            lineNo = lineNo,
+            medicineId = medicineId,
+            medicineName = medicineName,
+            medicineSubtitle = medicineSubtitle,
+            quantity = quantity,
+            unit = unit,
+            createdAt = createdAt.orEmpty(),
+            updatedAt = updatedAt.orEmpty(),
+        )
 }
 
 @Serializable
@@ -3053,11 +3352,27 @@ private data class RequestInsertDto(
 )
 
 @Serializable
+private data class RequestItemInsertDto(
+    @SerialName("request_id") val requestId: String,
+    @SerialName("line_no") val lineNo: Int,
+    @SerialName("medicine_id") val medicineId: String,
+    @SerialName("medicine_name") val medicineName: String,
+    @SerialName("medicine_subtitle") val medicineSubtitle: String = "",
+    val quantity: Int,
+    val unit: String,
+)
+
+@Serializable
 private data class RequestUpdateDto(
     val status: String? = null,
     @SerialName("warehouse_id") val warehouseId: String? = null,
     @SerialName("warehouse_name") val warehouseName: String? = null,
     val notes: String? = null,
+    @SerialName("medicine_id") val medicineId: String? = null,
+    @SerialName("medicine_name") val medicineName: String? = null,
+    @SerialName("medicine_subtitle") val medicineSubtitle: String? = null,
+    val quantity: Int? = null,
+    val unit: String? = null,
     @SerialName("rejection_reason") val rejectionReason: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
 )
@@ -3066,6 +3381,7 @@ private data class RequestUpdateDto(
 private data class B2bRequestRpcResponse(
     val request: RequestDto,
     val order: OrderDto? = null,
+    val items: List<RequestItemDto> = emptyList(),
 )
 
 @Serializable

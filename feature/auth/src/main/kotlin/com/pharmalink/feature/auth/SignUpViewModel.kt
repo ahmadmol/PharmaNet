@@ -91,7 +91,13 @@ class SignUpViewModel @Inject constructor(
     }
 
     fun updatePharmacyLocation(value: String) {
-        _uiState.update { it.copy(pharmacyLocation = value) }
+        _uiState.update {
+            it.copy(
+                pharmacyLocation = value,
+                latitude = if (it.accountType == AccountType.PHARMACY) null else it.latitude,
+                longitude = if (it.accountType == AccountType.PHARMACY) null else it.longitude,
+            )
+        }
     }
 
     fun updateWarehouseName(value: String) {
@@ -99,7 +105,13 @@ class SignUpViewModel @Inject constructor(
     }
 
     fun updateWarehouseLocation(value: String) {
-        _uiState.update { it.copy(warehouseLocation = value) }
+        _uiState.update {
+            it.copy(
+                warehouseLocation = value,
+                latitude = if (it.accountType == AccountType.WAREHOUSE) null else it.latitude,
+                longitude = if (it.accountType == AccountType.WAREHOUSE) null else it.longitude,
+            )
+        }
     }
 
     fun onPickLocation(lat: Double, lng: Double, address: String?) {
@@ -129,6 +141,10 @@ class SignUpViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     isResolvingLocation = true,
+                    latitude = null,
+                    longitude = null,
+                    pharmacyLocation = if (accountType == AccountType.PHARMACY) "" else it.pharmacyLocation,
+                    warehouseLocation = if (accountType == AccountType.WAREHOUSE) "" else it.warehouseLocation,
                     locationMessage = null,
                     locationMessageIsError = false,
                     locationSettingsAction = null,
@@ -177,6 +193,10 @@ class SignUpViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isResolvingLocation = false,
+                            latitude = null,
+                            longitude = null,
+                            pharmacyLocation = if (accountType == AccountType.PHARMACY) "" else it.pharmacyLocation,
+                            warehouseLocation = if (accountType == AccountType.WAREHOUSE) "" else it.warehouseLocation,
                             locationMessage = message,
                             locationMessageIsError = true,
                             locationSettingsAction = action,
@@ -187,9 +207,14 @@ class SignUpViewModel @Inject constructor(
     }
 
     fun onLocationPermissionDenied(permanentlyDenied: Boolean) {
+        val accountType = _uiState.value.accountType
         _uiState.update {
             it.copy(
                 isResolvingLocation = false,
+                latitude = null,
+                longitude = null,
+                pharmacyLocation = if (accountType == AccountType.PHARMACY) "" else it.pharmacyLocation,
+                warehouseLocation = if (accountType == AccountType.WAREHOUSE) "" else it.warehouseLocation,
                 locationMessage = if (permanentlyDenied) {
                     context.getString(R.string.location_error_permission_settings)
                 } else {
@@ -330,11 +355,13 @@ class SignUpViewModel @Inject constructor(
             state.fullName.isBlank() -> context.getString(R.string.auth_error_name_required)
             state.accountType == AccountType.PHARMACY && state.pharmacyName.isBlank() ->
                 context.getString(R.string.auth_error_pharmacy_name_required)
+            state.accountType == AccountType.PHARMACY &&
+                (state.pharmacyLocation.isBlank() || state.latitude == null || state.longitude == null) ->
+                context.getString(R.string.auth_error_pharmacy_map_location_required)
             state.accountType == AccountType.WAREHOUSE && state.warehouseName.isBlank() ->
                 context.getString(R.string.auth_error_warehouse_name_required)
-            state.accountType == AccountType.WAREHOUSE && state.warehouseLocation.isBlank() ->
-                context.getString(R.string.auth_error_warehouse_location_required)
-            state.accountType == AccountType.WAREHOUSE && (state.latitude == null || state.longitude == null) ->
+            state.accountType == AccountType.WAREHOUSE &&
+                (state.warehouseLocation.isBlank() || state.latitude == null || state.longitude == null) ->
                 context.getString(R.string.auth_error_warehouse_map_location_required)
             else -> null
         }

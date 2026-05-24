@@ -37,6 +37,7 @@ class WarehouseInventoryViewModel @Inject constructor(
         extraBufferCapacity = 1,
     )
     val effect: SharedFlow<WarehouseInventoryEffect> = _effect.asSharedFlow()
+    private var allMedicines: List<MedicineInventoryModel> = emptyList()
 
     init {
         if (warehouseId.isEmpty()) {
@@ -56,9 +57,7 @@ class WarehouseInventoryViewModel @Inject constructor(
                 }
             }
             is WarehouseInventoryAction.OnSearchQueryChanged -> updateSearchQuery(action.query)
-            WarehouseInventoryAction.OnFilterClicked -> {
-                // No filter UI implemented yet — button is disabled in UI
-            }
+            is WarehouseInventoryAction.OnFilterSelected -> updateFilter(action.filter)
             WarehouseInventoryAction.OnAddMedicineClicked -> {
                 viewModelScope.launch {
                     _effect.emit(WarehouseInventoryEffect.NavigateToAddMedicine)
@@ -81,6 +80,7 @@ class WarehouseInventoryViewModel @Inject constructor(
 
                 if (warehouse != null) {
                     val medicines = inventory.map { it.toUiModel() }
+                    allMedicines = medicines
                     val totalItems = medicines.size
                     val capacityPercent = calculateCapacityPercent(medicines)
 
@@ -91,7 +91,7 @@ class WarehouseInventoryViewModel @Inject constructor(
                             totalItems = totalItems,
                             capacityPercent = capacityPercent,
                             lastUpdated = formatLastUpdated(inventory.maxOfOrNull { item -> item.lastUpdated }),
-                            medicines = medicines,
+                            medicines = applyFilters(medicines, it.searchQuery, it.selectedFilter),
                         )
                     }
                 } else {
@@ -127,6 +127,7 @@ class WarehouseInventoryViewModel @Inject constructor(
 
                 if (warehouse != null) {
                     val medicines = inventory.map { it.toUiModel() }
+                    allMedicines = medicines
                     val totalItems = medicines.size
                     val capacityPercent = calculateCapacityPercent(medicines)
 
@@ -137,7 +138,7 @@ class WarehouseInventoryViewModel @Inject constructor(
                             totalItems = totalItems,
                             capacityPercent = capacityPercent,
                             lastUpdated = "الآن",
-                            medicines = medicines,
+                            medicines = applyFilters(medicines, it.searchQuery, it.selectedFilter),
                         )
                     }
                 } else {
@@ -152,24 +153,77 @@ class WarehouseInventoryViewModel @Inject constructor(
     }
 
     private fun updateSearchQuery(query: String) {
-        _state.update { it.copy(searchQuery = query) }
+        _state.update {
+            it.copy(
+                searchQuery = query,
+                medicines = applyFilters(allMedicines, query, it.selectedFilter),
+            )
+        }
+    }
+
+    private fun updateFilter(filter: InventoryProductFilter) {
+        _state.update {
+            it.copy(
+                selectedFilter = filter,
+                medicines = applyFilters(allMedicines, it.searchQuery, filter),
+            )
+        }
+    }
+
+    private fun applyFilters(
+        products: List<MedicineInventoryModel>,
+        query: String,
+        filter: InventoryProductFilter,
+    ): List<MedicineInventoryModel> {
+        val normalizedQuery = query.trim()
+
+        return products
+            .asSequence()
+            .filter { product ->
+                when (filter) {
+                    InventoryProductFilter.ALL -> true
+                    InventoryProductFilter.AVAILABLE -> product.stockStatus == StockStatus.IN_STOCK
+                    InventoryProductFilter.LOW_STOCK -> product.stockStatus == StockStatus.LOW_STOCK
+                    InventoryProductFilter.HIDDEN -> !product.isVisible
+                }
+            }
+            .filter { product ->
+                normalizedQuery.isBlank() ||
+                    product.name.contains(normalizedQuery, ignoreCase = true) ||
+                    product.description.contains(normalizedQuery, ignoreCase = true) ||
+                    product.priceLabel.orEmpty().contains(normalizedQuery, ignoreCase = true)
+            }
+            .toList()
     }
 
     private fun InventoryItem.toUiModel(): MedicineInventoryModel {
         return MedicineInventoryModel(
             id = id,
             name = medicineName,
-            description = "", // Note: Description field not available in current schema
+            description = description.orEmpty(),
             currentQuantity = quantity,
             capacity = calculateCapacity(quantity, stockStatus),
             unit = unit,
             imageUrl = medicineImageUrl ?: "",
+            priceLabel = formatOptionalPrice(priceAmount, currency),
+            isVisible = isVisible,
+            isActive = isActive,
             stockStatus = when (stockStatus) {
                 DomainStockStatus.IN_STOCK -> StockStatus.IN_STOCK
                 DomainStockStatus.LOW_STOCK -> StockStatus.LOW_STOCK
                 DomainStockStatus.OUT_OF_STOCK -> StockStatus.OUT_OF_STOCK
             },
         )
+    }
+
+    private fun formatOptionalPrice(price: Double?, currency: String): String? {
+        if (price == null) return null
+        val amount = if (price % 1.0 == 0.0) {
+            price.toLong().toString()
+        } else {
+            "%.2f".format(price)
+        }
+        return "$amount $currency"
     }
 
     private fun calculateCapacity(quantity: Int, status: DomainStockStatus): Int {

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,12 +27,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -54,12 +58,14 @@ import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.components.PharmaTextField
 import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMedicineScreen(
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: AddMedicineViewModel = hiltViewModel(),
 ) {
@@ -99,7 +105,17 @@ fun AddMedicineScreen(
                                 contentDescription = "رجوع"
                             )
                         }
-                    }
+                    },
+                    actions = {
+                        AdminProfileAvatarIcon(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(44.dp),
+                            fallbackSize = 24.dp,
+                            fallbackTint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(d.spaceM))
+                    },
                 )
             }
         ) { innerPadding ->
@@ -189,6 +205,20 @@ fun AddMedicineScreen(
                     placeholder = "مثال: 500 ملغ"
                 )
 
+                PharmaTextField(
+                    value = state.description,
+                    onValueChange = viewModel::onDescriptionChange,
+                    label = "التفاصيل / الوصف",
+                    placeholder = "تفاصيل مختصرة عن المنتج",
+                )
+
+                PharmaTextField(
+                    value = state.specs,
+                    onValueChange = viewModel::onSpecsChange,
+                    label = "المواصفات",
+                    placeholder = "مثال: 20 قرص، يحفظ بدرجة حرارة الغرفة",
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(d.spaceM)
@@ -196,8 +226,8 @@ fun AddMedicineScreen(
                     PharmaTextField(
                         value = state.price,
                         onValueChange = viewModel::onPriceChange,
-                        label = "سعر البيع",
-                        placeholder = "0.0",
+                        label = "سعر البيع (اختياري)",
+                        placeholder = "اتركه فارغاً",
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                     )
@@ -211,6 +241,11 @@ fun AddMedicineScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                 }
+
+                ProductVisibilityCard(
+                    isVisible = state.isVisible,
+                    onVisibilityChange = viewModel::onVisibilityChange,
+                )
 
                 if (state.errorMessage != null) {
                     Text(
@@ -226,7 +261,7 @@ fun AddMedicineScreen(
                 PharmaButton(
                     text = if (state.isUploading) "جاري الحفظ..." else "إضافة الدواء للمخزون",
                     onClick = viewModel::submitMedicine,
-                    enabled = !state.isUploading && state.name.isNotBlank() && state.price.isNotBlank(),
+                    enabled = !state.isUploading && state.name.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = d.spaceL)
@@ -241,6 +276,50 @@ fun AddMedicineScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ProductVisibilityCard(
+    isVisible: Boolean,
+    onVisibilityChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusL),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceM),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+            ) {
+                Text(
+                    text = "إظهار المنتج للصيدليات",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = if (isVisible) "سيظهر في معرض المستودع لاحقاً" else "سيبقى مخفياً عن التصفح",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = isVisible,
+                onCheckedChange = onVisibilityChange,
+            )
         }
     }
 }

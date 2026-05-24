@@ -54,7 +54,11 @@ fun PharmaBottomNavigation(
                         )
                     },
                     label = {
-                        Text(text = stringResource(item.labelRes))
+                        Text(
+                            text = stringResource(item.labelRes),
+                            maxLines = 1,
+                            softWrap = false,
+                        )
                     },
                     modifier = Modifier.weight(1f),
                     alwaysShowLabel = true,

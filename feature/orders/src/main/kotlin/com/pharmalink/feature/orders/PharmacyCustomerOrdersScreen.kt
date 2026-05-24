@@ -1,5 +1,6 @@
 package com.pharmalink.feature.orders
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,9 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Refresh
@@ -39,6 +42,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.core.common.ui.ScreenState
@@ -149,7 +153,14 @@ private fun FilterRow(
             FilterChip(
                 selected = selected == filter,
                 onClick = { onSelected(filter) },
-                label = { Text(filter.label()) },
+                label = {
+                    Text(
+                        text = filter.label(),
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                },
+                modifier = Modifier.widthIn(min = 64.dp),
             )
         }
     }
@@ -163,18 +174,35 @@ private fun PendingSummary(pendingCount: Int, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.primaryContainer,
     ) {
         Row(
-            modifier = Modifier.padding(MaterialTheme.dimens.spaceL),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(MaterialTheme.dimens.spaceL),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceXS)) {
-                Text("طلبات بانتظار قرار", style = MaterialTheme.typography.labelLarge)
-                Text("راجع الطلبات الجديدة وحدد السعر أو الرفض", style = MaterialTheme.typography.bodySmall)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceXS),
+            ) {
+                Text(
+                    text = "طلبات بانتظار قرار",
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    softWrap = false,
+                )
+                Text(
+                    text = "راجع الطلبات الجديدة وحدد السعر أو الرفض",
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 2,
+                )
             }
             Text(
                 text = pendingCount.toString(),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.padding(start = MaterialTheme.dimens.spaceM),
             )
         }
     }
@@ -201,22 +229,62 @@ private fun PharmacyCustomerOrderCard(
                 verticalAlignment = Alignment.Top,
             ) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceXS)) {
-                    CustomerOrderStatusChip(status = order.status, label = order.statusLabel)
-                    Text(order.medicineName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(order.customerName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    CustomerOrderStatusChip(
+                        status = order.status,
+                        label = order.statusLabel,
+                        modifier = Modifier.widthIn(min = 72.dp),
+                    )
+                    Text(
+                        text = order.medicineName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                    )
+                    Text(
+                        text = order.customerName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
                 }
-                Text(order.createdAtLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = order.createdAtLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.padding(start = MaterialTheme.dimens.spaceS),
+                )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
+            ) {
                 SuggestionChip(
                     onClick = {},
                     enabled = false,
-                    label = { Text(order.fulfillmentLabel) },
+                    label = {
+                        Text(
+                            text = order.fulfillmentLabel,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    },
+                    modifier = Modifier.widthIn(min = 72.dp),
                 )
                 SuggestionChip(
                     onClick = {},
                     enabled = false,
-                    label = { Text(order.urgencyLabel) },
+                    label = {
+                        Text(
+                            text = order.urgencyLabel,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    },
+                    modifier = Modifier.widthIn(min = 64.dp),
                 )
             }
             OrderInfoRow(label = "الكمية", value = order.quantityLabel)

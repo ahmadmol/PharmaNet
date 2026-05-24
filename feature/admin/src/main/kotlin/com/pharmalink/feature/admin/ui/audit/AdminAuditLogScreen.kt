@@ -60,6 +60,7 @@ import com.pharmalink.designsystem.theme.PharmaWarning
 import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -73,6 +74,8 @@ import com.pharmalink.designsystem.components.PharmaStateView
 import com.pharmalink.designsystem.components.PharmaStateTone
 import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.feature.admin.R
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarButton
 import java.time.LocalDate
 
 @Composable
@@ -80,6 +83,7 @@ fun AdminAuditLogScreen(
     onOpenLogDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     onShowAdminMenu: () -> Unit = {},
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: AdminAuditLogViewModel = hiltViewModel(),
 ) {
@@ -101,6 +105,7 @@ fun AdminAuditLogScreen(
         onAction = viewModel::onAction,
         onNavigateToProfile = onNavigateToProfile,
         onShowAdminMenu = onShowAdminMenu,
+        profileImageUrl = profileImageUrl,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -113,6 +118,7 @@ private fun AdminAuditLogContent(
     onAction: (AdminAuditLogAction) -> Unit,
     onNavigateToProfile: () -> Unit,
     onShowAdminMenu: () -> Unit,
+    profileImageUrl: String? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -143,30 +149,11 @@ private fun AdminAuditLogContent(
                         }
                     },
                     actions = {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = CircleShape,
-                                )
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(),
-                                    onClick = onNavigateToProfile,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = "الملف الشخصي",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
+                        AdminProfileAvatarButton(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = stringResource(R.string.admin_profile_cd),
+                            onClick = onNavigateToProfile,
+                        )
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -502,8 +489,8 @@ private fun AuditLogCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .border(
-                    width = 4.dp,
-                    color = borderColor,
+                    width = 1.dp,
+                    color = borderColor.copy(alpha = 0.18f),
                     shape = MaterialTheme.shapes.large,
                 )
                 .padding(d.spaceL),

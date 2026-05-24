@@ -17,6 +17,7 @@ import com.pharmalink.domain.model.PharmacyCustomerOrder
 import com.pharmalink.domain.model.PharmacyProfile
 import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Request
+import com.pharmalink.domain.model.RequestItem
 import com.pharmalink.domain.model.CustomerRequestScope
 import com.pharmalink.domain.model.CustomerRequestUrgency
 import com.pharmalink.domain.model.RequestUpdate
@@ -61,6 +62,8 @@ interface PharmaRepository {
 
     suspend fun fetchMedicines(): Result<List<Medicine>>
 
+    suspend fun getWarehouseProducts(warehouseId: String): Result<List<Medicine>>
+
     suspend fun getPublicPharmacies(): Result<List<PublicPharmacyForMedicine>>
 
     suspend fun getPublicPharmaciesForMedicine(medicineId: String): Result<List<PublicPharmacyForMedicine>>
@@ -82,6 +85,10 @@ interface PharmaRepository {
     suspend fun createRequest(request: Request): Result<Request>
 
     suspend fun updateRequest(requestId: String, updates: RequestUpdate): Result<Request>
+
+    suspend fun getRequestItems(requestId: String): Result<List<RequestItem>>
+
+    suspend fun replaceRequestItems(requestId: String, items: List<RequestItem>): Result<List<RequestItem>>
 
     suspend fun deleteRequest(requestId: String): Result<Unit>
 

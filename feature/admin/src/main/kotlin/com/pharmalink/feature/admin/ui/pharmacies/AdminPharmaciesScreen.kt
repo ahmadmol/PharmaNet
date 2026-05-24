@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.LocalPharmacy
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -74,6 +73,7 @@ import com.pharmalink.designsystem.components.PharmaStateTone
 import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarButton
 
 @Composable
 fun AdminPharmaciesScreen(
@@ -81,6 +81,7 @@ fun AdminPharmaciesScreen(
     onNavigateToPharmacyDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     onShowAdminMenu: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: AdminPharmaciesViewModel = hiltViewModel(),
 ) {
@@ -99,9 +100,6 @@ fun AdminPharmaciesScreen(
             is AdminPharmaciesEffect.NavigateToBranchManagement -> {
                 // No backend RPC available — button is disabled in UI
             }
-            AdminPharmaciesEffect.NavigateToCoverageMap -> {
-                // No backend RPC available — card is disabled in UI
-            }
         }
     }
 
@@ -110,6 +108,7 @@ fun AdminPharmaciesScreen(
         onAction = viewModel::onAction,
         onNavigateToCreatePharmacy = onNavigateToCreatePharmacy,
         onNavigateToProfile = onNavigateToProfile,
+        profileImageUrl = profileImageUrl,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -122,6 +121,7 @@ private fun AdminPharmaciesContent(
     onAction: (AdminPharmaciesAction) -> Unit,
     onNavigateToCreatePharmacy: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    profileImageUrl: String? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -152,30 +152,11 @@ private fun AdminPharmaciesContent(
                         }
                     },
                     actions = {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
-                                    shape = CircleShape,
-                                )
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(),
-                                    onClick = onNavigateToProfile,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = stringResource(R.string.admin_profile_cd),
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
+                        AdminProfileAvatarButton(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = stringResource(R.string.admin_profile_cd),
+                            onClick = onNavigateToProfile,
+                        )
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -406,12 +387,6 @@ private fun SuccessContent(
             )
         }
 
-        // Coverage Map Card
-        item {
-            CoverageMapCard(
-                onClick = { onAction(AdminPharmaciesAction.OnCoverageMapClicked) },
-            )
-        }
     }
 }
 
@@ -524,55 +499,6 @@ private fun PharmacyCard(
     }
 }
 
-@Composable
-private fun CoverageMapCard(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val d = MaterialTheme.dimens
-
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(d.spaceM),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Map,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp),
-                )
-                
-                Text(
-                    text = stringResource(R.string.admin_pharmacies_coverage_map_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                
-                Text(
-                    text = stringResource(R.string.admin_pharmacies_coverage_map_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
-    }
-}
-
 @Preview(showBackground = true, locale = "ar")
 @Composable
 private fun PreviewAdminPharmaciesScreen() {
@@ -597,6 +523,7 @@ private fun PreviewAdminPharmaciesScreen() {
             onAction = {},
             onNavigateToCreatePharmacy = {},
             onNavigateToProfile = {},
+            profileImageUrl = null,
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

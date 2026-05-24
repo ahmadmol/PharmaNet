@@ -74,6 +74,8 @@ class SupabaseAuthRepository @Inject constructor(
             put("pharmacy_location", JsonPrimitive(request.pharmacyLocation))
             put("warehouse_name", JsonPrimitive(request.warehouseName))
             put("warehouse_location", JsonPrimitive(request.warehouseLocation))
+            request.latitude?.let { put("latitude", JsonPrimitive(it)) }
+            request.longitude?.let { put("longitude", JsonPrimitive(it)) }
         }
 
         auth.signUpWith(Email) {

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.AssignmentTurnedIn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.HourglassTop
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
@@ -33,6 +34,8 @@ import androidx.compose.material.icons.outlined.LocalPharmacy
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Store
 import androidx.compose.material.icons.outlined.StickyNote2
 import androidx.compose.material.icons.outlined.Warehouse
@@ -127,11 +130,15 @@ fun CreateRequestScreen(
                         viewModel.onMedicineSelected(medicine)
                         medicineMenuExpanded = false
                     },
-                    onWarehouseSelected = viewModel::onWarehouseSelected,
                     onOpenSelector = { isSelectorVisible = true },
                     onQuantityChange = { next ->
                         viewModel.onQuantityChange(next.coerceAtLeast(1).toString())
                     },
+                    onPendingUnitChange = viewModel::onPendingUnitChange,
+                    onAddToBasket = viewModel::addSelectedItemToBasket,
+                    onEditBasketItem = viewModel::editBasketItem,
+                    onRemoveBasketItem = viewModel::removeBasketItem,
+                    onClearBasket = viewModel::clearBasket,
                     onNotesChange = viewModel::onNotesChange,
                 )
             }
@@ -153,7 +160,10 @@ fun CreateRequestScreen(
 
         CreateRequestBottomActions(
             isLoading = uiState.isLoading,
-            canSubmit = uiState.selectedMedicine != null && uiState.selectedWarehouseId.isNotBlank(),
+            canSubmit = uiState.selectedWarehouseId.isNotBlank() &&
+                (uiState.items.isNotEmpty() || uiState.selectedMedicine != null),
+            itemCount = uiState.items.size,
+            totalQuantity = uiState.items.sumOf { it.quantity },
             onSubmit = viewModel::sendRequest,
             modifier = Modifier
                 .fillMaxWidth()
@@ -342,25 +352,31 @@ private fun RequestFormCard(
     medicineMenuExpanded: Boolean,
     onMedicineMenuExpandedChange: (Boolean) -> Unit,
     onMedicineSelected: (MedicineItem) -> Unit,
-    onWarehouseSelected: (String, String) -> Unit,
     onOpenSelector: () -> Unit,
     onQuantityChange: (Int) -> Unit,
+    onPendingUnitChange: (String) -> Unit,
+    onAddToBasket: () -> Unit,
+    onEditBasketItem: (String, Int, String) -> Unit,
+    onRemoveBasketItem: (String) -> Unit,
+    onClearBasket: () -> Unit,
     onNotesChange: (String) -> Unit,
 ) {
     val d = MaterialTheme.dimens
     val quantity = uiState.quantity.toIntOrNull() ?: 1
+    val selectedWarehouse = uiState.warehouses.firstOrNull { it.id == uiState.selectedWarehouseId }
+    val resolvedUnit = uiState.pendingUnit.ifBlank { uiState.selectedMedicine?.strength.orEmpty() }
+    val unitOptions = listOf(
+        uiState.selectedMedicine?.strength.orEmpty(),
+        "علبة",
+        "شريط",
+        "حبة",
+        "زجاجة",
+    ).filter { it.isNotBlank() }.distinct()
 
     DashboardCard {
         SectionTitle(
             title = "تفاصيل الطلب",
             subtitle = "املأ المعلومات الأساسية لإرسال طلب واضح للمستودع.",
-        )
-
-        Spacer(Modifier.height(d.spaceL))
-
-        SelectorLaunchCard(
-            uiState = uiState,
-            onClick = onOpenSelector,
         )
 
         Spacer(Modifier.height(d.spaceL))
@@ -449,10 +465,9 @@ private fun RequestFormCard(
             color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(d.spaceS))
-        WarehouseQuickList(
-            warehouses = uiState.warehouses,
-            selectedWarehouseId = uiState.selectedWarehouseId,
-            onWarehouseSelected = onWarehouseSelected,
+        SelectedWarehouseCard(
+            selectedWarehouse = selectedWarehouse,
+            onOpenSelector = onOpenSelector,
         )
 
         Spacer(Modifier.height(d.spaceL))
@@ -460,6 +475,36 @@ private fun RequestFormCard(
         QuantityStepper(
             quantity = quantity,
             onQuantityChange = onQuantityChange,
+        )
+
+        Spacer(Modifier.height(d.spaceL))
+
+        UnitSelector(
+            value = resolvedUnit,
+            options = unitOptions,
+            onUnitSelected = onPendingUnitChange,
+        )
+
+        Spacer(Modifier.height(d.spaceL))
+
+        StitchButton(
+            onClick = onAddToBasket,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = uiState.selectedMedicine != null,
+            contentPadding = PaddingValues(horizontal = d.spaceL, vertical = d.spaceM),
+        ) {
+            Icon(Icons.Outlined.ShoppingCart, contentDescription = null, modifier = Modifier.size(d.iconS))
+            Spacer(Modifier.width(d.spaceS))
+            Text("إضافة إلى السلة", fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(Modifier.height(d.spaceL))
+
+        BasketCard(
+            items = uiState.items,
+            onEditBasketItem = onEditBasketItem,
+            onRemoveBasketItem = onRemoveBasketItem,
+            onClearBasket = onClearBasket,
         )
 
         Spacer(Modifier.height(d.spaceL))
@@ -484,6 +529,234 @@ private fun RequestFormCard(
             shape = RoundedCornerShape(d.radiusL),
             colors = polishedFieldColors(),
         )
+    }
+}
+
+@Composable
+private fun SelectedWarehouseCard(
+    selectedWarehouse: WarehouseOption?,
+    onOpenSelector: () -> Unit,
+) {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpenSelector),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = PharmaBlue50,
+        contentColor = PharmaBlue500,
+        border = BorderStroke(1.dp, PharmaBlue500.copy(alpha = 0.22f)),
+    ) {
+        Row(
+            modifier = Modifier.padding(d.spaceM),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Surface(
+                modifier = Modifier.size(44.dp),
+                shape = RoundedCornerShape(d.radiusL),
+                color = MaterialTheme.colorScheme.surface,
+                contentColor = PharmaBlue500,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Outlined.Warehouse, contentDescription = null)
+                }
+            }
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = selectedWarehouse?.name ?: "اختر المستودع",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = selectedWarehouse?.let {
+                        listOf(it.location, it.deliveryLabel).filter { value -> value.isNotBlank() }.joinToString(" - ")
+                    }?.ifBlank { selectedWarehouse.statusLabel } ?: "مستودع واحد لكل طلب",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = null)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UnitSelector(
+    value: String,
+    options: List<String>,
+    onUnitSelected: (String) -> Unit,
+) {
+    val d = MaterialTheme.dimens
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = { },
+            readOnly = true,
+            label = { Text("الوحدة") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            shape = RoundedCornerShape(d.radiusL),
+            colors = polishedFieldColors(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { unit ->
+                DropdownMenuItem(
+                    text = { Text(unit) },
+                    onClick = {
+                        onUnitSelected(unit)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BasketCard(
+    items: List<CreateRequestBasketItem>,
+    onEditBasketItem: (String, Int, String) -> Unit,
+    onRemoveBasketItem: (String) -> Unit,
+    onClearBasket: () -> Unit,
+) {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.34f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.26f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceM),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+            ) {
+                Text(
+                    text = "السلة الحالية",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                Surface(
+                    shape = CircleShape,
+                    color = PharmaBlue50,
+                    contentColor = PharmaBlue500,
+                ) {
+                    Text(
+                        text = "${items.size} صنف",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = d.spaceS, vertical = d.spaceXS),
+                    )
+                }
+                if (items.isNotEmpty()) {
+                    TextButton(onClick = onClearBasket) {
+                        Text("مسح")
+                    }
+                }
+            }
+
+            if (items.isEmpty()) {
+                Text(
+                    text = "أضف الأدوية المطلوبة هنا قبل إرسال الطلب.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                items.forEach { item ->
+                    BasketItemRow(
+                        item = item,
+                        onEditBasketItem = onEditBasketItem,
+                        onRemoveBasketItem = onRemoveBasketItem,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BasketItemRow(
+    item: CreateRequestBasketItem,
+    onEditBasketItem: (String, Int, String) -> Unit,
+    onRemoveBasketItem: (String) -> Unit,
+) {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusL),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)),
+    ) {
+        Row(
+            modifier = Modifier.padding(d.spaceM),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+        ) {
+            Icon(Icons.Outlined.Medication, contentDescription = null, tint = PharmaBlue500)
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = item.medicineName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = listOf(item.medicineSubtitle, item.unit).filter { it.isNotBlank() }.joinToString(" - "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(
+                onClick = {
+                    if (item.quantity > 1) {
+                        onEditBasketItem(item.medicineId, item.quantity - 1, item.unit)
+                    }
+                },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(Icons.Outlined.Remove, contentDescription = "تقليل الكمية", tint = PharmaBlue500)
+            }
+            Text(
+                text = item.quantity.toString(),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.width(28.dp),
+            )
+            IconButton(
+                onClick = { onEditBasketItem(item.medicineId, item.quantity + 1, item.unit) },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(Icons.Outlined.Add, contentDescription = "زيادة الكمية", tint = PharmaBlue500)
+            }
+            IconButton(
+                onClick = { onRemoveBasketItem(item.medicineId) },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(Icons.Outlined.Delete, contentDescription = "حذف الصنف", tint = MaterialTheme.colorScheme.error)
+            }
+        }
     }
 }
 
@@ -874,30 +1147,92 @@ private fun RequestStatusCard(
 private fun CreateRequestBottomActions(
     isLoading: Boolean,
     canSubmit: Boolean,
+    itemCount: Int,
+    totalQuantity: Int,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
 
-    StitchButton(
-        onClick = onSubmit,
-        modifier = modifier.height(56.dp),
-        enabled = !isLoading && canSubmit,
-        contentPadding = PaddingValues(horizontal = d.spaceL, vertical = d.spaceM),
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(d.spaceS),
     ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(18.dp),
-                strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onPrimary,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BottomSummaryMetric(
+                label = "عدد الأصناف",
+                value = itemCount.toString(),
+                modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(d.spaceS))
+            BottomSummaryMetric(
+                label = "إجمالي الكمية",
+                value = totalQuantity.toString(),
+                modifier = Modifier.weight(1f),
+            )
         }
-        Text(
-            text = if (isLoading) stringResource(R.string.sending_request_message) else stringResource(R.string.send_request_button),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
+
+        StitchButton(
+            onClick = onSubmit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            enabled = !isLoading && canSubmit,
+            contentPadding = PaddingValues(horizontal = d.spaceL, vertical = d.spaceM),
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+                Spacer(Modifier.width(d.spaceS))
+            } else {
+                Icon(Icons.Outlined.Send, contentDescription = null, modifier = Modifier.size(d.iconS))
+                Spacer(Modifier.width(d.spaceS))
+            }
+            Text(
+                text = if (isLoading) stringResource(R.string.sending_request_message) else stringResource(R.string.send_request_button),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomSummaryMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(d.radiusM),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceS),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 

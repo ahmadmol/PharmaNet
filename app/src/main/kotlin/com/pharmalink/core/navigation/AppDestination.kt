@@ -1,5 +1,6 @@
 package com.pharmalink.core.navigation
 
+import android.net.Uri
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -55,15 +56,69 @@ sealed class AppDestination(
     data object PharmacyDashboard : AppDestination("pharmacy_dashboard")
     data object PharmacyRadar : AppDestination("pharmacy_radar")
     data object PharmacyCustomerOrders : AppDestination("pharmacy_customer_orders")
+    data object PharmacyWarehouseProducts : AppDestination(
+        route = "pharmacy_warehouse_products/{warehouseId}",
+        arguments = listOf(navArgument(NavArgs.WAREHOUSE_ID) { type = NavType.StringType }),
+    ) {
+        fun createRoute(warehouseId: String): String = "pharmacy_warehouse_products/$warehouseId"
+    }
     data object PharmacyCustomerOrderDetail : AppDestination(
         route = "pharmacy_customer_order/{orderId}",
         arguments = listOf(navArgument(NavArgs.ORDER_ID) { type = NavType.StringType }),
     ) {
         fun createRoute(orderId: String): String = "pharmacy_customer_order/$orderId"
     }
+    data object WarehouseDashboard : AppDestination("warehouse_dashboard")
     data object Resources : AppDestination("resources")
     data object FeaturedWarehouses : AppDestination("featured_warehouses")
     data object CreateRequest : AppDestination("create_request")
+    data object CreateRequestPrefilled : AppDestination(
+        route = "create_request_prefilled?warehouseId={warehouseId}&medicineId={medicineId}&medicineName={medicineName}&medicineSubtitle={medicineSubtitle}&unit={unit}",
+        arguments = listOf(
+            navArgument(NavArgs.WAREHOUSE_ID) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+            navArgument(NavArgs.MEDICINE_ID) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+            navArgument("medicineName") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+            navArgument("medicineSubtitle") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+            navArgument("unit") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+        ),
+    ) {
+        fun createRoute(): String = "create_request"
+
+        fun createPrefilledRoute(
+            warehouseId: String,
+            medicineId: String,
+            medicineName: String,
+            medicineSubtitle: String,
+            unit: String,
+        ): String = buildString {
+            append("create_request_prefilled")
+            append("?warehouseId=${Uri.encode(warehouseId)}")
+            append("&medicineId=${Uri.encode(medicineId)}")
+            append("&medicineName=${Uri.encode(medicineName)}")
+            append("&medicineSubtitle=${Uri.encode(medicineSubtitle)}")
+            append("&unit=${Uri.encode(unit)}")
+        }
+    }
     data object Orders : AppDestination("orders")
     data object Profile : AppDestination("profile")
     data object EditProfile : AppDestination("edit_profile")

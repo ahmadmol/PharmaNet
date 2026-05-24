@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonPrimitive
 
 private const val TAG = "AddMedicineViewModel"
 private const val MISSING_WAREHOUSE_SAFE_ERROR =
@@ -22,6 +23,8 @@ private const val IMAGE_UPLOAD_SAFE_ERROR =
     "\u062a\u0639\u0630\u0631 \u0631\u0641\u0639 \u0635\u0648\u0631\u0629 \u0627\u0644\u062f\u0648\u0627\u0621. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
 private const val ADD_MEDICINE_SAFE_ERROR =
     "\u062a\u0639\u0630\u0631 \u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u062f\u0648\u0627\u0621. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
+private const val INVALID_PRICE_SAFE_ERROR =
+    "\u0627\u0644\u0633\u0639\u0631 \u063a\u064a\u0631 \u0635\u0627\u0644\u062d. \u0627\u062a\u0631\u0643\u0647 \u0641\u0627\u0631\u063a\u0627 \u0623\u0648 \u0623\u062f\u062e\u0644 \u0631\u0642\u0645\u0627 \u0635\u062d\u064a\u062d\u0627"
 
 @HiltViewModel
 class AddMedicineViewModel @Inject constructor(
@@ -37,8 +40,11 @@ class AddMedicineViewModel @Inject constructor(
     fun onNameChange(value: String) = _state.update { it.copy(name = value) }
     fun onBrandChange(value: String) = _state.update { it.copy(brand = value) }
     fun onStrengthChange(value: String) = _state.update { it.copy(strength = value) }
+    fun onDescriptionChange(value: String) = _state.update { it.copy(description = value) }
+    fun onSpecsChange(value: String) = _state.update { it.copy(specs = value) }
     fun onPriceChange(value: String) = _state.update { it.copy(price = value) }
     fun onStockQuantityChange(value: String) = _state.update { it.copy(stockQuantity = value) }
+    fun onVisibilityChange(value: Boolean) = _state.update { it.copy(isVisible = value) }
     fun onImageSelected(uri: android.net.Uri?) = _state.update { it.copy(imageUri = uri) }
 
     fun submitMedicine() {
@@ -49,9 +55,15 @@ class AddMedicineViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isUploading = true, errorMessage = null) }
+            val currentState = _state.value
+            val optionalPrice = currentState.price.trim().takeIf { it.isNotBlank() }?.toDoubleOrNull()
+            if (currentState.price.isNotBlank() && optionalPrice == null) {
+                _state.update { it.copy(isUploading = false, errorMessage = INVALID_PRICE_SAFE_ERROR) }
+                return@launch
+            }
 
             var imageUrl: String? = null
-            _state.value.imageUri?.let { uri ->
+            currentState.imageUri?.let { uri ->
                 pharmaRepository.uploadMedicineImage(uri).fold(
                     onSuccess = { imageUrl = it },
                     onFailure = { error ->
@@ -69,12 +81,17 @@ class AddMedicineViewModel @Inject constructor(
 
             val medicine = Medicine(
                 id = "",
-                name = _state.value.name,
-                brand = _state.value.brand,
-                strength = _state.value.strength,
-                price = _state.value.price.toDoubleOrNull() ?: 0.0,
-                stockQuantity = _state.value.stockQuantity.toIntOrNull() ?: 0,
+                name = currentState.name.trim(),
+                brand = currentState.brand.trim(),
+                strength = currentState.strength.trim(),
+                price = optionalPrice ?: 0.0,
+                stockQuantity = currentState.stockQuantity.toIntOrNull() ?: 0,
                 imageUrl = imageUrl,
+                priceAmount = optionalPrice,
+                description = currentState.description.trim().takeIf { it.isNotBlank() },
+                specs = currentState.specs.trim().takeIf { it.isNotBlank() }?.let(::JsonPrimitive),
+                isVisible = currentState.isVisible,
+                isActive = true,
             )
 
             pharmaRepository.addMedicine(medicine, warehouseId).fold(

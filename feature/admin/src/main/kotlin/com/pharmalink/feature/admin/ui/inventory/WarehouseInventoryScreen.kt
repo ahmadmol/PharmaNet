@@ -14,18 +14,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -47,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import com.pharmalink.designsystem.theme.PharmaWarning
 import com.pharmalink.designsystem.theme.StatusActive
 import androidx.compose.ui.res.stringResource
@@ -63,12 +66,15 @@ import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
 import com.pharmalink.feature.admin.R
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarIcon
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WarehouseInventoryScreen(
     onBackClick: () -> Unit,
     onAddMedicine: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: WarehouseInventoryViewModel = hiltViewModel(),
 ) {
@@ -88,6 +94,7 @@ fun WarehouseInventoryScreen(
     WarehouseInventoryContent(
         state = state,
         onAction = viewModel::onAction,
+        profileImageUrl = profileImageUrl,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -98,6 +105,7 @@ fun WarehouseInventoryScreen(
 private fun WarehouseInventoryContent(
     state: WarehouseInventoryUiState,
     onAction: (WarehouseInventoryAction) -> Unit,
+    profileImageUrl: String? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -126,6 +134,16 @@ private fun WarehouseInventoryContent(
                                 tint = MaterialTheme.colorScheme.onSurface,
                             )
                         }
+                    },
+                    actions = {
+                        AdminProfileAvatarIcon(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(44.dp),
+                            fallbackSize = 24.dp,
+                            fallbackTint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
@@ -156,7 +174,7 @@ private fun WarehouseInventoryContent(
                 onRetry = { onAction(WarehouseInventoryAction.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
-            state.medicines.isEmpty() -> EmptyContent(modifier = Modifier.padding(padding))
+            state.totalItems == 0 -> EmptyContent(modifier = Modifier.padding(padding))
             else -> SuccessContent(
                 state = state,
                 onAction = onAction,
@@ -246,41 +264,72 @@ private fun SuccessContent(
 
         // Search and Filter Row
         item {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                verticalArrangement = Arrangement.spacedBy(d.spaceS),
             ) {
                 SearchField(
                     value = state.searchQuery,
                     onValueChange = { onAction(WarehouseInventoryAction.OnSearchQueryChanged(it)) },
                     placeholder = stringResource(R.string.warehouse_inventory_search_placeholder),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                
-                IconButton(
-                    onClick = { onAction(WarehouseInventoryAction.OnFilterClicked) },
-                    enabled = false,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FilterList,
-                        contentDescription = stringResource(R.string.admin_filter_cd),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                    )
-                }
+                InventoryFilterChips(
+                    selectedFilter = state.selectedFilter,
+                    onFilterSelected = { onAction(WarehouseInventoryAction.OnFilterSelected(it)) },
+                )
             }
         }
 
-        // Medicine Cards
-        items(
-            items = state.medicines,
-            key = { it.id },
-        ) { medicine ->
-            MedicineInventoryCard(
-                medicine = medicine,
+        if (state.medicines.isEmpty()) {
+            item {
+                PharmaStateView(
+                    title = "لا توجد منتجات مطابقة",
+                    subtitle = "جرّب تغيير البحث أو اختيار فلتر آخر.",
+                    tone = PharmaStateTone.Neutral,
+                )
+            }
+        } else {
+            items(
+                items = state.medicines,
+                key = { it.id },
+            ) { medicine ->
+                MedicineInventoryCard(
+                    medicine = medicine,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InventoryFilterChips(
+    selectedFilter: InventoryProductFilter,
+    onFilterSelected: (InventoryProductFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    val filters = listOf(
+        InventoryProductFilter.ALL to "الكل",
+        InventoryProductFilter.AVAILABLE to "متوفر",
+        InventoryProductFilter.LOW_STOCK to "منخفض",
+        InventoryProductFilter.HIDDEN to "مخفي",
+    )
+
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+    ) {
+        items(filters) { (filter, label) ->
+            FilterChip(
+                selected = selectedFilter == filter,
+                onClick = { onFilterSelected(filter) },
+                label = {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                },
             )
         }
     }
@@ -436,9 +485,13 @@ private fun MedicineInventoryCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
                 verticalAlignment = Alignment.Top,
             ) {
+                ProductImageThumb(
+                    imageUrl = medicine.imageUrl,
+                )
+
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(d.spaceXS),
@@ -450,7 +503,7 @@ private fun MedicineInventoryCard(
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = medicine.description,
+                        text = medicine.description.ifBlank { "لا توجد تفاصيل إضافية" },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -487,7 +540,13 @@ private fun MedicineInventoryCard(
                     }
                 }
             }
-            
+
+            ProductManagementMeta(
+                priceLabel = medicine.priceLabel,
+                isVisible = medicine.isVisible,
+                isActive = medicine.isActive,
+            )
+             
             // Quantity and Progress
             Column(
                 verticalArrangement = Arrangement.spacedBy(d.spaceS),
@@ -532,6 +591,96 @@ private fun MedicineInventoryCard(
                         StockStatus.OUT_OF_STOCK -> MaterialTheme.colorScheme.error
                     },
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductManagementMeta(
+    priceLabel: String?,
+    isVisible: Boolean,
+    isActive: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(d.spaceS),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+        ) {
+            ProductMetaChip(
+                label = priceLabel ?: "السعر غير محدد",
+                modifier = Modifier.weight(1f),
+            )
+            ProductMetaChip(
+                label = if (isVisible) "ظاهر للصيدليات" else "مخفي",
+                modifier = Modifier.weight(1f),
+            )
+        }
+        ProductMetaChip(
+            label = if (isActive) "نشط" else "غير نشط",
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun ProductMetaChip(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f),
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = d.spaceS, vertical = d.spaceXS),
+        )
+    }
+}
+
+@Composable
+private fun ProductImageThumb(
+    imageUrl: String,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Surface(
+        modifier = modifier.size(64.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        if (imageUrl.isNotBlank()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(d.iconM),
                 )
             }
         }

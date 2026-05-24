@@ -5,8 +5,10 @@ import com.pharmalink.domain.model.Medicine
 data class CreateRequestUiState(
     val medicines: List<MedicineItem> = emptyList(),
     val warehouses: List<WarehouseOption> = emptyList(),
+    val items: List<CreateRequestBasketItem> = emptyList(),
     val selectedMedicine: MedicineItem? = null,
     val quantity: String = "1",
+    val pendingUnit: String = "",
     val notes: String = "",
     val selectedWarehouseId: String = "",
     val selectedWarehouseName: String = "",
@@ -17,6 +19,14 @@ data class CreateRequestUiState(
     val isLoadingMedicines: Boolean = false,
     val medicineLoadError: String? = null,
     val errorMessage: String? = null
+)
+
+data class CreateRequestBasketItem(
+    val medicineId: String,
+    val medicineName: String,
+    val medicineSubtitle: String,
+    val quantity: Int,
+    val unit: String,
 )
 
 data class MedicineItem(

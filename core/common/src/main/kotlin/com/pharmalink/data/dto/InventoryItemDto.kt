@@ -17,6 +17,11 @@ data class InventoryItemDto(
     val unit: String,
     @SerialName("stock_status") val stockStatus: String,
     @SerialName("last_updated") val lastUpdated: String,
+    val description: String? = null,
+    val price: Double? = null,
+    val currency: String? = null,
+    @SerialName("is_visible") val isVisible: Boolean? = null,
+    @SerialName("is_active") val isActive: Boolean? = null,
 )
 
 fun InventoryItemDto.toDomain(): InventoryItem = InventoryItem(
@@ -33,4 +38,9 @@ fun InventoryItemDto.toDomain(): InventoryItem = InventoryItem(
         else -> StockStatus.IN_STOCK
     },
     lastUpdated = Instant.parse(lastUpdated),
+    description = description,
+    priceAmount = price,
+    currency = currency ?: "SYP",
+    isVisible = isVisible ?: true,
+    isActive = isActive ?: true,
 )

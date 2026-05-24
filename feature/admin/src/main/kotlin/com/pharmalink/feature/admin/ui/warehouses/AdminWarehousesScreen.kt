@@ -66,13 +66,13 @@ import com.pharmalink.feature.admin.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.designsystem.components.PharmaButton
-import com.pharmalink.designsystem.components.PharmaCard
 import com.pharmalink.designsystem.components.PharmaSkeletonLine
 import com.pharmalink.designsystem.components.PharmaStateView
 import com.pharmalink.designsystem.components.PharmaStateTone
 import com.pharmalink.designsystem.theme.PharmaTheme
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.designsystem.utils.CollectEffect
+import com.pharmalink.feature.admin.ui.components.AdminProfileAvatarButton
 
 @Composable
 fun AdminWarehousesScreen(
@@ -81,6 +81,7 @@ fun AdminWarehousesScreen(
     onNavigateToInventory: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     onShowAdminMenu: () -> Unit,
+    profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: AdminWarehousesViewModel = hiltViewModel(),
 ) {
@@ -107,6 +108,7 @@ fun AdminWarehousesScreen(
         onAction = viewModel::onAction,
         onNavigateToCreateWarehouse = onNavigateToCreateWarehouse,
         onNavigateToProfile = onNavigateToProfile,
+        profileImageUrl = profileImageUrl,
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
@@ -119,6 +121,7 @@ private fun AdminWarehousesContent(
     onAction: (AdminWarehousesAction) -> Unit,
     onNavigateToCreateWarehouse: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    profileImageUrl: String? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -149,30 +152,11 @@ private fun AdminWarehousesContent(
                         }
                     },
                     actions = {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
-                                    shape = CircleShape,
-                                )
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(),
-                                    onClick = onNavigateToProfile,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = stringResource(R.string.admin_profile_cd),
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
+                        AdminProfileAvatarButton(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = stringResource(R.string.admin_profile_cd),
+                            onClick = onNavigateToProfile,
+                        )
                         Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -365,23 +349,6 @@ private fun SuccessContent(
             }
         }
 
-        // Statistics Cards
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-            ) {
-                StatCard(
-                    title = stringResource(R.string.admin_warehouses_capacity_label),
-                    value = stringResource(R.string.admin_total_capacity, state.totalCapacityPercent),
-                    modifier = Modifier.weight(1f),
-                )
-                
-                // Note: activeShipments stat card removed - endpoint not available yet
-                // Showing only totalCapacityPercent which comes from real warehouse data
-            }
-        }
-
         // Warehouse Cards
         items(
             items = state.warehouses,
@@ -391,38 +358,6 @@ private fun SuccessContent(
                 warehouse = warehouse,
                 onCardClick = { onAction(AdminWarehousesAction.OnWarehouseClicked(warehouse.id)) },
                 onManageInventoryClick = { onAction(AdminWarehousesAction.OnManageInventoryClicked(warehouse.id)) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatCard(
-    title: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    val d = MaterialTheme.dimens
-
-    PharmaCard(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        elevationDp = 2f,
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(d.spaceS),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-            
-            Text(
-                text = value,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
@@ -600,12 +535,12 @@ private fun PreviewAdminWarehousesScreen() {
                         inventoryCount = 54,
                     ),
                 ),
-                totalCapacityPercent = 85,
                 // activeShipments removed - not available
             ),
             onAction = {},
             onNavigateToCreateWarehouse = {},
             onNavigateToProfile = {},
+            profileImageUrl = null,
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

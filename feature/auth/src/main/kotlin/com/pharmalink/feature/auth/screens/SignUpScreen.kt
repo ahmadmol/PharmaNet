@@ -1,5 +1,6 @@
 package com.pharmalink.feature.auth.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +37,7 @@ import com.pharmalink.domain.model.AccountType
 import com.pharmalink.feature.auth.R
 import com.pharmalink.feature.auth.SignUpUiState
 import com.pharmalink.feature.auth.components.AuthLinkRow
+import com.pharmalink.feature.auth.components.LocationPickerComponent
 import com.pharmalink.feature.auth.components.LocationTextField
 import com.pharmalink.feature.auth.components.NameTextField
 import com.pharmalink.feature.auth.components.PasswordTextField
@@ -65,14 +71,27 @@ fun SignUpScreen(
 ) {
     val d = MaterialTheme.dimens
     val scroll = rememberScrollState()
+    var showLocationPicker by remember { mutableStateOf(false) }
+    val activeFacilityLocation = when (uiState.accountType) {
+        AccountType.PHARMACY -> uiState.pharmacyLocation
+        AccountType.WAREHOUSE -> uiState.warehouseLocation
+        else -> ""
+    }
+    val openLocationPickerAndRequest = {
+        showLocationPicker = true
+        onRequestCurrentLocationClick()
+    }
 
     val isFullNameError = uiState.fullName.isBlank()
     val isPharmacyNameError = uiState.pharmacyName.isBlank() && uiState.accountType == AccountType.PHARMACY
     val isPhoneError = uiState.phoneNumber.isBlank()
     val isPasswordError = uiState.password.isBlank()
     val isConfirmPasswordError = uiState.confirmPassword.isBlank() || uiState.password != uiState.confirmPassword
+    val isPharmacyLocationError = uiState.accountType == AccountType.PHARMACY &&
+        (uiState.pharmacyLocation.isBlank() || uiState.latitude == null || uiState.longitude == null)
     val isWarehouseNameError = uiState.warehouseName.isBlank() && uiState.accountType == AccountType.WAREHOUSE
-    val isWarehouseLocationError = uiState.warehouseLocation.isBlank() && uiState.accountType == AccountType.WAREHOUSE
+    val isWarehouseLocationError = uiState.accountType == AccountType.WAREHOUSE &&
+        (uiState.warehouseLocation.isBlank() || uiState.latitude == null || uiState.longitude == null)
 
     Box(
         modifier = modifier
@@ -211,16 +230,31 @@ fun SignUpScreen(
                             errorMessage = if (isPharmacyNameError) stringResource(R.string.error_pharmacy_name_required) else null,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                        LocationTextField(
-                            value = uiState.pharmacyLocation,
-                            onValueChange = onPharmacyLocationChange,
-                            label = stringResource(R.string.field_label_location_pharmacy),
-                            isError = false,
-                            errorMessage = null,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+                        Box(Modifier.fillMaxWidth()) {
+                            LocationTextField(
+                                value = uiState.pharmacyLocation,
+                                onValueChange = onPharmacyLocationChange,
+                                label = stringResource(R.string.field_label_location_pharmacy),
+                                isError = isPharmacyLocationError,
+                                errorMessage = if (isPharmacyLocationError) {
+                                    stringResource(R.string.auth_error_pharmacy_map_location_required)
+                                } else {
+                                    null
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                readOnly = true,
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable(
+                                        enabled = !uiState.isResolvingLocation,
+                                        onClick = openLocationPickerAndRequest,
+                                    ),
+                            )
+                        }
                         TextButton(
-                            onClick = onRequestCurrentLocationClick,
+                            onClick = openLocationPickerAndRequest,
                             enabled = !uiState.isResolvingLocation,
                         ) {
                             Text(stringResource(R.string.location_picker_use_current_location))
@@ -261,17 +295,31 @@ fun SignUpScreen(
                             errorMessage = if (isWarehouseNameError) stringResource(R.string.error_warehouse_name_required) else null,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                        LocationTextField(
-                            value = uiState.warehouseLocation,
-                            onValueChange = onWarehouseLocationChange,
-                            label = stringResource(R.string.field_label_location_warehouse),
-                            isError = isWarehouseLocationError,
-                            errorMessage = if (isWarehouseLocationError) stringResource(R.string.error_warehouse_location_required) else null,
-                            modifier = Modifier.fillMaxWidth(),
-                            readOnly = true,
-                        )
+                        Box(Modifier.fillMaxWidth()) {
+                            LocationTextField(
+                                value = uiState.warehouseLocation,
+                                onValueChange = onWarehouseLocationChange,
+                                label = stringResource(R.string.field_label_location_warehouse),
+                                isError = isWarehouseLocationError,
+                                errorMessage = if (isWarehouseLocationError) {
+                                    stringResource(R.string.auth_error_warehouse_map_location_required)
+                                } else {
+                                    null
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                readOnly = true,
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable(
+                                        enabled = !uiState.isResolvingLocation,
+                                        onClick = openLocationPickerAndRequest,
+                                    ),
+                            )
+                        }
                         TextButton(
-                            onClick = onRequestCurrentLocationClick,
+                            onClick = openLocationPickerAndRequest,
                             enabled = !uiState.isResolvingLocation,
                         ) {
                             Text(stringResource(R.string.location_picker_use_current_location))
@@ -363,6 +411,19 @@ fun SignUpScreen(
             )
         }
     }
+
+    if (showLocationPicker && uiState.accountType in setOf(AccountType.PHARMACY, AccountType.WAREHOUSE)) {
+        LocationPickerComponent(
+            selectedAddress = activeFacilityLocation,
+            initialLatitude = uiState.latitude,
+            initialLongitude = uiState.longitude,
+            isResolvingLocation = uiState.isResolvingLocation,
+            locationMessage = uiState.locationMessage,
+            locationMessageIsError = uiState.locationMessageIsError,
+            onDismiss = { showLocationPicker = false },
+            onUseCurrentLocation = onRequestCurrentLocationClick,
+        )
+    }
 }
 
 private fun isFormValid(uiState: SignUpUiState): Boolean {
@@ -374,7 +435,11 @@ private fun isFormValid(uiState: SignUpUiState): Boolean {
 
     return when (uiState.accountType) {
         AccountType.PUBLIC_USER -> base
-        AccountType.PHARMACY -> base && uiState.pharmacyName.isNotEmpty()
+        AccountType.PHARMACY -> base &&
+            uiState.pharmacyName.isNotEmpty() &&
+            uiState.pharmacyLocation.isNotEmpty() &&
+            uiState.latitude != null &&
+            uiState.longitude != null
         AccountType.WAREHOUSE -> base &&
             uiState.warehouseName.isNotEmpty() &&
             uiState.warehouseLocation.isNotEmpty() &&

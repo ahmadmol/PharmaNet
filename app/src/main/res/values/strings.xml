@@ -5,6 +5,7 @@
     <!-- Bottom navigation & shell -->
     <string name="admin_dashboard_tab">لوحة التحكم</string>
     <string name="pharmacy_dashboard_tab">الرئيسية</string>
+    <string name="warehouse_dashboard_tab">الرئيسية</string>
     <string name="pharmacy_radar_tab">الرادار</string>
     <string name="placeholder_under_development">قيد التطوير</string>
     <string name="home_screen">الرئيسية</string>
