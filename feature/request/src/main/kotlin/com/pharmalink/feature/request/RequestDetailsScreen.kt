@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Notes
 import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Schedule
@@ -37,6 +39,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,9 +50,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,6 +69,7 @@ import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AccountType
+import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestItem
 import com.pharmalink.domain.model.RequestStatus
@@ -125,8 +131,11 @@ fun RequestDetailsScreen(
                 accountType = state.accountType,
                 isActionInProgress = state.isActionInProgress,
                 actionErrorMessage = state.actionErrorMessage,
+                relatedOrder = state.relatedOrder,
                 onPharmacySubmit = viewModel::submitRequest,
                 onPharmacyDelete = viewModel::deleteRequest,
+                onPharmacyAcceptQuote = viewModel::acceptQuote,
+                onPharmacyRejectQuote = viewModel::rejectQuote,
                 onWarehouseAcceptPrice = viewModel::acceptRequest,
                 onWarehouseAction = viewModel::updateRequestStatus,
                 onDismissActionError = viewModel::clearActionError,
@@ -142,84 +151,106 @@ private fun RequestDetailsContent(
     accountType: AccountType?,
     isActionInProgress: Boolean,
     actionErrorMessage: String?,
+    relatedOrder: Order?,
     onPharmacySubmit: () -> Unit,
     onPharmacyDelete: () -> Unit,
+    onPharmacyAcceptQuote: () -> Unit,
+    onPharmacyRejectQuote: () -> Unit,
     onWarehouseAcceptPrice: (Long) -> Unit,
     onWarehouseAction: (RequestStatus) -> Unit,
     onDismissActionError: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(d.spaceL),
-        verticalArrangement = Arrangement.spacedBy(d.spaceM),
-    ) {
-        item {
-            // Main Request Summary Card
-            RequestSummaryCard(request = request)
-        }
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            item {
+                RequestSummaryCard(request = request)
+            }
 
-        item {
-            RequestItemsCard(request = request)
-        }
+            if (accountType == AccountType.WAREHOUSE) {
+                item {
+                    RequesterPharmacyCard(request = request)
+                }
+            }
 
-        item {
-            // Invoice Summary Card
-            InvoiceSummaryCard(request = request)
-        }
-        
-        item {
-            RequestStatusTimeline(
-                currentStatus = request.status,
-                modifier = Modifier.padding(vertical = d.spaceM),
-            )
-        }
+            item {
+                RequestItemsCard(request = request)
+            }
 
-        item {
-            PharmacyDraftActionsCard(
-                accountType = accountType,
-                requestStatus = request.status,
-                isActionInProgress = isActionInProgress,
-                actionErrorMessage = actionErrorMessage,
-                onSubmit = onPharmacySubmit,
-                onDelete = onPharmacyDelete,
-                onDismissActionError = onDismissActionError,
-            )
-        }
+            item {
+                InvoiceSummaryCard(request = request)
+            }
 
-        item {
-            WarehouseLifecycleActionsCard(
-                accountType = accountType,
-                requestStatus = request.status,
-                isActionInProgress = isActionInProgress,
-                actionErrorMessage = actionErrorMessage,
-                onWarehouseAcceptPrice = onWarehouseAcceptPrice,
-                onWarehouseAction = onWarehouseAction,
-                onDismissActionError = onDismissActionError,
-            )
-        }
-        
-        item {
-            WarehouseInfoCard(request = request)
-        }
-        
-        item {
-            StorageNotesCard(request = request)
-        }
-        
-        item {
-            EtaCard(request = request)
-        }
-        
-        item {
-            request.relatedOrderId?.let { orderId ->
-                PharmaButton(
-                    text = stringResource(R.string.request_details_open_related_order),
-                    onClick = { onOpenOrder(orderId) },
-                    style = PharmaButtonStyle.GradientAccent,
-                    modifier = Modifier.fillMaxWidth(),
+            item {
+                PharmacyQuoteActionsCard(
+                    accountType = accountType,
+                    request = request,
+                    relatedOrder = relatedOrder,
+                    isActionInProgress = isActionInProgress,
+                    actionErrorMessage = actionErrorMessage,
+                    onAcceptQuote = onPharmacyAcceptQuote,
+                    onRejectQuote = onPharmacyRejectQuote,
+                    onDismissActionError = onDismissActionError,
                 )
+            }
+
+            item {
+                RequestStatusTimeline(
+                    currentStatus = request.status,
+                    modifier = Modifier.padding(vertical = d.spaceM),
+                )
+            }
+
+            item {
+                PharmacyDraftActionsCard(
+                    accountType = accountType,
+                    requestStatus = request.status,
+                    isActionInProgress = isActionInProgress,
+                    actionErrorMessage = actionErrorMessage,
+                    onSubmit = onPharmacySubmit,
+                    onDelete = onPharmacyDelete,
+                    onDismissActionError = onDismissActionError,
+                )
+            }
+
+            item {
+                WarehouseLifecycleActionsCard(
+                    accountType = accountType,
+                    requestStatus = request.status,
+                    isActionInProgress = isActionInProgress,
+                    actionErrorMessage = actionErrorMessage,
+                    onWarehouseAcceptPrice = onWarehouseAcceptPrice,
+                    onWarehouseAction = onWarehouseAction,
+                    onDismissActionError = onDismissActionError,
+                )
+            }
+
+            item {
+                WarehouseInfoCard(request = request)
+            }
+
+            item {
+                StorageNotesCard(request = request)
+            }
+
+            item {
+                EtaCard(request = request)
+            }
+
+            item {
+                request.relatedOrderId?.let { orderId ->
+                    PharmaButton(
+                        text = stringResource(R.string.request_details_open_related_order),
+                        onClick = { onOpenOrder(orderId) },
+                        style = PharmaButtonStyle.GradientAccent,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }
@@ -316,7 +347,8 @@ private fun WarehouseLifecycleActionsCard(
 ) {
     if (accountType != AccountType.WAREHOUSE) return
     val actions = warehouseActionsForStatus(requestStatus)
-    if (actions.isEmpty()) return
+    val isWaitingForPharmacy = requestStatus == RequestStatus.QUOTE_PENDING
+    if (actions.isEmpty() && !isWaitingForPharmacy) return
     val d = MaterialTheme.dimens
     var showAcceptPriceDialog by remember { mutableStateOf(false) }
     var acceptPriceText by remember { mutableStateOf("") }
@@ -363,11 +395,21 @@ private fun WarehouseLifecycleActionsCard(
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             Text(
-                text = stringResource(R.string.request_details_warehouse_actions_title),
+                text = if (isWaitingForPharmacy) { "\u0628\u0627\u0646\u062A\u0638\u0627\u0631 \u0645\u0648\u0627\u0641\u0642\u0629 \u0627\u0644\u0635\u064A\u062F\u0644\u064A\u0629" } else { stringResource(R.string.request_details_warehouse_actions_title) },
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
+
+            if (isWaitingForPharmacy) {
+                Text(
+                    text = "\u062A\u0645 \u0625\u0631\u0633\u0627\u0644 \u0639\u0631\u0636 \u0627\u0644\u0633\u0639\u0631. \u0627\u0644\u0645\u0633\u062A\u0648\u062F\u0639 \u0628\u0627\u0646\u062A\u0638\u0627\u0631 \u0645\u0648\u0627\u0641\u0642\u0629 \u0627\u0644\u0635\u064A\u062F\u0644\u064A\u0629.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
             if (isActionInProgress) {
                 Row(
@@ -387,7 +429,7 @@ private fun WarehouseLifecycleActionsCard(
                 PharmaButton(
                     text = stringResource(action.labelRes),
                     onClick = {
-                        if (action.targetStatus == RequestStatus.ACCEPTED) {
+                        if (action.targetStatus == RequestStatus.QUOTE_PENDING) {
                             showAcceptPriceDialog = true
                         } else {
                             onWarehouseAction(action.targetStatus)
@@ -404,6 +446,108 @@ private fun WarehouseLifecycleActionsCard(
                     text = actionErrorMessage,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
+                )
+                PharmaButton(
+                    text = stringResource(R.string.request_dismiss_error),
+                    onClick = onDismissActionError,
+                    enabled = !isActionInProgress,
+                    style = PharmaButtonStyle.Outlined,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PharmacyQuoteActionsCard(
+    accountType: AccountType?,
+    request: Request,
+    relatedOrder: Order?,
+    isActionInProgress: Boolean,
+    actionErrorMessage: String?,
+    onAcceptQuote: () -> Unit,
+    onRejectQuote: () -> Unit,
+    onDismissActionError: () -> Unit,
+) {
+    if (accountType != AccountType.PHARMACY || request.status != RequestStatus.QUOTE_PENDING) return
+    val d = MaterialTheme.dimens
+    val quotePriceCents = relatedOrder?.totalPriceCents ?: request.legacyTotalPriceCents()
+    val quotePriceLabel = quotePriceCents?.toQuotePriceLabel(relatedOrder?.currency ?: "SAR")
+        ?: "\u0628\u0627\u0646\u062A\u0638\u0627\u0631 \u0627\u0644\u0633\u0639\u0631"
+
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+            horizontalAlignment = Alignment.End,
+        ) {
+            Text(
+                text = "\u0639\u0631\u0636 \u0627\u0644\u0633\u0639\u0631",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            InvoiceRow(
+                label = "\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0645\u0639\u0631\u0648\u0636",
+                value = quotePriceLabel,
+                isGrandTotal = true,
+            )
+
+            Text(
+                text = "\u0631\u0627\u062C\u0639 \u0627\u0644\u0633\u0639\u0631 \u0642\u0628\u0644 \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629. \u0639\u0646\u062F \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629 \u064A\u0645\u0643\u0646 \u0644\u0644\u0645\u0633\u062A\u0648\u062F\u0639 \u0628\u062F\u0621 \u062A\u062C\u0647\u064A\u0632 \u0627\u0644\u0637\u0644\u0628.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (isActionInProgress) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text(
+                        text = stringResource(R.string.request_action_updating),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            PharmaButton(
+                text = "\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629 \u0639\u0644\u0649 \u0627\u0644\u0639\u0631\u0636",
+                onClick = onAcceptQuote,
+                enabled = !isActionInProgress && quotePriceCents != null,
+                style = PharmaButtonStyle.GradientAccent,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            PharmaButton(
+                text = "\u0631\u0641\u0636 \u0627\u0644\u0639\u0631\u0636",
+                onClick = onRejectQuote,
+                enabled = !isActionInProgress,
+                style = PharmaButtonStyle.Outlined,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (!actionErrorMessage.isNullOrBlank()) {
+                Text(
+                    text = actionErrorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 PharmaButton(
                     text = stringResource(R.string.request_dismiss_error),
@@ -484,6 +628,28 @@ private fun String.toPriceCentsOrNull(): Long? {
     }.getOrNull()
 }
 
+private fun Request.legacyTotalPriceCents(): Long? =
+    totalPrice.takeIf { it > 0.0 }?.let { amount ->
+        runCatching {
+            BigDecimal.valueOf(amount)
+                .movePointRight(2)
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValueExact()
+        }.getOrNull()
+    }
+
+private fun Long.toQuotePriceLabel(currency: String): String {
+    val amount = BigDecimal.valueOf(this)
+        .movePointLeft(2)
+        .stripTrailingZeros()
+        .toPlainString()
+    val currencyLabel = when (currency.uppercase()) {
+        "SAR" -> "ر.س"
+        else -> currency
+    }
+    return "$amount $currencyLabel"
+}
+
 private data class WarehouseActionUi(
     val targetStatus: RequestStatus,
     val labelRes: Int,
@@ -495,7 +661,7 @@ private fun warehouseActionsForStatus(status: RequestStatus): List<WarehouseActi
     return when (status) {
         RequestStatus.PENDING -> listOf(
             WarehouseActionUi(
-                targetStatus = RequestStatus.ACCEPTED,
+                targetStatus = RequestStatus.QUOTE_PENDING,
                 labelRes = R.string.request_action_accept,
                 style = PharmaButtonStyle.GradientAccent,
             ),
@@ -519,13 +685,81 @@ private fun warehouseActionsForStatus(status: RequestStatus): List<WarehouseActi
                 style = PharmaButtonStyle.GradientAccent,
             ),
         )
-        RequestStatus.REJECTED, RequestStatus.FULFILLED, RequestStatus.CANCELLED, RequestStatus.DRAFT -> emptyList()
+        RequestStatus.QUOTE_PENDING,
+        RequestStatus.REJECTED,
+        RequestStatus.FULFILLED,
+        RequestStatus.CANCELLED,
+        RequestStatus.DRAFT -> emptyList()
+    }
+}
+
+@Composable
+private fun RequesterPharmacyCard(request: Request) {
+    val d = MaterialTheme.dimens
+    val pharmacyName = request.pharmacyName.trim()
+    val requesterTitle = if (pharmacyName.isBlank()) {
+        "\u0627\u0644\u0637\u0644\u0628 \u0645\u0646 \u0635\u064A\u062F\u0644\u064A\u0629"
+    } else {
+        "\u0627\u0644\u0637\u0644\u0628 \u0645\u0646 \u0635\u064A\u062F\u0644\u064A\u0629 $pharmacyName"
+    }
+    val contactItems = listOfNotNull(
+        request.pharmacyPhone.takeIf { it.isNotBlank() }?.let {
+            Icons.Outlined.Call to it
+        },
+        request.pharmacyLocation.takeIf { it.isNotBlank() }?.let {
+            Icons.Outlined.LocationOn to it
+        },
+    )
+
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+            horizontalAlignment = Alignment.End,
+        ) {
+            Text(
+                text = requesterTitle,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            contactItems.forEach { (icon, value) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = TextAlign.End,
+                    )
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun RequestSummaryCard(request: Request) {
     val d = MaterialTheme.dimens
+    val displayItems = request.displayItems()
     
     Card(
         shape = MaterialTheme.shapes.large,
@@ -539,18 +773,12 @@ private fun RequestSummaryCard(request: Request) {
                 .fillMaxWidth()
                 .padding(d.spaceL)
         ) {
-            // Header with ID and Urgency Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.request_details_request_id_format, request.id),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                DetailsStatusPill(status = request.status)
                 
                 if (request.priority == com.pharmalink.domain.model.RequestPriority.URGENT) {
                     UrgencyBadge()
@@ -559,7 +787,6 @@ private fun RequestSummaryCard(request: Request) {
             
             Spacer(Modifier.height(d.spaceM))
             
-            // Medicine Info with Image
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
@@ -571,12 +798,15 @@ private fun RequestSummaryCard(request: Request) {
                 
                 Column(
                     modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.End,
                 ) {
                     Text(
-                        text = request.medicineName,
+                        text = displayItems.firstOrNull()?.medicineName ?: request.medicineName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     
                     if (request.medicineSubtitle.isNotEmpty()) {
@@ -585,16 +815,18 @@ private fun RequestSummaryCard(request: Request) {
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 2.dp),
+                            textAlign = TextAlign.End,
                         )
                     }
                     
                     Spacer(Modifier.height(d.spaceS))
                     
                     Text(
-                        text = "${request.quantity} ${request.unit}",
+                        text = "\u0639\u062F\u062F \u0627\u0644\u0645\u0646\u062A\u062C\u0627\u062A: ${displayItems.size}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.End,
                     )
                 }
             }
@@ -605,18 +837,7 @@ private fun RequestSummaryCard(request: Request) {
 @Composable
 private fun RequestItemsCard(request: Request) {
     val d = MaterialTheme.dimens
-    val displayItems = request.items.ifEmpty {
-        listOf(
-            RequestItem(
-                lineNo = 1,
-                medicineId = request.medicineId.orEmpty(),
-                medicineName = request.medicineName,
-                medicineSubtitle = request.medicineSubtitle,
-                quantity = request.quantity,
-                unit = request.unit,
-            ),
-        )
-    }
+    val displayItems = request.displayItems()
 
     Card(
         shape = MaterialTheme.shapes.large,
@@ -631,7 +852,8 @@ private fun RequestItemsCard(request: Request) {
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                horizontalArrangement = Arrangement.spacedBy(d.spaceS, Alignment.End),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Inventory2,
@@ -640,10 +862,11 @@ private fun RequestItemsCard(request: Request) {
                     modifier = Modifier.size(20.dp),
                 )
                 Text(
-                    text = "\u0639\u0646\u0627\u0635\u0631 \u0627\u0644\u0637\u0644\u0628",
+                    text = "\u0627\u0644\u0645\u0646\u062A\u062C\u0627\u062A \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629 (${displayItems.size})",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.End,
                 )
             }
 
@@ -677,43 +900,73 @@ private fun RequestItemRow(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(d.spaceM),
     ) {
-        Surface(
-            shape = RoundedCornerShape(d.radiusM),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ) {
-            Text(
-                text = displayLineNo.toString(),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = d.spaceS, vertical = d.spaceXS),
-            )
-        }
-
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalAlignment = Alignment.End,
         ) {
             Text(
                 text = item.medicineName,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth(),
             )
             if (item.medicineSubtitle.isNotBlank()) {
                 Text(
                     text = item.medicineSubtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
 
+        Surface(
+            shape = RoundedCornerShape(d.radiusM),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ) {
+            Text(
+                text = "${item.quantity} ${item.unit}",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = d.spaceS, vertical = d.spaceXS),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailsStatusPill(status: RequestStatus) {
+    Surface(
+        shape = CircleShape,
+        color = when (status) {
+            RequestStatus.PENDING -> MaterialTheme.colorScheme.secondaryContainer
+            RequestStatus.QUOTE_PENDING -> MaterialTheme.colorScheme.secondaryContainer
+            RequestStatus.ACCEPTED -> MaterialTheme.colorScheme.primaryContainer
+            RequestStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiaryContainer
+            RequestStatus.FULFILLED -> MaterialTheme.colorScheme.primaryContainer
+            RequestStatus.REJECTED -> MaterialTheme.colorScheme.errorContainer
+            RequestStatus.CANCELLED, RequestStatus.DRAFT -> MaterialTheme.colorScheme.surfaceVariant
+        },
+        contentColor = when (status) {
+            RequestStatus.PENDING -> MaterialTheme.colorScheme.onSecondaryContainer
+            RequestStatus.QUOTE_PENDING -> MaterialTheme.colorScheme.onSecondaryContainer
+            RequestStatus.ACCEPTED -> MaterialTheme.colorScheme.onPrimaryContainer
+            RequestStatus.IN_PROGRESS -> MaterialTheme.colorScheme.onTertiaryContainer
+            RequestStatus.FULFILLED -> MaterialTheme.colorScheme.onPrimaryContainer
+            RequestStatus.REJECTED -> MaterialTheme.colorScheme.onErrorContainer
+            RequestStatus.CANCELLED, RequestStatus.DRAFT -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+    ) {
         Text(
-            text = "${item.quantity} ${item.unit}",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+            text = requestStatusLabel(status),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
         )
     }
 }
@@ -853,10 +1106,12 @@ private fun InfoCard(
                 .fillMaxWidth()
                 .padding(d.spaceL)
         ) {
-            // Header
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = d.spaceM),
+                horizontalArrangement = Arrangement.spacedBy(d.spaceS, Alignment.End),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = d.spaceM),
             ) {
                 Icon(
                     imageVector = icon,
@@ -864,29 +1119,33 @@ private fun InfoCard(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp),
                 )
-                Spacer(Modifier.width(d.spaceS))
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.End,
                 )
             }
             
-            // Items
             items.forEach { item ->
                 Column(
-                    modifier = Modifier.padding(vertical = d.spaceXS),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = d.spaceXS),
+                    horizontalAlignment = Alignment.End,
                 ) {
                     Text(
                         text = item.label,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
                     )
                     Text(
                         text = item.value,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.End,
                     )
                 }
             }
@@ -973,16 +1232,44 @@ private fun InvoiceRow(label: String, value: String, isUrgent: Boolean = false, 
             text = label,
             style = if (isGrandTotal) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
             fontWeight = if (isGrandTotal) FontWeight.Bold else FontWeight.Normal,
-            color = if (isUrgent) PremiumUrgent else MaterialTheme.colorScheme.onSurface
+            color = if (isUrgent) PremiumUrgent else MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End,
         )
         Text(
             text = value,
             style = if (isGrandTotal) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
             fontWeight = if (isGrandTotal) FontWeight.Bold else FontWeight.SemiBold,
-            color = if (isUrgent) PremiumUrgent else MaterialTheme.colorScheme.onSurface
+            color = if (isUrgent) PremiumUrgent else MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Start,
         )
     }
 }
+
+@Composable
+private fun requestStatusLabel(status: RequestStatus): String = when (status) {
+    RequestStatus.PENDING -> stringResource(R.string.request_status_submitted)
+    RequestStatus.QUOTE_PENDING -> stringResource(R.string.request_status_quote_pending)
+    RequestStatus.ACCEPTED -> stringResource(R.string.request_status_approved)
+    RequestStatus.IN_PROGRESS -> stringResource(R.string.request_status_in_progress)
+    RequestStatus.FULFILLED -> stringResource(R.string.request_status_completed)
+    RequestStatus.REJECTED -> stringResource(R.string.request_status_rejected)
+    RequestStatus.CANCELLED -> stringResource(R.string.request_status_cancelled)
+    RequestStatus.DRAFT -> stringResource(R.string.request_status_draft)
+}
+
+private fun Request.displayItems(): List<RequestItem> =
+    items.ifEmpty {
+        listOf(
+            RequestItem(
+                lineNo = 1,
+                medicineId = medicineId.orEmpty(),
+                medicineName = medicineName,
+                medicineSubtitle = medicineSubtitle,
+                quantity = quantity,
+                unit = unit,
+            ),
+        )
+    }
 
 private data class InfoItem(
     val label: String,

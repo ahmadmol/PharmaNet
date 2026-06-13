@@ -127,6 +127,16 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             UnsupportedOperationException("getNearbyOrders is not supported in InMemoryPharmaRepository.")
         )
 
+    override fun observeNearbyOrdersRealtime(
+        lat: Double,
+        lng: Double,
+        radius: Double,
+    ): kotlinx.coroutines.flow.Flow<List<NearbyOrderDto>> =
+        kotlinx.coroutines.flow.flow {
+            // Radar demo data is not implemented in InMemory repository.
+            emit(emptyList())
+        }
+
     override suspend fun getOrder(orderId: String): Result<Order?> =
         Result.success(orders.value.firstOrNull { it.id == orderId })
 
@@ -337,19 +347,16 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
     override suspend fun warehouseAcceptB2bRequest(
         requestId: String,
         totalPriceCents: Long,
-        note: String?,
     ): Result<Request> =
         updateB2bRequestAndOrder(
             requestId = requestId,
             expectedRequestStatus = RequestStatus.PENDING,
             expectedOrderStatus = OrderStatus.PENDING,
-            nextRequestStatus = RequestStatus.ACCEPTED,
-            nextOrderStatus = OrderStatus.CONFIRMED,
+            nextRequestStatus = RequestStatus.QUOTE_PENDING,
+            nextOrderStatus = OrderStatus.QUOTE_PENDING,
             orderTransform = { order ->
                 order.copy(
                     totalPriceCents = totalPriceCents,
-                    notes = note ?: order.notes,
-                    confirmedAt = Instant.now(),
                 )
             },
         )
@@ -389,6 +396,26 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
                     fulfilledAt = Instant.now(),
                 )
             },
+        )
+
+    override suspend fun pharmacyAcceptB2bQuote(requestId: String): Result<Request> =
+        updateB2bRequestAndOrder(
+            requestId = requestId,
+            expectedRequestStatus = RequestStatus.QUOTE_PENDING,
+            expectedOrderStatus = OrderStatus.QUOTE_PENDING,
+            nextRequestStatus = RequestStatus.ACCEPTED,
+            nextOrderStatus = OrderStatus.CONFIRMED,
+            orderTransform = { order -> order.copy(confirmedAt = Instant.now()) },
+        )
+
+    override suspend fun pharmacyRejectB2bQuote(requestId: String, reason: String?): Result<Request> =
+        updateB2bRequestAndOrder(
+            requestId = requestId,
+            expectedRequestStatus = RequestStatus.QUOTE_PENDING,
+            expectedOrderStatus = OrderStatus.QUOTE_PENDING,
+            nextRequestStatus = RequestStatus.REJECTED,
+            nextOrderStatus = OrderStatus.REJECTED,
+            requestTransform = { request -> request.copy(rejectionReason = reason) },
         )
 
     private fun updateB2bRequestAndOrder(

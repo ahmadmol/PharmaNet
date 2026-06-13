@@ -11,6 +11,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -32,9 +33,11 @@ class PharmacyRadarViewModel @Inject constructor(
 
             val registeredLocation = repository.getCurrentPharmacyFacilityLocation().getOrNull()
             val location = registeredLocation ?: locationService.getCurrentFacilityLocation().getOrElse { error ->
+                // No registered location and GPS failed — mark location missing
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = mapLocationErrorToMessage(error),
+                    errorMessage = null,
+                    isLocationMissing = true,
                 )
                 return@launch
             }
@@ -42,28 +45,20 @@ class PharmacyRadarViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 currentLocationName = location.areaName,
                 errorMessage = context.getString(R.string.pharmacy_dashboard_loading_orders),
+                isLocationMissing = false,
             )
 
-            repository.getNearbyOrders(
+            repository.observeNearbyOrdersRealtime(
                 lat = location.latitude,
                 lng = location.longitude,
                 radius = radiusKm,
-            ).fold(
-                onSuccess = { orders ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        nearbyOrders = orders,
-                        errorMessage = null,
-                    )
-                },
-                onFailure = { throwable ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = throwable.message?.takeIf { it.isNotBlank() }
-                            ?: context.getString(R.string.pharmacy_dashboard_error_server),
-                    )
-                },
-            )
+            ).collectLatest { orders ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    nearbyOrders = orders,
+                    errorMessage = null,
+                )
+            }
         }
     }
 
@@ -73,6 +68,24 @@ class PharmacyRadarViewModel @Inject constructor(
             "LOCATION_DISABLED" -> context.getString(R.string.pharmacy_dashboard_error_location_disabled)
             "LOCATION_UNAVAILABLE" -> context.getString(R.string.pharmacy_dashboard_error_location_unavailable)
             else -> context.getString(R.string.pharmacy_dashboard_error_location_unavailable)
+        }
+    }
+
+    private fun mapBackendErrorToMessage(error: Throwable): String {
+        val message = error.message.orEmpty()
+        return when {
+            message.contains("missing organizationId", ignoreCase = true) ||
+                message.contains("linked pharmacy", ignoreCase = true) ||
+                message.contains("Linked pharmacy not found", ignoreCase = true) ->
+                context.getString(R.string.pharmacy_dashboard_error_missing_pharmacy_link)
+            message.contains("coordinates", ignoreCase = true) ||
+                message.contains("latitude", ignoreCase = true) ||
+                message.contains("longitude", ignoreCase = true) ->
+                context.getString(R.string.pharmacy_dashboard_error_missing_pharmacy_coordinates)
+            message.contains("permission", ignoreCase = true) ||
+                message.contains("unauthorized", ignoreCase = true) ->
+                context.getString(R.string.pharmacy_dashboard_error_permission_denied)
+            else -> context.getString(R.string.pharmacy_dashboard_error_server)
         }
     }
 }

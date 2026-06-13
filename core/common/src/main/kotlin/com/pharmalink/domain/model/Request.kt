@@ -10,6 +10,7 @@ enum class RequestPriority {
 enum class RequestStatus {
     DRAFT,           // Initial state, pharmacy editing
     PENDING,         // Submitted by pharmacy, awaiting warehouse
+    QUOTE_PENDING,   // Warehouse quoted price, awaiting pharmacy approval
     ACCEPTED,        // Warehouse accepted
     REJECTED,        // Warehouse rejected
     IN_PROGRESS,     // Warehouse fulfilling
@@ -35,6 +36,9 @@ data class Request(
     val supplierName: String,
     val createdAtLabel: String,
     val updatedAtLabel: String,
+    val pharmacyName: String = "",
+    val pharmacyPhone: String = "",
+    val pharmacyLocation: String = "",
     val etaLabel: String = "",
     val relatedOrderId: String? = null,
     val rejectionReason: String? = null,
@@ -91,6 +95,8 @@ object RequestTransitions {
             // Pharmacy can cancel draft or pending requests
             RequestStatus.DRAFT to RequestStatus.CANCELLED -> true
             RequestStatus.PENDING to RequestStatus.CANCELLED -> true
+            RequestStatus.QUOTE_PENDING to RequestStatus.ACCEPTED -> true
+            RequestStatus.QUOTE_PENDING to RequestStatus.REJECTED -> true
             // No other transitions allowed for pharmacy
             else -> false
         }
@@ -102,6 +108,7 @@ object RequestTransitions {
     ): Boolean {
         return when (current to target) {
             // Warehouse can accept or reject pending requests
+            RequestStatus.PENDING to RequestStatus.QUOTE_PENDING -> true
             RequestStatus.PENDING to RequestStatus.ACCEPTED -> true
             RequestStatus.PENDING to RequestStatus.REJECTED -> true
             // Warehouse can move accepted to in-progress

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pharmalink.core.common.error.MissingPharmacyLinkageException
 import com.pharmalink.core.common.validation.SyrianPhone
+import com.pharmalink.core.network.notifications.FcmTokenManager
 import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.domain.model.LoginRequest
 import com.pharmalink.domain.model.LoginUiState
@@ -26,6 +27,7 @@ import kotlinx.coroutines.launch
 class LoginViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val authRepository: AuthRepository,
+    private val fcmTokenManager: FcmTokenManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -129,6 +131,7 @@ class LoginViewModel @Inject constructor(
         val bootstrapResult = authRepository.bootstrapAuthenticatedUser(user)
         return bootstrapResult.fold(
             onSuccess = {
+                fcmTokenManager.refreshToken(reason = "login_success")
                 currentState.copy(
                     isLoading = false,
                     isLoginSuccessful = true,

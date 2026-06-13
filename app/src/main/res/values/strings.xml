@@ -11,6 +11,8 @@
     <string name="home_screen">الرئيسية</string>
     <string name="resources">الموارد</string>
     <string name="my_orders">طلباتي</string>
+    <string name="pharmacy_customer_orders_tab">طلبات العملاء</string>
+    <string name="pharmacy_warehouse_requests_tab">طلبات المستودعات</string>
     <string name="account">حسابي</string>
     <string name="admin_audit_log_tab">السجل</string>
     <string name="add_medicine">إضافة دواء</string>
@@ -83,7 +85,7 @@
 
     <string name="request_sent_title">تم الإرسال</string>
     <string name="request_sent_message">تم إرسال الطلب بنجاح</string>
-    <string name="request_view_my_requests">عرض طلباتي</string>
+    <string name="request_view_my_requests">عرض طلبات المستودعات</string>
 
     <string name="messages_title">الرسائل</string>
     <string name="action_back">رجوع</string>

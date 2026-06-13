@@ -206,6 +206,7 @@ private fun CustomerRequestScope.toPublicUserRequestScopeLabel(context: Context)
 
 private fun OrderStatus.toPublicUserStatusLabel(context: Context): String = when (this) {
     OrderStatus.PENDING -> context.getString(R.string.customer_order_status_pending)
+    OrderStatus.QUOTE_PENDING -> context.getString(R.string.customer_order_status_pending)
     OrderStatus.CONFIRMED -> context.getString(R.string.customer_order_status_confirmed)
     OrderStatus.IN_PROGRESS -> context.getString(R.string.customer_order_status_in_progress)
     OrderStatus.REJECTED -> context.getString(R.string.customer_order_status_rejected)
@@ -217,6 +218,7 @@ private fun OrderStatus.toPublicUserStatusLabel(context: Context): String = when
 
 private fun OrderStatus.toPublicUserSupportingText(context: Context): String = when (this) {
     OrderStatus.PENDING -> context.getString(R.string.customer_order_status_pending_supporting)
+    OrderStatus.QUOTE_PENDING -> context.getString(R.string.customer_order_status_pending_supporting)
     OrderStatus.CONFIRMED -> context.getString(R.string.customer_order_status_confirmed_supporting)
     OrderStatus.IN_PROGRESS -> context.getString(R.string.customer_order_status_in_progress_supporting)
     OrderStatus.REJECTED -> context.getString(R.string.customer_order_status_rejected_supporting)

@@ -181,6 +181,7 @@ private fun OrderCard(
     val d = MaterialTheme.dimens
     val tone = when (order.status) {
         OrderStatus.PENDING -> StatusTone.Pending
+        OrderStatus.QUOTE_PENDING -> StatusTone.Pending
         OrderStatus.CONFIRMED,
         OrderStatus.IN_PROGRESS,
         OrderStatus.READY_FOR_PICKUP,
@@ -191,6 +192,7 @@ private fun OrderCard(
     }
     val statusLabel = when (order.status) {
         OrderStatus.PENDING -> stringResource(R.string.order_status_pending)
+        OrderStatus.QUOTE_PENDING -> "بانتظار موافقة الصيدلية"
         OrderStatus.CONFIRMED -> stringResource(R.string.order_status_approved)
         OrderStatus.IN_PROGRESS -> "قيد التجهيز"
         OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"

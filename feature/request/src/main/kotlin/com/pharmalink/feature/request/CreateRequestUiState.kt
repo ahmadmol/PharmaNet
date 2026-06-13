@@ -27,6 +27,8 @@ data class CreateRequestBasketItem(
     val medicineSubtitle: String,
     val quantity: Int,
     val unit: String,
+    val warehouseId: String = "",
+    val warehouseName: String = "",
 )
 
 data class MedicineItem(
@@ -34,7 +36,8 @@ data class MedicineItem(
     val name: String,
     val brand: String,
     val strength: String,
-    val price: Double
+    val price: Double,
+    val warehouseId: String = "",
 )
 
 fun Medicine.toItem(): MedicineItem = MedicineItem(
@@ -42,7 +45,8 @@ fun Medicine.toItem(): MedicineItem = MedicineItem(
     name = name,
     brand = brand,
     strength = strength,
-    price = price
+    price = price,
+    warehouseId = warehouseId.orEmpty(),
 )
 
 

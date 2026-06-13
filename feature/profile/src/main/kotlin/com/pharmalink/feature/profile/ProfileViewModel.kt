@@ -33,6 +33,8 @@ private const val PROFILE_UPDATE_SAFE_ERROR =
     "\u062a\u0639\u0630\u0631 \u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
 private const val WAREHOUSE_LOCATION_SAFE_ERROR =
     "\u062a\u0639\u0630\u0631 \u062a\u062d\u062f\u064a\u062b \u0645\u0648\u0642\u0639 \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
+private const val NOTIFICATIONS_PREFERENCE_SAFE_ERROR =
+    "\u062a\u0639\u0630\u0631 \u062a\u062d\u062f\u064a\u062b \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0625\u0634\u0639\u0627\u0631\u0627\u062a. \u064a\u0631\u062c\u0649 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0644\u0627\u062d\u0642\u0627"
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
@@ -91,6 +93,7 @@ class ProfileViewModel @Inject constructor(
                     else -> ""
                 }
                 val organizationName = userIdentity?.organizationName ?: organizationNameFallback
+                val isPharmacyAccount = snapshot?.accountType == AccountType.PHARMACY
                 ProfileUiState(
                     userName = profile.managerName.ifBlank {
                         displayName.ifBlank { context.getString(R.string.profile_default_user_name) }
@@ -98,11 +101,7 @@ class ProfileViewModel @Inject constructor(
                     userEmail = profile.contactEmail.ifBlank { snapshot?.email.orEmpty() },
                     userPhone = profile.contactPhone.ifBlank { snapshot?.phoneNumber.orEmpty() },
                     profileImageUrl = profile.avatarUrl,
-                    accountType = if (snapshot?.accountType == AccountType.PUBLIC_USER) {
-                        context.getString(R.string.profile_account_type_public_user)
-                    } else {
-                        snapshot?.accountType?.name?.replace('_', ' ').orEmpty()
-                    },
+                    accountType = snapshot?.accountType?.toProfileRoleLabel(context).orEmpty(),
                     accountTypeEnum = snapshot?.accountType,
                     pharmacyName = if (snapshot?.accountType == AccountType.PUBLIC_USER) {
                         ""
@@ -110,6 +109,9 @@ class ProfileViewModel @Inject constructor(
                         profile.pharmacyName.ifBlank { organizationName }
                     },
                     pharmacyAddress = profile.addressLine,
+                    pharmacyId = snapshot?.pharmacyId.orEmpty(),
+                    pharmacyLinked = !snapshot?.pharmacyId.isNullOrBlank(),
+                    pharmacyCoordinatesComplete = !isPharmacyAccount || (profile.latitude != null && profile.longitude != null),
                     warehouseLatitude = profile.latitude,
                     warehouseLongitude = profile.longitude,
                     isUpdatingWarehouseLocation = _uiState.value.isUpdatingWarehouseLocation,
@@ -295,8 +297,16 @@ class ProfileViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isUpdatingNotifications = false,
                 notificationsEnabled = if (result.isSuccess) enabled else _uiState.value.notificationsEnabled,
-                notificationsError = result.exceptionOrNull()?.message,
+                notificationsError = result.exceptionOrNull()?.let { NOTIFICATIONS_PREFERENCE_SAFE_ERROR },
             )
         }
     }
 }
+
+private fun AccountType.toProfileRoleLabel(context: Context): String =
+    when (this) {
+        AccountType.ADMIN -> "مدير النظام"
+        AccountType.PHARMACY -> context.getString(R.string.profile_org_label_pharmacy)
+        AccountType.WAREHOUSE -> context.getString(R.string.edit_profile_role_warehouse)
+        AccountType.PUBLIC_USER -> context.getString(R.string.profile_account_type_public_user)
+    }

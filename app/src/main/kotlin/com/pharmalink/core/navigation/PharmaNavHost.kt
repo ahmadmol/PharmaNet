@@ -214,6 +214,7 @@ fun PharmaNavHost(
             val mainTabsStartDestination = when (accountType) {
                 AccountType.WAREHOUSE -> AppDestination.WarehouseDashboard.route
                 AccountType.ADMIN -> AppDestination.AdminDashboard.route
+                AccountType.PHARMACY -> AppDestination.PharmacyDashboard.route
                 else -> AppDestination.Home.route
             }
             PharmaNavigator(

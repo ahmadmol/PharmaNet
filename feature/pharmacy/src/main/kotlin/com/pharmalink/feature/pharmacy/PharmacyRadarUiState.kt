@@ -7,6 +7,7 @@ data class PharmacyRadarUiState(
     val currentLocationName: String = "",
     val nearbyOrders: List<NearbyOrderDto> = emptyList(),
     val errorMessage: String? = null,
+    val isLocationMissing: Boolean = false,
 ) {
     val nearbyOrdersCount: Int
         get() = nearbyOrders.size

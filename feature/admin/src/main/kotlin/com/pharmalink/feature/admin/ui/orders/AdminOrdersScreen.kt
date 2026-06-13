@@ -494,6 +494,7 @@ private fun OrderCard(
                     Text(
                         text = when (order.status) {
                             OrderStatus.PENDING -> "معلق"
+                            OrderStatus.QUOTE_PENDING -> "بانتظار الموافقة"
                             OrderStatus.CONFIRMED -> "مؤكد"
                             OrderStatus.IN_PROGRESS -> "قيد التنفيذ"
                             OrderStatus.DELIVERED -> "مسلم"

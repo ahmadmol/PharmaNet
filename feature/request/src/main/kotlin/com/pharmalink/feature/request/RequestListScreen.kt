@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,6 +58,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material3.Surface
+import com.pharmalink.domain.model.RequestItem
 
 
 @Composable
@@ -213,6 +221,7 @@ fun RequestListScreen(
                     items(uiState.requests) { request ->
                         RequestItemCard(
                             request = request,
+                            accountType = uiState.accountType,
                             onClick = { onNavigateToRequestDetails(request.id) }
                         )
                     }
@@ -230,18 +239,20 @@ private fun RequestStatusFilter(
     val statuses = listOf(
         null to stringResource(R.string.request_filter_all),
         RequestStatus.PENDING to stringResource(R.string.request_status_submitted),
+        RequestStatus.QUOTE_PENDING to stringResource(R.string.request_status_quote_pending),
         RequestStatus.ACCEPTED to stringResource(R.string.request_status_approved),
-        RequestStatus.IN_PROGRESS to stringResource(R.string.request_status_under_review),
+        RequestStatus.IN_PROGRESS to stringResource(R.string.request_status_in_progress),
         RequestStatus.FULFILLED to stringResource(R.string.request_status_completed),
         RequestStatus.REJECTED to stringResource(R.string.request_status_rejected),
         RequestStatus.CANCELLED to stringResource(R.string.request_status_cancelled),
     )
 
-    Row(
+    LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS)
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = MaterialTheme.dimens.spaceXS),
     ) {
-        statuses.forEach { (status, label) ->
+        items(statuses, key = { it.first?.name ?: "ALL" }) { (status, label) ->
             FilterChip(
                 selected = selectedStatus == status,
                 label = label,
@@ -284,71 +295,87 @@ private fun FilterChip(
 @Composable
 private fun RequestItemCard(
     request: Request,
+    accountType: AccountType?,
     onClick: () -> Unit
 ) {
+    val d = MaterialTheme.dimens
+    val basketItems = request.displayItems()
+    val previewItems = basketItems.take(2)
+    val extraItemsCount = (basketItems.size - previewItems.size).coerceAtLeast(0)
+
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(d.radiusL),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.padding(MaterialTheme.dimens.spaceM)
+            modifier = Modifier.padding(d.spaceM),
+            verticalArrangement = Arrangement.spacedBy(d.spaceS),
         ) {
-            Text(
-                text = request.medicineName,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            
-            if (request.medicineSubtitle.isNotBlank()) {
-                Text(
-                    text = request.medicineSubtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
                     Text(
-                        text = "${request.quantity} ${request.unit}",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = request.primaryPartyName(accountType),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
+                    if (accountType == AccountType.WAREHOUSE) {
+                        RequesterIdentityPreview(request = request)
+                    }
+                    Text(
+                        text = "\u0639\u0646\u0627\u0635\u0631 \u0627\u0644\u0633\u0644\u0629: ${basketItems.size}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                StatusPill(status = request.status)
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                previewItems.forEach { item ->
+                    IncomingBasketPreviewRow(item = item)
+                }
+                if (extraItemsCount > 0) {
+                    Text(
+                        text = "+$extraItemsCount \u0639\u0646\u0627\u0635\u0631 \u0623\u062E\u0631\u0649",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PriceStatePill(request = request)
                     if (request.priority == RequestPriority.URGENT) {
-                        Spacer(modifier = Modifier.width(MaterialTheme.dimens.spaceS))
-                        Icon(
-                            imageVector = Icons.Filled.FlashOn,
-                            contentDescription = stringResource(R.string.request_priority_urgent),
-                            tint = PremiumUrgent,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = stringResource(R.string.request_priority_urgent),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = PremiumUrgent,
-                            fontWeight = FontWeight.Bold
-                        )
+                        UrgentPill()
                     }
                 }
-                
+
                 Text(
-                    text = statusLabel(request.status),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = getStatusColor(request.status)
-                )
-            }
-            
-            if (request.warehouseName.isNotBlank()) {
-                Text(
-                    text = request.warehouseName,
-                    style = MaterialTheme.typography.bodySmall,
+                    text = request.updatedAtLabel,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -357,26 +384,202 @@ private fun RequestItemCard(
 }
 
 @Composable
-private fun getStatusColor(status: RequestStatus) = when (status) {
-    RequestStatus.PENDING -> MaterialTheme.colorScheme.primary
-    RequestStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
-    RequestStatus.ACCEPTED -> MaterialTheme.colorScheme.primary
-    RequestStatus.FULFILLED -> MaterialTheme.colorScheme.primary
-    RequestStatus.REJECTED -> MaterialTheme.colorScheme.error
+private fun RequesterIdentityPreview(request: Request) {
+    val d = MaterialTheme.dimens
+    val details = listOfNotNull(
+        request.pharmacyPhone.takeIf { it.isNotBlank() }?.let {
+            Icons.Outlined.Phone to it
+        },
+        request.pharmacyLocation.takeIf { it.isNotBlank() }?.let {
+            Icons.Outlined.LocationOn to it
+        },
+    )
+
+    details.forEach { (icon, value) ->
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(d.spaceXS),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun IncomingBasketPreviewRow(item: RequestItem) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Inventory2,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text = item.medicineName,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = "${item.quantity} ${item.unit}",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun StatusPill(status: RequestStatus) {
+    Surface(
+        shape = CircleShape,
+        color = statusContainerColor(status),
+        contentColor = statusContentColor(status),
+    ) {
+        Text(
+            text = statusLabel(status),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun PriceStatePill(request: Request) {
+    val isPriced = request.totalPrice > 0.0
+    Surface(
+        shape = CircleShape,
+        color = if (isPriced) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.secondaryContainer
+        },
+        contentColor = if (isPriced) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        },
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Payments,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+            )
+            Text(
+                text = if (isPriced) {
+                    "${request.totalPrice.toLong()} \u0644.\u0633"
+                } else {
+                    "\u0628\u0627\u0646\u062A\u0638\u0627\u0631 \u0627\u0644\u062A\u0633\u0639\u064A\u0631"
+                },
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun UrgentPill() {
+    Surface(
+        shape = CircleShape,
+        color = PremiumUrgent.copy(alpha = 0.12f),
+        contentColor = PremiumUrgent,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.FlashOn,
+                contentDescription = stringResource(R.string.request_priority_urgent),
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = stringResource(R.string.request_priority_urgent),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun statusContainerColor(status: RequestStatus) = when (status) {
+    RequestStatus.PENDING -> MaterialTheme.colorScheme.secondaryContainer
+    RequestStatus.QUOTE_PENDING -> MaterialTheme.colorScheme.secondaryContainer
+    RequestStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiaryContainer
+    RequestStatus.ACCEPTED -> MaterialTheme.colorScheme.primaryContainer
+    RequestStatus.FULFILLED -> MaterialTheme.colorScheme.primaryContainer
+    RequestStatus.REJECTED -> MaterialTheme.colorScheme.errorContainer
+    RequestStatus.CANCELLED -> MaterialTheme.colorScheme.surfaceVariant
+    RequestStatus.DRAFT -> MaterialTheme.colorScheme.surfaceVariant
+}
+
+@Composable
+private fun statusContentColor(status: RequestStatus) = when (status) {
+    RequestStatus.PENDING -> MaterialTheme.colorScheme.onSecondaryContainer
+    RequestStatus.QUOTE_PENDING -> MaterialTheme.colorScheme.onSecondaryContainer
+    RequestStatus.IN_PROGRESS -> MaterialTheme.colorScheme.onTertiaryContainer
+    RequestStatus.ACCEPTED -> MaterialTheme.colorScheme.onPrimaryContainer
+    RequestStatus.FULFILLED -> MaterialTheme.colorScheme.onPrimaryContainer
+    RequestStatus.REJECTED -> MaterialTheme.colorScheme.onErrorContainer
     RequestStatus.CANCELLED -> MaterialTheme.colorScheme.onSurfaceVariant
-    else -> MaterialTheme.colorScheme.onSurface
+    RequestStatus.DRAFT -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
 @Composable
 private fun statusLabel(status: RequestStatus): String = when (status) {
     RequestStatus.PENDING -> stringResource(R.string.request_status_submitted)
+    RequestStatus.QUOTE_PENDING -> stringResource(R.string.request_status_quote_pending)
     RequestStatus.ACCEPTED -> stringResource(R.string.request_status_approved)
-    RequestStatus.IN_PROGRESS -> stringResource(R.string.request_status_under_review)
+    RequestStatus.IN_PROGRESS -> stringResource(R.string.request_status_in_progress)
     RequestStatus.FULFILLED -> stringResource(R.string.request_status_completed)
     RequestStatus.REJECTED -> stringResource(R.string.request_status_rejected)
     RequestStatus.CANCELLED -> stringResource(R.string.request_status_cancelled)
     RequestStatus.DRAFT -> stringResource(R.string.request_status_draft)
 }
+
+private fun Request.displayItems(): List<RequestItem> =
+    items.ifEmpty {
+        listOf(
+            RequestItem(
+                lineNo = 1,
+                medicineId = medicineId.orEmpty(),
+                medicineName = medicineName,
+                medicineSubtitle = medicineSubtitle,
+                quantity = quantity,
+                unit = unit,
+            ),
+        )
+    }
+
+private fun Request.primaryPartyName(accountType: AccountType?): String =
+    if (accountType == AccountType.WAREHOUSE) {
+        pharmacyName.ifBlank { "\u0635\u064A\u062F\u0644\u064A\u0629" }
+    } else {
+        warehouseName.ifBlank { supplierName.ifBlank { medicineName } }
+    }
 
 @Composable
 private fun Modifier.shimmerEffect(shape: RoundedCornerShape = RoundedCornerShape(MaterialTheme.dimens.radiusM)): Modifier {

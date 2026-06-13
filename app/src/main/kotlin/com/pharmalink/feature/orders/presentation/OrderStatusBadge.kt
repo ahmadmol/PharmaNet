@@ -25,7 +25,8 @@ fun OrderStatusBadge(
     modifier: Modifier = Modifier,
 ) {
     val (backgroundColor, textColor) = when (status) {
-        OrderStatus.PENDING -> Color(0xFF6B7280) to Color(0xFF5C6BC0) // Muted blue to calm blue
+        OrderStatus.PENDING,
+        OrderStatus.QUOTE_PENDING -> Color(0xFF6B7280) to Color(0xFF5C6BC0) // Muted blue to calm blue
         OrderStatus.CONFIRMED,
         OrderStatus.IN_PROGRESS,
         OrderStatus.READY_FOR_PICKUP,
@@ -47,6 +48,7 @@ fun OrderStatusBadge(
         Text(
             text = when (status) {
                 OrderStatus.PENDING -> "قيد المراجعة"
+                OrderStatus.QUOTE_PENDING -> "بانتظار موافقة الصيدلية"
                 OrderStatus.CONFIRMED -> "تم التأكيد"
                 OrderStatus.IN_PROGRESS -> "قيد التجهيز"
                 OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"

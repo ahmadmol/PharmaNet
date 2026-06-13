@@ -22,6 +22,7 @@ class BackendReadinessContractTest {
     fun repositoryRpcCallsHaveSqlDefinitions() {
         val rpcNames = listOf(
             "create_public_user_profile",
+            "create_customer_order",
             "get_public_pharmacies",
             "get_public_pharmacies_for_medicine",
             "get_nearby_orders",
@@ -59,6 +60,86 @@ class BackendReadinessContractTest {
         rpcNames.forEach { rpc ->
             assertTrue("Missing SQL definition for RPC $rpc", migrationSql.contains("FUNCTION public.$rpc") || migrationSql.contains("FUNCTION $rpc"))
         }
+    }
+
+    /**
+     * Stronger than name-only existence: for every RPC whose parameter names are known from the
+     * Kotlin call sites / param DTOs, assert that at least one SQL definition declares each of
+     * those parameter names. This catches parameter drift between Kotlin DTOs and SQL signatures.
+     *
+     * Only RPCs with parameter signatures that are verifiable from the repository are listed.
+     */
+    @Test
+    fun repositoryRpcParametersMatchSqlSignatures() {
+        val expectedParams: Map<String, List<String>> = mapOf(
+            "create_customer_order" to listOf(
+                "p_medicine_id", "p_medicine_name", "p_quantity", "p_unit", "p_pharmacy_id",
+                "p_urgency", "p_request_scope", "p_fulfillment_type", "p_delivery_address",
+                "p_delivery_latitude", "p_delivery_longitude", "p_delivery_phone", "p_notes",
+                "p_prescription_url",
+            ),
+            "confirm_customer_order" to listOf("p_order_id", "p_total_price_cents"),
+            "cancel_customer_order" to listOf("p_order_id"),
+            "customer_accept_order_price" to listOf("p_order_id"),
+            "customer_reject_order_price" to listOf("p_order_id"),
+            "reject_customer_order" to listOf("p_order_id"),
+            "mark_customer_order_ready_for_pickup" to listOf("p_order_id"),
+            "mark_customer_order_out_for_delivery" to listOf("p_order_id"),
+            "mark_customer_order_delivered" to listOf("p_order_id"),
+            "submit_pharmacy_request" to listOf("p_request_id"),
+            "warehouse_accept_b2b_request" to listOf("p_request_id", "p_total_price_cents"),
+            "warehouse_reject_b2b_request" to listOf("p_request_id", "p_rejection_reason"),
+            "warehouse_start_b2b_fulfillment" to listOf("p_request_id"),
+            "warehouse_mark_b2b_delivered" to listOf("p_request_id", "p_delivery_note"),
+            "pharmacy_accept_b2b_quote" to listOf("p_request_id"),
+            "pharmacy_reject_b2b_quote" to listOf("p_request_id", "p_rejection_reason"),
+            "get_public_pharmacies_for_medicine" to listOf("p_medicine_id"),
+            "admin_get_audit_log_detail" to listOf("p_log_id"),
+        )
+
+        expectedParams.forEach { (rpc, params) ->
+            val paramBlocks = sqlFunctionParameterBlocks(rpc)
+            assertTrue("No SQL definition with a parameter list found for RPC $rpc", paramBlocks.isNotEmpty())
+            params.forEach { param ->
+                assertTrue(
+                    "RPC $rpc is missing SQL parameter $param (Kotlin call expects it)",
+                    paramBlocks.any { it.contains(param) },
+                )
+            }
+        }
+    }
+
+    /**
+     * Returns the parameter-list text (between the outer parentheses) for every SQL definition of
+     * the given function name. Handles nested parentheses inside default expressions / type modifiers.
+     */
+    private fun sqlFunctionParameterBlocks(rpc: String): List<String> {
+        val blocks = mutableListOf<String>()
+        val header = Regex("FUNCTION\\s+(?:public\\.)?" + Regex.escape(rpc) + "\\s*\\(")
+        for (match in header.findAll(migrationSql)) {
+            val openParen = match.range.last // index of '('
+            var depth = 0
+            val sb = StringBuilder()
+            var i = openParen
+            while (i < migrationSql.length) {
+                val c = migrationSql[i]
+                when (c) {
+                    '(' -> {
+                        depth++
+                        if (depth > 1) sb.append(c)
+                    }
+                    ')' -> {
+                        depth--
+                        if (depth == 0) break
+                        sb.append(c)
+                    }
+                    else -> if (depth >= 1) sb.append(c)
+                }
+                i++
+            }
+            blocks.add(sb.toString())
+        }
+        return blocks
     }
 
     @Test

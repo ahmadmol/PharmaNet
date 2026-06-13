@@ -72,6 +72,16 @@ interface PharmaRepository {
 
     suspend fun getNearbyOrders(lat: Double, lng: Double, radius: Double): Result<List<NearbyOrderDto>>
 
+    /**
+     * Realtime stream for nearby customer orders shown in the Pharmacy Radar screen.
+     * Backend should deliver only rows that the authenticated pharmacy is allowed to read.
+     */
+    fun observeNearbyOrdersRealtime(
+        lat: Double,
+        lng: Double,
+        radius: Double,
+    ): Flow<List<NearbyOrderDto>>
+
     suspend fun addMedicine(medicine: Medicine, warehouseId: String): Result<Unit>
 
     suspend fun getOrder(orderId: String): Result<Order?>
@@ -98,8 +108,7 @@ interface PharmaRepository {
 
     suspend fun warehouseAcceptB2bRequest(
         requestId: String,
-        totalPriceCents: Long,
-        note: String? = null
+        totalPriceCents: Long
     ): Result<Request>
 
     suspend fun warehouseRejectB2bRequest(
@@ -112,6 +121,13 @@ interface PharmaRepository {
     suspend fun warehouseMarkB2bDelivered(
         requestId: String,
         deliveryNote: String? = null
+    ): Result<Request>
+
+    suspend fun pharmacyAcceptB2bQuote(requestId: String): Result<Request>
+
+    suspend fun pharmacyRejectB2bQuote(
+        requestId: String,
+        reason: String? = null
     ): Result<Request>
 
     suspend fun markNotificationRead(notificationId: String): Result<Unit>

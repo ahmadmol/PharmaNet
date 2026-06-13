@@ -341,6 +341,7 @@ private fun SummaryRow(label: String, value: String) {
 @Composable
 private fun orderStatusText(status: OrderStatus): String = when (status) {
     OrderStatus.PENDING -> stringResource(R.string.order_detail_status_pending)
+    OrderStatus.QUOTE_PENDING -> "بانتظار موافقة الصيدلية"
     OrderStatus.CONFIRMED -> stringResource(R.string.order_detail_status_approved)
     OrderStatus.IN_PROGRESS -> "قيد التجهيز"
     OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"
@@ -352,6 +353,7 @@ private fun orderStatusText(status: OrderStatus): String = when (status) {
 
 private fun orderStatusTone(status: OrderStatus): StatusTone = when (status) {
     OrderStatus.PENDING -> StatusTone.Pending
+    OrderStatus.QUOTE_PENDING -> StatusTone.Pending
     OrderStatus.CONFIRMED,
     OrderStatus.IN_PROGRESS,
     OrderStatus.READY_FOR_PICKUP,

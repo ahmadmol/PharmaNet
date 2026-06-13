@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -90,6 +91,8 @@ import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AccountType
 import com.pharmalink.domain.model.HomeStats
+import com.pharmalink.domain.model.Medicine
+import com.pharmalink.domain.model.PublicPharmacyForMedicine
 import com.pharmalink.domain.model.Warehouse
 import com.pharmalink.feature.home.R
 import com.pharmalink.designsystem.R as DsR
@@ -166,7 +169,7 @@ private fun HomeContent(
                     userName = uiState.userName,
                     onProfileClick = onNavigateToProfile,
                     onNotificationsClick = onNavigateToNotifications,
-                    showNotifications = !isPublicUser,
+                    showNotifications = true,
                 )
             }
             if (!isPublicUser) {
@@ -192,6 +195,21 @@ private fun HomeContent(
                         onOrdersClick = onNavigateToOrders,
                         onProfileClick = onNavigateToProfile,
                     )
+                }
+                if (uiState.featuredMedicines.isNotEmpty()) {
+                    item { SectionHeader(title = "أدوية شائعة") }
+                    item {
+                        PublicMedicinesRow(
+                            medicines = uiState.featuredMedicines,
+                            onMedicineClick = onNavigateToMedicineSearch,
+                        )
+                    }
+                }
+                if (uiState.publicPharmacies.isNotEmpty()) {
+                    item { SectionHeader(title = "صيدليات قريبة") }
+                    items(uiState.publicPharmacies, key = { it.pharmacyId }) { pharmacy ->
+                        PublicPharmacyRow(pharmacy = pharmacy)
+                    }
                 }
                 return@LazyColumn
             }
@@ -689,6 +707,110 @@ private fun QuickActionItemCard(
     }
 }
 
+
+@Composable
+private fun PublicMedicinesRow(
+    medicines: List<Medicine>,
+    onMedicineClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+    ) {
+        items(medicines, key = { it.id }) { medicine ->
+            Surface(
+                modifier = Modifier
+                    .width(160.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(),
+                        onClick = onMedicineClick,
+                    ),
+                shape = RoundedCornerShape(d.radiusXL),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = d.cardElevation,
+            ) {
+                Column(
+                    modifier = Modifier.padding(d.spaceL),
+                    verticalArrangement = Arrangement.spacedBy(d.spaceS),
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    Surface(shape = CircleShape, color = PharmaBlue50, contentColor = PharmaBlue500) {
+                        Icon(
+                            Icons.Outlined.LocalPharmacy,
+                            contentDescription = null,
+                            modifier = Modifier.padding(d.spaceS).size(d.iconM),
+                        )
+                    }
+                    Text(
+                        text = medicine.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (medicine.brand.isNotBlank()) {
+                        Text(
+                            text = medicine.brand,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PublicPharmacyRow(
+    pharmacy: PublicPharmacyForMedicine,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 1.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(d.spaceL),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Surface(shape = CircleShape, color = PharmaBlue50, contentColor = PharmaBlue500) {
+                Icon(
+                    Icons.Outlined.LocalPharmacy,
+                    contentDescription = null,
+                    modifier = Modifier.padding(d.spaceS).size(d.iconM),
+                )
+            }
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = pharmacy.pharmacyName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (pharmacy.location.isNotBlank()) {
+                    Text(
+                        text = pharmacy.location,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun DashboardPanel(content: @Composable () -> Unit) {

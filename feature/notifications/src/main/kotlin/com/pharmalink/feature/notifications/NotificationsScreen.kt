@@ -183,7 +183,7 @@ private fun NotificationOverviewCard(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
             modifier = Modifier.padding(d.spaceL),
@@ -272,10 +272,10 @@ private fun NotificationCard(
             containerColor = if (notification.read) {
                 MaterialTheme.colorScheme.surface
             } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.32f)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.16f)
             },
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (notification.read) 0.dp else 1.dp),
     ) {
         Column(
             modifier = Modifier.padding(d.spaceL),

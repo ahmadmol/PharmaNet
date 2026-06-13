@@ -11,6 +11,9 @@ data class ProfileUiState(
     val accountTypeEnum: AccountType? = null,
     val pharmacyName: String = "",
     val pharmacyAddress: String = "",
+    val pharmacyId: String = "",
+    val pharmacyLinked: Boolean = false,
+    val pharmacyCoordinatesComplete: Boolean = false,
     val profileImageUrl: String? = null,
     val notificationsEnabled: Boolean = true,
     val isUpdatingNotifications: Boolean = false,
@@ -40,6 +43,8 @@ data class ProfileUiState(
                     AccountType.WAREHOUSE -> snapshot.warehouseId.ifBlank { snapshot.pharmacyId }
                     else -> snapshot?.pharmacyId.orEmpty()
                 },
+                pharmacyId = snapshot?.pharmacyId.orEmpty(),
+                pharmacyLinked = !snapshot?.pharmacyId.isNullOrBlank(),
             )
     }
 }

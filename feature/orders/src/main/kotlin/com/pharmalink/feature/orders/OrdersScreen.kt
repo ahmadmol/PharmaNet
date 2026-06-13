@@ -369,6 +369,7 @@ private fun OrderCard(
 private fun OrderStatusChip(order: OrderItem) {
     val color = when (order.statusType) {
         OrderStatus.PENDING -> PharmaNeutral600
+        OrderStatus.QUOTE_PENDING -> PharmaNeutral600
         OrderStatus.CONFIRMED,
         OrderStatus.IN_PROGRESS,
         OrderStatus.READY_FOR_PICKUP,
@@ -392,7 +393,8 @@ private fun OrderStatusChip(order: OrderItem) {
 private fun OrderProgressTimeline(status: OrderStatus) {
     val d = MaterialTheme.dimens
     val activeIndex = when (status) {
-        OrderStatus.PENDING, 
+        OrderStatus.PENDING,
+        OrderStatus.QUOTE_PENDING,
         OrderStatus.REJECTED,
         OrderStatus.CANCELLED -> 0
         OrderStatus.CONFIRMED,

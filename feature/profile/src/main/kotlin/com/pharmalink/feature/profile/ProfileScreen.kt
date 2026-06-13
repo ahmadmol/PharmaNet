@@ -154,6 +154,14 @@ private fun ProfileContent(
                 modifier = Modifier.padding(horizontal = d.spaceL),
             )
         }
+        if (uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PHARMACY) {
+            item {
+                LinkedPharmacyStatusCard(
+                    uiState = uiState,
+                    modifier = Modifier.padding(horizontal = d.spaceL),
+                )
+            }
+        }
         items(settingsGroups) { group ->
             ProfileSettingsSection(
                 group = group,
@@ -469,6 +477,115 @@ private fun SummaryInfo(label: String, value: String, modifier: Modifier = Modif
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Composable
+private fun LinkedPharmacyStatusCard(
+    uiState: ProfileUiState,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    val hasWarning = !uiState.pharmacyLinked || !uiState.pharmacyCoordinatesComplete
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceS),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+            ) {
+                Icon(
+                    imageVector = if (hasWarning) Icons.Outlined.Info else Icons.Outlined.Store,
+                    contentDescription = null,
+                    tint = if (hasWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(d.iconS),
+                )
+                Text(
+                    text = "حالة ربط الصيدلية",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Text(
+                text = "الحساب مربوط بصيدلية: ${if (uiState.pharmacyLinked) "نعم" else "لا"}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (uiState.pharmacyName.isNotBlank()) {
+                Text(
+                    text = "الصيدلية: ${uiState.pharmacyName}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (uiState.pharmacyAddress.isNotBlank()) {
+                Text(
+                    text = "الموقع: ${uiState.pharmacyAddress}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            PharmacyLinkDetails(uiState = uiState)
+            if (!uiState.pharmacyLinked) {
+                Text(
+                    text = "لا يمكن عرض طلبات العملاء أو الرادار أو طلبات المستودعات قبل ربط الحساب بصيدلية.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            } else if (!uiState.pharmacyCoordinatesComplete) {
+                Text(
+                    text = "إحداثيات الصيدلية غير مكتملة. قد لا يظهر الرادار الطلبات القريبة حتى يتم تحديث الموقع.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PharmacyLinkDetails(uiState: ProfileUiState) {
+    val d = MaterialTheme.dimens
+
+    if (uiState.warehouseLatitude != null && uiState.warehouseLongitude != null) {
+        Text(
+            text = "الإحداثيات: ${"%.5f".format(uiState.warehouseLatitude)}, ${"%.5f".format(uiState.warehouseLongitude)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+
+    if (!uiState.pharmacyLinked || !uiState.pharmacyCoordinatesComplete) {
+        Surface(
+            shape = RoundedCornerShape(d.radiusM),
+            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.18f),
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ) {
+            Text(
+                text = if (!uiState.pharmacyLinked) {
+                    "الحساب غير مرتبط بصيدلية بعد. لن تظهر طلبات العملاء أو الرادار أو طلبات المستودعات قبل إكمال الربط."
+                } else {
+                    "إحداثيات الصيدلية غير مكتملة. يحتاج الرادار إلى موقع محفوظ لعرض الطلبات القريبة."
+                },
+                modifier = Modifier.padding(d.spaceM),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
     }
 }
 

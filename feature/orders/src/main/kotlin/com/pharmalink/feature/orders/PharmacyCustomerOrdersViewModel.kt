@@ -83,11 +83,16 @@ class PharmacyCustomerOrdersViewModel @Inject constructor(
                     publishFilteredOrders(isRefreshing = false)
                 },
                 onFailure = { error ->
-                    _uiState.update {
-                        it.copy(
-                            screenState = ScreenState.Error(mapOrdersErrorToMessage(error)),
-                            isRefreshing = false,
-                        )
+                    if (error.isEmptyOrdersResult()) {
+                        allOrders = emptyList()
+                        publishFilteredOrders(isRefreshing = false)
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                screenState = ScreenState.Error(mapOrdersErrorToMessage(error)),
+                                isRefreshing = false,
+                            )
+                        }
                     }
                 },
             )
@@ -121,5 +126,13 @@ class PharmacyCustomerOrdersViewModel @Inject constructor(
                 "تعذر الاتصال بالخادم، يرجى المحاولة مجدداً"
             else -> "تعذر تحميل طلبات العملاء، يرجى المحاولة مجدداً"
         }
+    }
+
+    private fun Throwable.isEmptyOrdersResult(): Boolean {
+        val msg = message.orEmpty()
+        return msg.contains("PGRST116", ignoreCase = true) ||
+            msg.contains("no rows", ignoreCase = true) ||
+            msg.contains("0 rows", ignoreCase = true) ||
+            msg.contains("contains 0 rows", ignoreCase = true)
     }
 }

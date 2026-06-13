@@ -28,26 +28,13 @@ internal fun NavController.navigateToInnerTopLevel(appDestination: AppDestinatio
             return // Already on the target route, no need to navigate
         }
         
-        // Simplified approach: assume Home is available as start destination
-        // This is safe because Home is the startDestination of the inner NavHost
-        val homeInBackStack = true
-        
-        if (homeInBackStack) {
-            // Safe: Home is in back stack, use it as anchor
-            navigate(appDestination.route) {
-                popUpTo(AppDestination.Home.route) {
-                    saveState = true
-                    inclusive = false // Don't pop Home itself
-                }
-                launchSingleTop = true
-                restoreState = true
+        navigate(appDestination.route) {
+            popUpTo(graph.startDestinationId) {
+                saveState = true
+                inclusive = false
             }
-        } else {
-            // Fallback: Home not in back stack, navigate directly
-            navigate(appDestination.route) {
-                launchSingleTop = true
-                restoreState = true
-            }
+            launchSingleTop = true
+            restoreState = true
         }
     } catch (e: Exception) {
         // Ultimate fallback: try simple navigation

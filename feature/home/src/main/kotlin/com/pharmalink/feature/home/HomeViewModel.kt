@@ -47,6 +47,15 @@ class HomeViewModel @Inject constructor(
             _uiState.value = HomeUiState.Loading
 
             if (accountType == AccountType.PUBLIC_USER) {
+                // Load lightweight discovery data so the public home is not empty.
+                // Both calls are best-effort: a failure degrades to an empty section
+                // rather than blocking the whole screen.
+                val pharmaciesDeferred = async { pharmaRepository.getPublicPharmacies() }
+                val medicinesDeferred = async { pharmaRepository.fetchMedicines() }
+
+                val publicPharmacies = pharmaciesDeferred.await().getOrDefault(emptyList()).take(5)
+                val featuredMedicines = medicinesDeferred.await().getOrDefault(emptyList()).take(5)
+
                 _uiState.value = HomeUiState.Success(
                     userName = currentUserName,
                     stats = null,
@@ -54,6 +63,8 @@ class HomeViewModel @Inject constructor(
                     accountType = accountType,
                     canAddMedicine = false,
                     alertMessage = null,
+                    publicPharmacies = publicPharmacies,
+                    featuredMedicines = featuredMedicines,
                 )
                 return@launch
             }

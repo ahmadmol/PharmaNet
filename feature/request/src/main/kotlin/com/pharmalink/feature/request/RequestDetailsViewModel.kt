@@ -10,6 +10,7 @@ import com.pharmalink.core.repository.AuthRepository
 import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.mapper.toUserIdentity
 import com.pharmalink.domain.model.AccountType
+import com.pharmalink.domain.model.Order
 import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.RequestTransitions
@@ -27,6 +28,7 @@ import kotlinx.coroutines.launch
 data class RequestDetailsUiState(
     val screenState: ScreenState<Request> = ScreenState.Loading,
     val accountType: AccountType? = null,
+    val relatedOrder: Order? = null,
     val isActionInProgress: Boolean = false,
     val actionErrorMessage: String? = null,
 )
@@ -86,18 +88,20 @@ class RequestDetailsViewModel @Inject constructor(
                 pharmaRepository.getRequest(requestId).fold(
                     onSuccess = { request ->
                         _uiState.value = if (request != null) {
-                            _uiState.value.copy(screenState = ScreenState.Success(request))
+                            _uiState.value.copy(
+                                screenState = ScreenState.Success(request),
+                                relatedOrder = loadRelatedOrder(request),
+                            )
                         } else {
                             _uiState.value.copy(
                                 screenState = ScreenState.Error(context.getString(R.string.request_error_not_found)),
+                                relatedOrder = null,
                             )
                         }
                     },
                     onFailure = { e ->
                         _uiState.value = _uiState.value.copy(
-                            screenState = ScreenState.Error(
-                                e.message ?: context.getString(R.string.request_error_not_found),
-                            ),
+                            screenState = ScreenState.Error(mapErrorToUserMessage(e)),
                         )
                     },
                 )
@@ -118,7 +122,7 @@ class RequestDetailsViewModel @Inject constructor(
         if (_uiState.value.isActionInProgress) return
         val role = _uiState.value.accountType
         if (role != AccountType.WAREHOUSE ||
-            !RequestTransitions.canTransition(currentRequest.status, RequestStatus.ACCEPTED, role)
+            !RequestTransitions.canTransition(currentRequest.status, RequestStatus.QUOTE_PENDING, role)
         ) {
             _uiState.value = _uiState.value.copy(
                 actionErrorMessage = context.getString(R.string.error_permission),
@@ -137,8 +141,10 @@ class RequestDetailsViewModel @Inject constructor(
                 totalPriceCents = totalPriceCents,
             ).fold(
                 onSuccess = { updatedRequest ->
+                    val displayRequest = updatedRequest.withItemsFallback(currentRequest)
                     _uiState.value = _uiState.value.copy(
-                        screenState = ScreenState.Success(updatedRequest),
+                        screenState = ScreenState.Success(displayRequest),
+                        relatedOrder = loadRelatedOrder(displayRequest),
                         isActionInProgress = false,
                         actionErrorMessage = null,
                     )
@@ -177,6 +183,9 @@ class RequestDetailsViewModel @Inject constructor(
             )
 
             val result = when (targetStatus) {
+                RequestStatus.QUOTE_PENDING -> Result.failure(
+                    IllegalStateException("Quoting a B2B request requires a total price"),
+                )
                 RequestStatus.ACCEPTED -> Result.failure(
                     IllegalStateException("Accepting a B2B request requires a total price"),
                 )
@@ -190,8 +199,10 @@ class RequestDetailsViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { updatedRequest ->
+                    val displayRequest = updatedRequest.withItemsFallback(currentRequest)
                     _uiState.value = _uiState.value.copy(
-                        screenState = ScreenState.Success(updatedRequest),
+                        screenState = ScreenState.Success(displayRequest),
+                        relatedOrder = loadRelatedOrder(displayRequest),
                         isActionInProgress = false,
                         actionErrorMessage = null,
                     )
@@ -222,8 +233,10 @@ class RequestDetailsViewModel @Inject constructor(
                 accountType = currentAccountType,
             ).fold(
                 onSuccess = { updatedRequest ->
+                    val displayRequest = updatedRequest.withItemsFallback(currentRequest)
                     _uiState.value = _uiState.value.copy(
-                        screenState = ScreenState.Success(updatedRequest),
+                        screenState = ScreenState.Success(displayRequest),
+                        relatedOrder = loadRelatedOrder(displayRequest),
                         isActionInProgress = false,
                         actionErrorMessage = null,
                     )
@@ -256,6 +269,7 @@ class RequestDetailsViewModel @Inject constructor(
                 onSuccess = {
                     _uiState.value = _uiState.value.copy(
                         screenState = ScreenState.Error(context.getString(R.string.request_error_deleted)),
+                        relatedOrder = null,
                         isActionInProgress = false,
                         actionErrorMessage = null,
                     )
@@ -270,8 +284,66 @@ class RequestDetailsViewModel @Inject constructor(
         }
     }
 
+    fun acceptQuote() {
+        handlePharmacyQuoteDecision { request ->
+            pharmaRepository.pharmacyAcceptB2bQuote(request.id)
+        }
+    }
+
+    fun rejectQuote() {
+        handlePharmacyQuoteDecision { request ->
+            pharmaRepository.pharmacyRejectB2bQuote(request.id)
+        }
+    }
+
     fun clearActionError() {
         _uiState.value = _uiState.value.copy(actionErrorMessage = null)
+    }
+
+    private fun handlePharmacyQuoteDecision(
+        action: suspend (Request) -> Result<Request>,
+    ) {
+        val currentRequest = (_uiState.value.screenState as? ScreenState.Success)?.data ?: return
+        if (_uiState.value.isActionInProgress) return
+        val role = _uiState.value.accountType
+        if (role != AccountType.PHARMACY ||
+            !RequestTransitions.canTransition(currentRequest.status, RequestStatus.ACCEPTED, role)
+        ) {
+            _uiState.value = _uiState.value.copy(
+                actionErrorMessage = context.getString(R.string.error_permission),
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isActionInProgress = true,
+                actionErrorMessage = null,
+            )
+
+            action(currentRequest).fold(
+                onSuccess = { updatedRequest ->
+                    val displayRequest = updatedRequest.withItemsFallback(currentRequest)
+                    _uiState.value = _uiState.value.copy(
+                        screenState = ScreenState.Success(displayRequest),
+                        relatedOrder = loadRelatedOrder(displayRequest),
+                        isActionInProgress = false,
+                        actionErrorMessage = null,
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isActionInProgress = false,
+                        actionErrorMessage = mapErrorToUserMessage(error),
+                    )
+                },
+            )
+        }
+    }
+
+    private suspend fun loadRelatedOrder(request: Request): Order? {
+        val orderId = request.relatedOrderId ?: return null
+        return pharmaRepository.getOrder(orderId).getOrNull()
     }
     
     private fun mapErrorToUserMessage(error: Throwable): String {
@@ -287,7 +359,20 @@ class RequestDetailsViewModel @Inject constructor(
                 context.getString(R.string.error_permission)
             error.message?.contains("deleted", ignoreCase = true) == true ->
                 context.getString(R.string.request_error_deleted)
-            else -> error.message ?: context.getString(R.string.request_error_loading_failed)
+            else -> context.getString(R.string.request_error_action_failed)
         }
+    }
+
+    private fun Request.withItemsFallback(previous: Request): Request {
+        if (items.isNotEmpty() || previous.items.isEmpty() || id != previous.id) return this
+        val firstItem = previous.items.first()
+        return copy(
+            medicineId = firstItem.medicineId,
+            medicineName = firstItem.medicineName,
+            medicineSubtitle = firstItem.medicineSubtitle,
+            quantity = firstItem.quantity,
+            unit = firstItem.unit,
+            items = previous.items,
+        )
     }
 }

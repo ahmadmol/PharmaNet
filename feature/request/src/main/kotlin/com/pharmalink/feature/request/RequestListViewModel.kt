@@ -112,7 +112,7 @@ class RequestListViewModel @Inject constructor(
             error.message?.contains("permission", ignoreCase = true) == true ||
             error.message?.contains("unauthorized", ignoreCase = true) == true ->
                 context.getString(R.string.error_permission)
-            else -> error.message ?: context.getString(R.string.request_error_loading_failed)
+            else -> context.getString(R.string.request_error_loading_failed)
         }
     }
 

@@ -6,6 +6,15 @@
     <string name="pharmacy_dashboard_error_server">تعذر الاتصال بالخادم</string>
 
     <string name="pharmacy_dashboard_title">الرادار</string>
+    <string name="pharmacy_dashboard_home_title">الرئيسية</string>
+    <string name="pharmacy_dashboard_workflows_title">اختر نوع الطلب</string>
+    <string name="pharmacy_dashboard_customer_orders_title">طلبات العملاء</string>
+    <string name="pharmacy_dashboard_customer_orders_body">طلبات العملاء المرسلة مباشرة لصيدليتك أو التي تم قبولها من الرادار.</string>
+    <string name="pharmacy_dashboard_radar_title">الرادار</string>
+    <string name="pharmacy_dashboard_radar_body">طلبات العملاء القريبة المرسلة إلى جميع الصيدليات.</string>
+    <string name="pharmacy_dashboard_warehouse_requests_title">طلبات المستودعات</string>
+    <string name="pharmacy_dashboard_warehouse_requests_body">طلبات الأدوية التي ترسلها صيدليتك إلى المستودعات.</string>
+    <string name="pharmacy_dashboard_profile">الملف الشخصي</string>
     <string name="pharmacy_dashboard_greeting">مرحباً د. أحمد محمد</string>
     <string name="pharmacy_dashboard_location_prefix">موقعك الحالي:</string>
     <string name="pharmacy_dashboard_bottom_orders">الطلبات</string>
@@ -29,7 +38,10 @@
     <string name="pharmacy_welcome_value_loading">تحميل</string>
     <string name="pharmacy_dashboard_customer_orders_button_count">طلبات العملاء (%1$d)</string>
     <string name="pharmacy_dashboard_no_nearby_orders">لا توجد طلبات قريبة حالياً</string>
+    <string name="pharmacy_dashboard_no_nearby_orders_explained">يظهر هنا فقط طلبات العملاء القريبة المرسلة إلى جميع الصيدليات. الطلبات المرسلة لصيدليتك تظهر في طلبات العملاء.</string>
     <string name="pharmacy_dashboard_error_permission_denied">يجب السماح بالموقع لعرض الطلبات القريبة</string>
+    <string name="pharmacy_dashboard_error_missing_pharmacy_link">هذا الحساب غير مربوط بصيدلية حالياً. راجع الملف الشخصي أو تواصل مع الإدارة.</string>
+    <string name="pharmacy_dashboard_error_missing_pharmacy_coordinates">موقع الصيدلية غير مكتمل. أضف إحداثيات الصيدلية ليعمل الرادار.</string>
     <string name="pharmacy_dashboard_error_permission_permanently_denied">تم رفض إذن الموقع بشكل نهائي. يرجى تفعيله من إعدادات التطبيق</string>
     <string name="pharmacy_dashboard_error_location_disabled">خدمات الموقع معطلة. يرجى تفعيل GPS من إعدادات الجهاز</string>
     <string name="pharmacy_dashboard_retry_location">إعادة المحاولة</string>

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="create_request_screen_title">إنشاء طلب جديد</string>
+    <string name="create_request_screen_title">طلب من مستودع</string>
     <string name="select_medicine_placeholder">اختر الدواء</string>
     <string name="notes_label">ملاحظات إضافية</string>
     <string name="notes_placeholder">أضف أي ملاحظات هنا...</string>
-    <string name="send_request_button">إرسال الطلب</string>
+    <string name="send_request_button">إرسال طلب المستودع</string>
     <string name="sending_request_message">جاري إرسال الطلب...</string>
     <string name="request_sent_success_message">تم إرسال الطلب بنجاح!</string>
     <string name="request_sent_title">تم الإرسال</string>
     <string name="request_sent_message">تم إرسال الطلب بنجاح</string>
-    <string name="request_view_my_requests">عرض طلباتي</string>
+    <string name="request_view_my_requests">عرض طلبات المستودعات</string>
     
     <!-- Request Details Screen -->
     <string name="request_details_contact_warehouse">تواصل مع المستودع</string>
@@ -71,12 +71,13 @@
     <string name="request_error_creation_failed">فشل إنشاء الطلب. حاول مرة أخرى.</string>
     <string name="request_error_loading_failed">فشل تحميل الطلبات. حاول مرة أخرى.</string>
     <string name="request_error_filter_failed">فشل تصفية الطلبات. حاول مرة أخرى.</string>
+    <string name="request_error_action_failed">&#x062A;&#x0639;&#x0630;&#x0631; &#x062A;&#x0646;&#x0641;&#x064A;&#x0630; &#x0627;&#x0644;&#x0625;&#x062C;&#x0631;&#x0627;&#x0621;. &#x062D;&#x0627;&#x0648;&#x0644; &#x0645;&#x0631;&#x0629; &#x0623;&#x062E;&#x0631;&#x0649;.</string>
     <string name="error_network">خطأ في الاتصال. يرجى التحقق من الشبكة.</string>
     <string name="error_permission">ليس لديك صلاحية للقيام بهذا الإجراء.</string>
-    <string name="request_list_title">الطلبات</string>
-    <string name="request_create_new">طلب جديد</string>
+    <string name="request_list_title">طلبات المستودعات</string>
+    <string name="request_create_new">طلب من مستودع</string>
     <string name="request_list_empty">لا توجد طلبات لعرضها</string>
-    <string name="request_empty_subtitle">قائمة الطلبات فارغة</string>
+    <string name="request_empty_subtitle">لا توجد طلبات مستودعات بعد. أرسل طلباً إلى مستودع لعرضه هنا.</string>
     <string name="request_filter_all">الكل</string>
     <string name="request_status_submitted">تم الإرسال</string>
     <string name="request_status_under_review">قيد المراجعة</string>
@@ -90,24 +91,26 @@
     <string name="request_dismiss_error">تجاهل الخطأ</string>
     <string name="request_retry_loading">إعادة المحاولة</string>
     <string name="request_loading_message">جاري تحميل الطلبات...</string>
-    <string name="request_create_first">إنشاء طلب جديد</string>
-    <string name="request_list_incoming_title">Incoming Requests</string>
-    <string name="request_empty_incoming_subtitle">No incoming requests assigned to your warehouse.</string>
-    <string name="request_details_warehouse_actions_title">Warehouse Actions</string>
+    <string name="request_create_first">طلب من مستودع</string>
+    <string name="request_status_quote_pending">&#x0628;&#x0627;&#x0646;&#x062A;&#x0638;&#x0627;&#x0631; &#x0645;&#x0648;&#x0627;&#x0641;&#x0642;&#x0629; &#x0627;&#x0644;&#x0635;&#x064A;&#x062F;&#x0644;&#x064A;&#x0629;</string>
+    <string name="request_status_in_progress">&#x0642;&#x064A;&#x062F; &#x0627;&#x0644;&#x062A;&#x062C;&#x0647;&#x064A;&#x0632;</string>
+    <string name="request_list_incoming_title">&#x0627;&#x0644;&#x0637;&#x0644;&#x0628;&#x0627;&#x062A; &#x0627;&#x0644;&#x0648;&#x0627;&#x0631;&#x062F;&#x0629;</string>
+    <string name="request_empty_incoming_subtitle">&#x0644;&#x0627; &#x062A;&#x0648;&#x062C;&#x062F; &#x0637;&#x0644;&#x0628;&#x0627;&#x062A; &#x0648;&#x0627;&#x0631;&#x062F;&#x0629; &#x0644;&#x0647;&#x0630;&#x0627; &#x0627;&#x0644;&#x0645;&#x0633;&#x062A;&#x0648;&#x062F;&#x0639;.</string>
+    <string name="request_details_warehouse_actions_title">&#x0625;&#x062C;&#x0631;&#x0627;&#x0621;&#x0627;&#x062A; &#x0627;&#x0644;&#x0645;&#x0633;&#x062A;&#x0648;&#x062F;&#x0639;</string>
     <string name="request_details_pharmacy_actions_title">إجراءات الصيدلية</string>
-    <string name="request_action_accept">Accept</string>
-    <string name="request_action_reject">Reject</string>
-    <string name="request_action_start_processing">Start Processing</string>
-    <string name="request_action_mark_fulfilled">Mark Fulfilled</string>
+    <string name="request_action_accept">&#x0625;&#x0631;&#x0633;&#x0627;&#x0644; &#x0639;&#x0631;&#x0636; &#x0627;&#x0644;&#x0633;&#x0639;&#x0631;</string>
+    <string name="request_action_reject">&#x0631;&#x0641;&#x0636; &#x0627;&#x0644;&#x0637;&#x0644;&#x0628;</string>
+    <string name="request_action_start_processing">&#x0628;&#x062F;&#x0621; &#x0627;&#x0644;&#x062A;&#x062C;&#x0647;&#x064A;&#x0632;</string>
+    <string name="request_action_mark_fulfilled">&#x062A;&#x0645; &#x0627;&#x0644;&#x062A;&#x0633;&#x0644;&#x064A;&#x0645;</string>
     <string name="request_action_submit">إرسال الطلب</string>
     <string name="request_action_delete_draft">حذف المسودة</string>
-    <string name="request_action_updating">Updating request...</string>
-    <string name="request_accept_price_dialog_title">Set request price</string>
-    <string name="request_accept_price_label">Total price</string>
-    <string name="request_accept_price_supporting">Enter a non-negative amount with up to 2 decimals.</string>
-    <string name="request_accept_price_error">Enter a valid non-negative amount with up to 2 decimals.</string>
-    <string name="request_accept_price_confirm">Accept</string>
-    <string name="request_accept_price_cancel">Cancel</string>
+    <string name="request_action_updating">&#x062C;&#x0627;&#x0631;&#x064A; &#x062A;&#x062D;&#x062F;&#x064A;&#x062B; &#x0627;&#x0644;&#x0637;&#x0644;&#x0628;...</string>
+    <string name="request_accept_price_dialog_title">&#x062A;&#x062D;&#x062F;&#x064A;&#x062F; &#x0633;&#x0639;&#x0631; &#x0627;&#x0644;&#x0637;&#x0644;&#x0628;</string>
+    <string name="request_accept_price_label">&#x0627;&#x0644;&#x0633;&#x0639;&#x0631; &#x0627;&#x0644;&#x0625;&#x062C;&#x0645;&#x0627;&#x0644;&#x064A;</string>
+    <string name="request_accept_price_supporting">&#x0623;&#x062F;&#x062E;&#x0644; &#x0645;&#x0628;&#x0644;&#x063A;&#x0627;&#x064B; &#x0635;&#x062D;&#x064A;&#x062D;&#x0627;&#x064B; &#x0628;&#x062D;&#x062F; &#x0623;&#x0642;&#x0635;&#x0649; &#x0631;&#x0642;&#x0645;&#x064A;&#x0646; &#x0639;&#x0634;&#x0631;&#x064A;&#x064A;&#x0646;.</string>
+    <string name="request_accept_price_error">&#x0623;&#x062F;&#x062E;&#x0644; &#x0633;&#x0639;&#x0631;&#x0627;&#x064B; &#x0635;&#x062D;&#x064A;&#x062D;&#x0627;&#x064B; &#x0648;&#x063A;&#x064A;&#x0631; &#x0633;&#x0627;&#x0644;&#x0628;.</string>
+    <string name="request_accept_price_confirm">&#x0625;&#x0631;&#x0633;&#x0627;&#x0644; &#x0627;&#x0644;&#x0639;&#x0631;&#x0636;</string>
+    <string name="request_accept_price_cancel">&#x0625;&#x0644;&#x063A;&#x0627;&#x0621;</string>
     <string name="request_priority_urgent">مستعجل</string>
     <string name="request_details_invoice_summary">تفاصيل الفاتورة</string>
     <string name="request_details_items_total">إجمالي العناصر</string>

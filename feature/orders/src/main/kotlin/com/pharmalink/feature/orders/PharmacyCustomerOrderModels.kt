@@ -80,6 +80,7 @@ internal fun PharmacyCustomerOrderFilter.label(): String = when (this) {
 
 internal fun OrderStatus.toPharmacyCustomerOrderStatusLabel(): String = when (this) {
     OrderStatus.PENDING -> "جديد"
+    OrderStatus.QUOTE_PENDING -> "بانتظار الموافقة"
     OrderStatus.CONFIRMED -> "مؤكد"
     OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"
     OrderStatus.OUT_FOR_DELIVERY -> "خرج للتوصيل"

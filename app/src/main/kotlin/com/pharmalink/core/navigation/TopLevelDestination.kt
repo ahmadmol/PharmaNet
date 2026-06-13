@@ -28,8 +28,8 @@ val topLevelDestinations = listOf(
     TopLevelDestination(AppDestination.PharmacyRadar.route, AppDestination.PharmacyRadar.route, Icons.Outlined.LocationOn, R.string.pharmacy_radar_tab),
     TopLevelDestination(AppDestination.WarehouseDashboard.route, AppDestination.WarehouseDashboard.route, Icons.Outlined.Inventory2, R.string.warehouse_dashboard_tab),
     TopLevelDestination(AppDestination.Resources.route, AppDestination.Resources.route, Icons.Outlined.GridView, R.string.resources),
-    TopLevelDestination(AppDestination.PharmacyCustomerOrders.route, AppDestination.PharmacyCustomerOrders.route, Icons.AutoMirrored.Outlined.ReceiptLong, R.string.orders_screen_title),
-    TopLevelDestination(AppDestination.RequestList.route, AppDestination.RequestList.route, Icons.Outlined.ShoppingCart, R.string.my_orders),
+    TopLevelDestination(AppDestination.PharmacyCustomerOrders.route, AppDestination.PharmacyCustomerOrders.route, Icons.AutoMirrored.Outlined.ReceiptLong, R.string.pharmacy_customer_orders_tab),
+    TopLevelDestination(AppDestination.RequestList.route, AppDestination.RequestList.route, Icons.Outlined.ShoppingCart, R.string.pharmacy_warehouse_requests_tab),
     TopLevelDestination(AppDestination.Profile.route, AppDestination.Profile.route, Icons.Outlined.Person, R.string.account),
     TopLevelDestination(AppDestination.Orders.route, AppDestination.Orders.route, Icons.Outlined.ShoppingCart, R.string.orders_screen_title),
     TopLevelDestination(

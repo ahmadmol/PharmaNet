@@ -247,7 +247,23 @@ class SupabasePharmaRepository @Inject constructor(
         }
     }
 
-
+    override fun observeNearbyOrdersRealtime(
+        lat: Double,
+        lng: Double,
+        radius: Double,
+    ): Flow<List<NearbyOrderDto>> = flow {
+        // Initial load so the UI never shows "failed" due to a missing manual refresh.
+        emit(getNearbyOrders(lat = lat, lng = lng, radius = radius).getOrDefault(emptyList()))
+        // Re-query the RPC whenever any B2C order row changes; RLS/RPC filtering scopes results.
+        try {
+            realtime.tableChanges("orders").collect {
+                emit(getNearbyOrders(lat = lat, lng = lng, radius = radius).getOrDefault(emptyList()))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "observeNearbyOrdersRealtime failed", e)
+            emit(emptyList())
+        }
+    }
 
     override fun observeOrders(): Flow<List<DomainOrder>> = flow {
         Log.d(TAG, "=== OBSERVE ORDERS INITIALIZED ===")
@@ -1256,16 +1272,20 @@ class SupabasePharmaRepository @Inject constructor(
     override suspend fun warehouseAcceptB2bRequest(
         requestId: String,
         totalPriceCents: Long,
-        note: String?,
     ): Result<Request> =
         callB2bRequestRpc(
             functionName = "warehouse_accept_b2b_request",
             params = WarehouseAcceptB2bRpcParams(
                 requestId = requestId,
                 totalPriceCents = totalPriceCents,
-                note = note,
             ),
-        )
+        ).onSuccess { quotedRequest ->
+            sendPharmacyNotificationForB2bRequest(
+                request = quotedRequest,
+                title = "عرض سعر جديد",
+                body = "تم إرسال عرض سعر جديد لطلب المستودع. يرجى مراجعة السعر قبل المتابعة.",
+            )
+        }
 
     override suspend fun warehouseRejectB2bRequest(
         requestId: String,
@@ -1304,6 +1324,36 @@ class SupabasePharmaRepository @Inject constructor(
                 type = NotificationType.ORDER_UPDATE,
                 destination = NotificationDestination.REQUEST,
                 destinationArgs = mapOf("requestId" to deliveredRequest.id)
+            )
+        }
+
+    override suspend fun pharmacyAcceptB2bQuote(requestId: String): Result<Request> =
+        callB2bRequestRpc(
+            functionName = "pharmacy_accept_b2b_quote",
+            params = B2bRequestIdRpcParams(requestId = requestId),
+        ).onSuccess { acceptedRequest ->
+            sendWarehouseNotificationForB2bQuoteDecision(
+                request = acceptedRequest,
+                title = "تمت الموافقة على عرض السعر",
+                body = "وافقت الصيدلية على عرض السعر. يمكن بدء تجهيز الطلب.",
+            )
+        }
+
+    override suspend fun pharmacyRejectB2bQuote(
+        requestId: String,
+        reason: String?,
+    ): Result<Request> =
+        callB2bRequestRpc(
+            functionName = "pharmacy_reject_b2b_quote",
+            params = WarehouseRejectB2bRpcParams(
+                requestId = requestId,
+                rejectionReason = reason,
+            ),
+        ).onSuccess { rejectedRequest ->
+            sendWarehouseNotificationForB2bQuoteDecision(
+                request = rejectedRequest,
+                title = "تم رفض عرض السعر",
+                body = "رفضت الصيدلية عرض السعر. تم إغلاق الطلب.",
             )
         }
 
@@ -1383,6 +1433,94 @@ class SupabasePharmaRepository @Inject constructor(
                 "Failed to create warehouse notification for request ${submittedRequest.id} (warehouseId=$warehouseId): ${error.message}",
                 error,
             )
+        }
+    }
+
+    private suspend fun sendPharmacyNotificationForB2bRequest(
+        request: Request,
+        title: String,
+        body: String,
+    ) {
+        val pharmacyId = request.pharmacyId.takeIf { it.isNotBlank() } ?: run {
+            Log.w(TAG, "Skipping B2B pharmacy notification: target pharmacy is missing.")
+            return
+        }
+
+        runCatching {
+            val pharmacyUserRows = supabase.postgrest.from("profiles").select(columns = Columns.raw("id")) {
+                filter {
+                    eq("pharmacy_id", pharmacyId)
+                    eq("account_type", AccountType.PHARMACY.name)
+                    eq("is_active", true)
+                }
+            }.decodeList<UserIdDto>()
+
+            val pharmacyUserId = requireSingleProfileRow(
+                rows = pharmacyUserRows,
+                userId = pharmacyId,
+                rowLabel = "Active pharmacy profile",
+            ).id
+
+            supabase.postgrest.from("app_notifications").insert(
+                AppNotificationInsertDto(
+                    userId = pharmacyUserId,
+                    pharmacyId = pharmacyId,
+                    title = title,
+                    body = body,
+                    type = NotificationType.ORDER_UPDATE.name,
+                    category = NotificationCategory.REQUESTS.name,
+                    read = false,
+                    destination = NotificationDestination.REQUEST.name,
+                    destinationId = request.id,
+                ),
+            )
+
+            Log.d(TAG, "B2B pharmacy notification created.")
+        }.onFailure {
+            Log.w(TAG, "B2B pharmacy notification delivery failed.")
+        }
+    }
+
+    private suspend fun sendWarehouseNotificationForB2bQuoteDecision(
+        request: Request,
+        title: String,
+        body: String,
+    ) {
+        val warehouseId = request.warehouseId?.takeIf { it.isNotBlank() } ?: run {
+            Log.w(TAG, "Skipping B2B warehouse notification: target warehouse is missing.")
+            return
+        }
+
+        runCatching {
+            val warehouseUserRows = supabase.postgrest.from("profiles").select(columns = Columns.raw("id")) {
+                filter {
+                    eq("warehouse_id", warehouseId)
+                    eq("account_type", AccountType.WAREHOUSE.name)
+                    eq("is_active", true)
+                }
+            }.decodeList<UserIdDto>()
+
+            val warehouseUserId = requireSingleProfileRow(
+                rows = warehouseUserRows,
+                userId = warehouseId,
+                rowLabel = "Active warehouse profile",
+            ).id
+
+            supabase.postgrest.from("app_notifications").insert(
+                AppNotificationInsertDto(
+                    userId = warehouseUserId,
+                    pharmacyId = request.pharmacyId,
+                    title = title,
+                    body = body,
+                    type = NotificationType.ORDER_UPDATE.name,
+                    category = NotificationCategory.REQUESTS.name,
+                    read = false,
+                    destination = NotificationDestination.REQUEST.name,
+                    destinationId = request.id,
+                ),
+            )
+        }.onFailure {
+            Log.w(TAG, "B2B warehouse notification delivery failed.")
         }
     }
 
@@ -1748,18 +1886,8 @@ class SupabasePharmaRepository @Inject constructor(
 
         val order = result.toOrderDomain().getOrThrow()
 
-        // 6. Notify pharmacy of new customer order (best-effort, non-blocking)
-        val targetPharmacyId = order.pharmacyId?.takeIf { it.isNotBlank() }
-        if (targetPharmacyId != null) {
-            sendAppNotification(
-                recipientPharmacyId = targetPharmacyId,
-                title = "طلب عميل جديد",
-                content = "وصل طلب جديد من عميل بانتظار مراجعتك.",
-                type = NotificationType.ORDER_UPDATE,
-                destination = NotificationDestination.PHARMACY_CUSTOMER_ORDER,
-                destinationArgs = mapOf("orderId" to order.id),
-            )
-        }
+        // 6. Pharmacy notification is handled by the DB trigger notify_pharmacy_on_new_order.
+        //    No Kotlin-side insert to avoid duplicate notifications.
 
         order
     }
@@ -1952,18 +2080,6 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "customer_accept_order_price",
             params = OrderIdRpcParams(orderId),
         )
-    }.onSuccess { order ->
-        val pharmacyId = order.pharmacyId?.takeIf { it.isNotBlank() }
-        if (pharmacyId != null) {
-            sendAppNotification(
-                recipientPharmacyId = pharmacyId,
-                title = "قبل العميل السعر",
-                content = "وافق العميل على السعر المؤكد. يمكنك الآن متابعة تنفيذ الطلب.",
-                type = NotificationType.ORDER_UPDATE,
-                destination = NotificationDestination.PHARMACY_CUSTOMER_ORDER,
-                destinationArgs = mapOf("orderId" to order.id),
-            )
-        }
     }.map { }
 
     override suspend fun rejectCustomerOrderPrice(orderId: String): Result<Unit> = runCatching {
@@ -1975,18 +2091,6 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "customer_reject_order_price",
             params = OrderIdRpcParams(orderId),
         )
-    }.onSuccess { order ->
-        val pharmacyId = order.pharmacyId?.takeIf { it.isNotBlank() }
-        if (pharmacyId != null) {
-            sendAppNotification(
-                recipientPharmacyId = pharmacyId,
-                title = "رفض العميل السعر",
-                content = "رفض العميل السعر المؤكد. تم إلغاء الطلب.",
-                type = NotificationType.ORDER_UPDATE,
-                destination = NotificationDestination.PHARMACY_CUSTOMER_ORDER,
-                destinationArgs = mapOf("orderId" to order.id),
-            )
-        }
     }.map { }
 
     override suspend fun confirmOrder(orderId: String, totalPriceCents: Long): Result<DomainOrder> = runCatching {
@@ -2028,12 +2132,6 @@ class SupabasePharmaRepository @Inject constructor(
                 totalPriceCents = totalPriceCents,
             ),
         )
-    }.onSuccess { order ->
-        sendCustomerOrderNotification(
-            order = order,
-            title = "طھظ… طھط£ظƒظٹط¯ ط·ظ„ط¨ظƒ",
-            content = "ظ‚ط§ظ…طھ ط§ظ„طµظٹط¯ظ„ظٹط© ط¨طھط£ظƒظٹط¯ ط·ظ„ط¨ظƒ ظ…ط¹ طھط³ط¹ظٹط±طھظ‡.",
-        )
     }
 
     override suspend fun rejectOrder(orderId: String): Result<DomainOrder> = runCatching {
@@ -2066,12 +2164,6 @@ class SupabasePharmaRepository @Inject constructor(
         callOrderRpc(
             functionName = "reject_customer_order",
             params = OrderIdRpcParams(orderId),
-        )
-    }.onSuccess { order ->
-        sendCustomerOrderNotification(
-            order = order,
-            title = "طھظ… ط±ظپط¶ ط§ظ„ط·ظ„ط¨",
-            content = "ظ‚ط§ظ…طھ ط§ظ„طµظٹط¯ظ„ظٹط© ط¨ط±ظپط¶ ط·ظ„ط¨ظƒ.",
         )
     }
 
@@ -2111,12 +2203,6 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "mark_customer_order_ready_for_pickup",
             params = OrderIdRpcParams(orderId),
         )
-    }.onSuccess { order ->
-        sendCustomerOrderNotification(
-            order = order,
-            title = "ط·ظ„ط¨ظƒ ط¬ط§ظ‡ط² ظ„ظ„ط§ط³طھظ„ط§ظ…",
-            content = "ط£طµط¨ط­ ط·ظ„ط¨ظƒ ط¬ط§ظ‡ط²ظ‹ط§ ظ„ظ„ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„طµظٹط¯ظ„ظٹط©.",
-        )
     }
 
     override suspend fun markOrderOutForDelivery(orderId: String): Result<DomainOrder> = runCatching {
@@ -2155,12 +2241,6 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "mark_customer_order_out_for_delivery",
             params = OrderIdRpcParams(orderId),
         )
-    }.onSuccess { order ->
-        sendCustomerOrderNotification(
-            order = order,
-            title = "ط·ظ„ط¨ظƒ ط®ط±ط¬ ظ„ظ„طھظˆطµظٹظ„",
-            content = "ط·ظ„ط¨ظƒ ط§ظ„ط¢ظ† ظپظٹ ط§ظ„ط·ط±ظٹظ‚ ط¥ظ„ظٹظƒ.",
-        )
     }
 
     override suspend fun markOrderDelivered(orderId: String): Result<DomainOrder> = runCatching {
@@ -2194,42 +2274,6 @@ class SupabasePharmaRepository @Inject constructor(
             functionName = "mark_customer_order_delivered",
             params = OrderIdRpcParams(orderId),
         )
-    }.onSuccess { order ->
-        sendCustomerOrderNotification(
-            order = order,
-            title = "طھظ… طھط³ظ„ظٹظ… ط§ظ„ط·ظ„ط¨",
-            content = "طھظ… طھط³ظ„ظٹظ… ط·ظ„ط¨ظƒ ط¨ظ†ط¬ط§ط­.",
-        )
-    }
-
-    private suspend fun sendCustomerOrderNotification(
-        order: DomainOrder,
-        title: String,
-        content: String,
-    ) {
-        val customerId = order.customerId?.takeIf { it.isNotBlank() } ?: run {
-            Log.w(TAG, "Skipping customer notification for order ${order.id}: customerId is missing.")
-            return
-        }
-
-        runCatching {
-            supabase.postgrest.from("app_notifications").insert(
-                AppNotificationInsertDto(
-                    userId = customerId,
-                    pharmacyId = order.pharmacyId,
-                    title = title,
-                    body = content,
-                    type = NotificationType.ORDER_UPDATE.name,
-                    category = NotificationCategory.ORDERS.name,
-                    read = false,
-                    destination = NotificationDestination.ORDER.name,
-                    destinationId = order.id,
-                ),
-            )
-            Log.d(TAG, "Customer notification created for order ${order.id} -> user $customerId")
-        }.onFailure { error ->
-            Log.e(TAG, "Failed to create customer notification for order ${order.id}: ${error.message}", error)
-        }
     }
 
     private suspend inline fun <reified T : Any> callOrderRpc(
@@ -2327,12 +2371,6 @@ class SupabasePharmaRepository @Inject constructor(
                 orderId = orderId,
                 totalPriceCents = totalPriceCents,
             ),
-        )
-    }.onSuccess { order ->
-        sendCustomerOrderNotification(
-            order = order,
-            title = "تم تأكيد سعر طلبك",
-            content = "قامت الصيدلية بتأكيد سعر طلبك. يرجى مراجعة التفاصيل والموافقة أو الرفض.",
         )
     }.map { Unit }
 
@@ -3445,7 +3483,6 @@ private data class B2bRequestIdRpcParams(
 private data class WarehouseAcceptB2bRpcParams(
     @SerialName("p_request_id") val requestId: String,
     @SerialName("p_total_price_cents") val totalPriceCents: Long,
-    @SerialName("p_note") val note: String? = null,
 )
 
 @Serializable

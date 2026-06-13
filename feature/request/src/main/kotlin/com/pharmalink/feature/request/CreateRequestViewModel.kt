@@ -30,8 +30,10 @@ private const val INVALID_BASKET_ERROR = "\u062a\u062d\u0642\u0642 \u0645\u0646 
 private const val PHARMACY_ONLY_ERROR = "\u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0637\u0644\u0628\u0627\u062a \u0645\u062a\u0627\u062d \u0641\u0642\u0637 \u0644\u062d\u0633\u0627\u0628\u0627\u062a \u0627\u0644\u0635\u064a\u062f\u0644\u064a\u0627\u062a"
 private const val MISSING_PHARMACY_PROFILE_ERROR = "\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a \u063a\u064a\u0631 \u0645\u0643\u062a\u0645\u0644. \u064a\u0631\u062c\u0649 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0645\u0646 \u062c\u062f\u064a\u062f \u0644\u0625\u0639\u0627\u062f\u0629 \u0645\u0632\u0627\u0645\u0646\u0629 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0635\u064a\u062f\u0644\u064a\u0629."
 private const val MEDICINE_ID_MISSING_ERROR = "\u0645\u0639\u0631\u0641 \u0627\u0644\u062f\u0648\u0627\u0621 \u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631. \u064a\u0631\u062c\u0649 \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u062f\u0648\u0627\u0621 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649."
+private const val WAREHOUSE_UNCLEAR_ERROR =
+    "\u0627\u0644\u0645\u0633\u062A\u0648\u062F\u0639 \u063A\u064A\u0631 \u0645\u062D\u062F\u062F \u0628\u0648\u0636\u0648\u062D. \u064A\u0631\u062C\u0649 \u0627\u062E\u062A\u064A\u0627\u0631 \u0627\u0644\u0645\u0633\u062A\u0648\u062F\u0639 \u0645\u0631\u0629 \u0623\u062E\u0631\u0649."
 private const val BASKET_WAREHOUSE_MISMATCH_ERROR =
-    "\u0627\u0644\u0633\u0644\u0629 \u062a\u062d\u062a\u0648\u064a \u0645\u0646\u062a\u062c\u0627\u062a \u0645\u0646 \u0645\u0633\u062a\u0648\u062f\u0639 \u0622\u062e\u0631. \u0627\u0645\u0633\u062d \u0627\u0644\u0633\u0644\u0629 \u0623\u0648\u0644\u0627\u064b \u0644\u0625\u0636\u0627\u0641\u0629 \u0645\u0646\u062a\u062c\u0627\u062a \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639."
+    "\u0627\u0644\u0633\u0644\u0629 \u062A\u062D\u062A\u0648\u064A \u0645\u0646\u062A\u062C\u0627\u062A \u0645\u0646 \u0645\u0633\u062A\u0648\u062F\u0639 \u0645\u062E\u062A\u0644\u0641. \u064A\u0631\u062C\u0649 \u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0645\u0633\u062A\u0648\u062F\u0639 \u0648\u0627\u062D\u062F \u0644\u0643\u0644 \u0637\u0644\u0628."
 
 @HiltViewModel
 class CreateRequestViewModel @Inject constructor(
@@ -59,7 +61,8 @@ class CreateRequestViewModel @Inject constructor(
     }
 
     private fun applyCatalogPreselectIfPresent() {
-        if (preselectedWarehouseId.isBlank() || preselectedMedicineId.isBlank() || preselectedMedicineName.isBlank()) {
+        val warehouseId = preselectedWarehouseId.normalizedId()
+        if (warehouseId.isBlank() || preselectedMedicineId.isBlank() || preselectedMedicineName.isBlank()) {
             return
         }
 
@@ -72,10 +75,11 @@ class CreateRequestViewModel @Inject constructor(
             medicineSubtitle = preselectedMedicineSubtitle.trim(),
             quantity = 1,
             unit = unit,
+            warehouseId = warehouseId,
         )
 
         _uiState.value = _uiState.value.copy(
-            selectedWarehouseId = preselectedWarehouseId,
+            selectedWarehouseId = warehouseId,
             items = listOf(item),
             selectedMedicine = null,
             quantity = "1",
@@ -97,14 +101,22 @@ class CreateRequestViewModel @Inject constructor(
             try {
                 pharmaRepository.observeWarehouses().collect { warehouses ->
                     val warehouseOptions = warehouses.map { it.toWarehouseOption() }
-                    val currentSelection = warehouseOptions.firstOrNull { it.id == _uiState.value.selectedWarehouseId }
+                    val state = _uiState.value
+                    val currentWarehouseId = state.selectedWarehouseId.normalizedId()
+                    val currentSelection = warehouseOptions.firstOrNull { it.id == currentWarehouseId }
                     val defaultWarehouse = warehouseOptions.singleOrNull()
-                    _uiState.value = _uiState.value.copy(
+                    val resolvedWarehouseId = currentSelection?.id
+                        ?: currentWarehouseId.ifBlank { defaultWarehouse?.id.orEmpty() }
+                    val resolvedWarehouseName = currentSelection?.name
+                        ?: state.selectedWarehouseName.ifBlank { defaultWarehouse?.name.orEmpty() }
+                    _uiState.value = state.copy(
                         warehouses = warehouseOptions,
-                        selectedWarehouseId = currentSelection?.id
-                            ?: _uiState.value.selectedWarehouseId.ifBlank { defaultWarehouse?.id.orEmpty() },
-                        selectedWarehouseName = currentSelection?.name
-                            ?: _uiState.value.selectedWarehouseName.ifBlank { defaultWarehouse?.name.orEmpty() },
+                        selectedWarehouseId = resolvedWarehouseId,
+                        selectedWarehouseName = resolvedWarehouseName,
+                        items = state.items.withWarehouseName(
+                            warehouseId = resolvedWarehouseId,
+                            warehouseName = resolvedWarehouseName,
+                        ),
                     )
                 }
             } catch (e: Exception) {
@@ -136,8 +148,42 @@ class CreateRequestViewModel @Inject constructor(
     }
 
     fun onMedicineSelected(medicine: MedicineItem) {
-        _uiState.value = _uiState.value.copy(
+        val state = _uiState.value
+        val medicineWarehouseId = medicine.warehouseId.normalizedId()
+        val selectedWarehouseId = state.selectedWarehouseId.normalizedId()
+        val basketWarehouseId = state.items.firstNotNullOfOrNull { item ->
+            item.warehouseId.normalizedId().takeIf { it.isNotBlank() }
+        }
+        val resolvedWarehouseId = selectedWarehouseId.ifBlank { medicineWarehouseId }
+        if (
+            state.items.isNotEmpty() &&
+            medicineWarehouseId.isNotBlank() &&
+            basketWarehouseId != null &&
+            medicineWarehouseId != basketWarehouseId
+        ) {
+            _uiState.value = state.copy(errorMessage = BASKET_WAREHOUSE_MISMATCH_ERROR)
+            return
+        }
+        if (
+            state.items.isNotEmpty() &&
+            medicineWarehouseId.isNotBlank() &&
+            selectedWarehouseId.isNotBlank() &&
+            medicineWarehouseId != selectedWarehouseId
+        ) {
+            _uiState.value = state.copy(errorMessage = BASKET_WAREHOUSE_MISMATCH_ERROR)
+            return
+        }
+
+        val resolvedWarehouseName = if (resolvedWarehouseId != selectedWarehouseId) {
+            state.warehouses.firstOrNull { it.id == resolvedWarehouseId }?.name.orEmpty()
+        } else {
+            state.selectedWarehouseName
+        }
+
+        _uiState.value = state.copy(
             selectedMedicine = medicine,
+            selectedWarehouseId = resolvedWarehouseId,
+            selectedWarehouseName = resolvedWarehouseName.ifBlank { state.selectedWarehouseName },
             errorMessage = null
         )
     }
@@ -182,6 +228,24 @@ class CreateRequestViewModel @Inject constructor(
             _uiState.value = state.copy(errorMessage = INVALID_BASKET_ERROR)
             return
         }
+        val medicineWarehouseId = medicine.warehouseId.normalizedId()
+        val selectedWarehouseId = state.selectedWarehouseId.normalizedId().ifBlank { medicineWarehouseId }
+        if (selectedWarehouseId.isBlank()) {
+            _uiState.value = state.copy(errorMessage = WAREHOUSE_UNCLEAR_ERROR)
+            return
+        }
+        if (medicineWarehouseId.isNotBlank() && medicineWarehouseId != selectedWarehouseId) {
+            _uiState.value = state.copy(errorMessage = BASKET_WAREHOUSE_MISMATCH_ERROR)
+            return
+        }
+        if (!state.items.matchWarehouse(selectedWarehouseId)) {
+            _uiState.value = state.copy(errorMessage = BASKET_WAREHOUSE_MISMATCH_ERROR)
+            return
+        }
+        val selectedWarehouseName = resolveWarehouseName(
+            state = state,
+            warehouseId = selectedWarehouseId,
+        )
 
         val basketItem = CreateRequestBasketItem(
             medicineId = medicine.id,
@@ -189,12 +253,16 @@ class CreateRequestViewModel @Inject constructor(
             medicineSubtitle = medicine.brand.trim(),
             quantity = quantity,
             unit = unit,
+            warehouseId = selectedWarehouseId,
+            warehouseName = selectedWarehouseName,
         )
         val updatedItems = state.items
             .filterNot { it.medicineId == basketItem.medicineId } + basketItem
 
         _uiState.value = state.copy(
             items = updatedItems,
+            selectedWarehouseId = selectedWarehouseId,
+            selectedWarehouseName = selectedWarehouseName,
             selectedMedicine = null,
             quantity = "1",
             pendingUnit = "",
@@ -252,16 +320,26 @@ class CreateRequestViewModel @Inject constructor(
 
     fun onWarehouseSelected(warehouseId: String, warehouseName: String) {
         val state = _uiState.value
-        if (state.items.isNotEmpty() &&
-            state.selectedWarehouseId.isNotBlank() &&
-            warehouseId != state.selectedWarehouseId
-        ) {
+        val normalizedWarehouseId = warehouseId.normalizedId()
+        if (normalizedWarehouseId.isBlank()) {
+            _uiState.value = state.copy(errorMessage = WAREHOUSE_UNCLEAR_ERROR)
+            return
+        }
+        val basketWarehouseId = state.items.firstNotNullOfOrNull { item ->
+            item.warehouseId.normalizedId().takeIf { it.isNotBlank() }
+        }
+        if (basketWarehouseId != null && basketWarehouseId != normalizedWarehouseId) {
             _uiState.value = state.copy(errorMessage = BASKET_WAREHOUSE_MISMATCH_ERROR)
             return
         }
-        _uiState.value = _uiState.value.copy(
-            selectedWarehouseId = warehouseId,
-            selectedWarehouseName = warehouseName,
+        val normalizedWarehouseName = warehouseName.trim()
+        _uiState.value = state.copy(
+            selectedWarehouseId = normalizedWarehouseId,
+            selectedWarehouseName = normalizedWarehouseName,
+            items = state.items.withWarehouseName(
+                warehouseId = normalizedWarehouseId,
+                warehouseName = normalizedWarehouseName,
+            ),
             errorMessage = null
         )
     }
@@ -308,15 +386,18 @@ class CreateRequestViewModel @Inject constructor(
                     return@launch
                 }
                 
-                run {
-                val selectedWarehouse = currentState.warehouses.firstOrNull { it.id == currentState.selectedWarehouseId.trim() }
-                if (selectedWarehouse == null) {
+                val selectedWarehouseId = currentState.selectedWarehouseId.normalizedId()
+                if (selectedWarehouseId.isBlank()) {
                     _uiState.value = currentState.copy(
                         isLoading = false,
-                        errorMessage = context.getString(R.string.request_error_warehouse_invalid),
+                        errorMessage = WAREHOUSE_UNCLEAR_ERROR,
                     )
                     return@launch
                 }
+                val selectedWarehouseName = resolveWarehouseName(
+                    state = currentState,
+                    warehouseId = selectedWarehouseId,
+                )
 
                 val firstItem = basketItems.first()
                 val requestItems = basketItems.mapIndexed { index, item ->
@@ -352,9 +433,9 @@ class CreateRequestViewModel @Inject constructor(
                     priority = priority,
                     totalPrice = totalPrice,
                     status = RequestStatus.DRAFT,
-                    warehouseId = selectedWarehouse.id,
-                    warehouseName = selectedWarehouse.name,
-                    supplierName = selectedWarehouse.name,
+                    warehouseId = selectedWarehouseId,
+                    warehouseName = selectedWarehouseName,
+                    supplierName = selectedWarehouseName,
                     createdAtLabel = "",
                     updatedAtLabel = "",
                     items = requestItems,
@@ -393,7 +474,6 @@ class CreateRequestViewModel @Inject constructor(
                     },
                 )
                 return@launch
-                }
 
             } catch (e: Exception) {
                 val userMessage = mapSupabaseErrorToUserMessage(e)
@@ -419,20 +499,26 @@ class CreateRequestViewModel @Inject constructor(
     }
     
     private fun validateRequest(state: CreateRequestUiState): String? {
+        val selectedWarehouseId = state.selectedWarehouseId.normalizedId()
         return when {
-            state.selectedWarehouseId.isBlank() ->
-                context.getString(R.string.request_error_warehouse_required)
+            selectedWarehouseId.isBlank() ->
+                WAREHOUSE_UNCLEAR_ERROR
             state.notes.length > 500 ->
                 context.getString(R.string.request_error_notes_too_long)
             state.items.isNotEmpty() && state.items.any { item ->
                 item.medicineId.isBlank() || item.medicineName.isBlank() ||
                     item.quantity !in 1..1000 || item.unit.isBlank()
             } -> INVALID_BASKET_ERROR
+            state.items.isNotEmpty() && !state.items.matchWarehouse(selectedWarehouseId) ->
+                BASKET_WAREHOUSE_MISMATCH_ERROR
             state.items.isNotEmpty() -> null
             state.selectedMedicine == null ->
                 context.getString(R.string.request_error_medicine_required)
             state.selectedMedicine.id.isBlank() ->
                 MEDICINE_ID_MISSING_ERROR
+            state.selectedMedicine.warehouseId.normalizedId().let { medicineWarehouseId ->
+                medicineWarehouseId.isNotBlank() && medicineWarehouseId != selectedWarehouseId
+            } -> BASKET_WAREHOUSE_MISMATCH_ERROR
             state.quantity.isBlank() ->
                 context.getString(R.string.request_error_quantity_required)
             state.quantity.toIntOrNull() == null ->
@@ -459,6 +545,8 @@ class CreateRequestViewModel @Inject constructor(
         if (selectedMedicine.id.isBlank() || quantity !in 1..1000 || unit.isBlank()) {
             return emptyList()
         }
+        val warehouseId = state.selectedWarehouseId.normalizedId()
+        val warehouseName = resolveWarehouseName(state, warehouseId)
 
         return listOf(
             CreateRequestBasketItem(
@@ -467,12 +555,55 @@ class CreateRequestViewModel @Inject constructor(
                 medicineSubtitle = selectedMedicine.brand.trim(),
                 quantity = quantity,
                 unit = unit,
+                warehouseId = warehouseId,
+                warehouseName = warehouseName,
             ),
         )
     }
 
     private fun resolveUnit(pendingUnit: String, fallbackUnit: String): String =
         pendingUnit.trim().ifBlank { fallbackUnit.trim() }
+
+    private fun resolveWarehouseName(state: CreateRequestUiState, warehouseId: String): String {
+        val normalizedWarehouseId = warehouseId.normalizedId()
+        return state.warehouses.firstOrNull { it.id == normalizedWarehouseId }?.name
+            ?: state.selectedWarehouseName.trim().ifBlank {
+                state.items.firstOrNull { it.warehouseId.normalizedId() == normalizedWarehouseId }
+                    ?.warehouseName
+                    .orEmpty()
+            }
+    }
+
+    private fun List<CreateRequestBasketItem>.matchWarehouse(warehouseId: String): Boolean {
+        val normalizedWarehouseId = warehouseId.normalizedId()
+        if (normalizedWarehouseId.isBlank()) return false
+        return all { item ->
+            val itemWarehouseId = item.warehouseId.normalizedId()
+            itemWarehouseId.isBlank() || itemWarehouseId == normalizedWarehouseId
+        }
+    }
+
+    private fun List<CreateRequestBasketItem>.withWarehouseName(
+        warehouseId: String,
+        warehouseName: String,
+    ): List<CreateRequestBasketItem> {
+        val normalizedWarehouseId = warehouseId.normalizedId()
+        val normalizedWarehouseName = warehouseName.trim()
+        if (normalizedWarehouseId.isBlank()) return this
+        return map { item ->
+            val itemWarehouseId = item.warehouseId.normalizedId()
+            if (itemWarehouseId.isBlank() || itemWarehouseId == normalizedWarehouseId) {
+                item.copy(
+                    warehouseId = normalizedWarehouseId,
+                    warehouseName = item.warehouseName.ifBlank { normalizedWarehouseName },
+                )
+            } else {
+                item
+            }
+        }
+    }
+
+    private fun String.normalizedId(): String = trim()
     
     private fun mapSupabaseErrorToUserMessage(error: Throwable): String {
         return when {

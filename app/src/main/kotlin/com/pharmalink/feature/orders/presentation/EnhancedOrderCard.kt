@@ -50,7 +50,8 @@ fun EnhancedOrderCard(
     val d = MaterialTheme.dimens
     val progress by animateFloatAsState(
         targetValue = when (order.status) {
-            OrderStatus.PENDING -> 0.25f
+            OrderStatus.PENDING,
+            OrderStatus.QUOTE_PENDING -> 0.25f
             OrderStatus.CONFIRMED,
             OrderStatus.IN_PROGRESS,
             OrderStatus.READY_FOR_PICKUP,
@@ -185,7 +186,8 @@ fun EnhancedOrderCard(
                         progress = progress,
                         modifier = Modifier.fillMaxWidth(),
                         color = when (order.status) {
-                            OrderStatus.PENDING -> MaterialTheme.colorScheme.primary
+                            OrderStatus.PENDING,
+                            OrderStatus.QUOTE_PENDING -> MaterialTheme.colorScheme.primary
                             OrderStatus.CONFIRMED,
                             OrderStatus.IN_PROGRESS,
                             OrderStatus.READY_FOR_PICKUP,

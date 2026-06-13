@@ -82,6 +82,7 @@ class OrdersViewModel @Inject constructor(
     private fun Order.toOrderItem(): OrderItem {
         val statusText = when (status) {
             OrderStatus.PENDING -> context.getString(R.string.order_status_pending)
+            OrderStatus.QUOTE_PENDING -> "بانتظار موافقة الصيدلية"
             OrderStatus.CONFIRMED -> context.getString(R.string.order_status_approved)
             OrderStatus.IN_PROGRESS -> "قيد التجهيز"
             OrderStatus.READY_FOR_PICKUP -> "جاهز للاستلام"

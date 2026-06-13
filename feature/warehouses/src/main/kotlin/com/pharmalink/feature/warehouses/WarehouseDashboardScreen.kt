@@ -270,6 +270,7 @@ private fun DashboardStatsGrid(
     val items = listOf(
         "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a" to (stats?.productsCount?.toString() ?: loadingValue),
         "\u0627\u0644\u0648\u0627\u0631\u062f\u0629" to (stats?.incomingRequestsCount?.toString() ?: loadingValue),
+        "\u0628\u0627\u0646\u062a\u0638\u0627\u0631 \u0645\u0648\u0627\u0641\u0642\u0629 \u0627\u0644\u0635\u064a\u062f\u0644\u064a\u0629" to (stats?.quotePendingCount?.toString() ?: loadingValue),
         "\u0645\u062e\u0632\u0648\u0646 \u0645\u0646\u062e\u0641\u0636" to (stats?.lowStockCount?.toString() ?: loadingValue),
         "\u0645\u062e\u0641\u064a/\u063a\u064a\u0631 \u0646\u0634\u0637" to (stats?.hiddenInactiveCount?.toString() ?: loadingValue),
     )
@@ -337,6 +338,7 @@ data class WarehouseDashboardUiState(
 data class WarehouseDashboardStats(
     val productsCount: Int,
     val incomingRequestsCount: Int,
+    val quotePendingCount: Int,
     val lowStockCount: Int,
     val hiddenInactiveCount: Int,
 )
@@ -366,6 +368,7 @@ class WarehouseDashboardViewModel @Inject constructor(
                         stats = WarehouseDashboardStats(
                             productsCount = inventory.size,
                             incomingRequestsCount = currentStats?.incomingRequestsCount ?: 0,
+                            quotePendingCount = currentStats?.quotePendingCount ?: 0,
                             lowStockCount = inventory.count { item -> item.stockStatus == StockStatus.LOW_STOCK },
                             hiddenInactiveCount = inventory.count { item -> !item.isVisible || !item.isActive },
                         ),
@@ -380,8 +383,12 @@ class WarehouseDashboardViewModel @Inject constructor(
             pharmaRepository.observeIncomingRequestsForWarehouse(warehouseId).collect { requests ->
                 val incomingCount = requests.count { request ->
                     request.status == RequestStatus.PENDING ||
+                        request.status == RequestStatus.QUOTE_PENDING ||
                         request.status == RequestStatus.ACCEPTED ||
                         request.status == RequestStatus.IN_PROGRESS
+                }
+                val quotePendingCount = requests.count { request ->
+                    request.status == RequestStatus.QUOTE_PENDING
                 }
                 _uiState.update { current ->
                     val currentStats = current.stats
@@ -390,11 +397,15 @@ class WarehouseDashboardViewModel @Inject constructor(
                             WarehouseDashboardStats(
                                 productsCount = 0,
                                 incomingRequestsCount = incomingCount,
+                                quotePendingCount = quotePendingCount,
                                 lowStockCount = 0,
                                 hiddenInactiveCount = 0,
                             )
                         } else {
-                            currentStats.copy(incomingRequestsCount = incomingCount)
+                            currentStats.copy(
+                                incomingRequestsCount = incomingCount,
+                                quotePendingCount = quotePendingCount,
+                            )
                         },
                     )
                 }

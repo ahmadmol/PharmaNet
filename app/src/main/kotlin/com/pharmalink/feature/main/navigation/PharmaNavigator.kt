@@ -107,7 +107,6 @@ import com.pharmalink.feature.tracking.DeliveryTrackingScreen
 import com.pharmalink.feature.warehouses.FeaturedWarehousesScreen
 import com.pharmalink.feature.warehouses.WarehouseDashboardScreen
 import com.pharmalink.feature.warehouses.WarehousesScreen
-import com.pharmalink.feature.auth.Splash.PharmaSplashScreen
 
 private val bottomBarRoutes = setOf(
     AppDestination.Home.route,
@@ -141,7 +140,7 @@ fun PharmaNavigator(
     val adminChromeViewModel: AdminChromeViewModel = hiltViewModel()
     val adminChromeState by adminChromeViewModel.state.collectAsState()
     val adminProfileImageUrl = adminChromeState.profileImageUrl
-    val accountType = userSnapshot?.accountType
+    val accountType = userSnapshot?.accountType ?: accountType
     val currentWarehouseId = userSnapshot?.warehouseId.orEmpty()
     var showAdminMenu by remember { mutableStateOf(false) }
 
@@ -149,6 +148,10 @@ fun PharmaNavigator(
         currentRoute.matchesDestination(AppDestination.AdminDashboard) -> AppDestination.AdminDashboard
         currentRoute.matchesDestination(AppDestination.PharmacyDashboard) -> AppDestination.PharmacyDashboard
         currentRoute.matchesDestination(AppDestination.PharmacyRadar) -> AppDestination.PharmacyRadar
+        currentRoute.matchesDestination(AppDestination.PharmacyCustomerOrderDetail) -> AppDestination.PharmacyCustomerOrders
+        currentRoute.matchesDestination(AppDestination.RequestDetail) -> AppDestination.RequestList
+        currentRoute.matchesDestination(AppDestination.CreateRequestPrefilled) -> AppDestination.RequestList
+        currentRoute.matchesDestination(AppDestination.PharmacyWarehouseProducts) -> AppDestination.RequestList
         currentRoute.matchesDestination(AppDestination.Home) -> AppDestination.Home
         currentRoute.matchesDestination(AppDestination.MedicineSearch) -> AppDestination.MedicineSearch
         currentRoute.matchesDestination(AppDestination.PublicPharmacies) -> AppDestination.PublicPharmacies
@@ -176,6 +179,7 @@ fun PharmaNavigator(
                 AppDestination.MedicineSearch,
                 AppDestination.PublicPharmacies,
                 AppDestination.MyCustomerOrders,
+                AppDestination.Notifications,
                 AppDestination.Profile,
             )
         AccountType.PHARMACY ->
@@ -183,9 +187,25 @@ fun PharmaNavigator(
                 AppDestination.PharmacyDashboard,
                 AppDestination.PharmacyRadar,
                 AppDestination.PharmacyCustomerOrders,
+                AppDestination.RequestList,
                 AppDestination.Profile,
             )
-        null -> listOf(AppDestination.Home, AppDestination.Profile)
+        null -> when (startDestination) {
+            AppDestination.PharmacyDashboard.route -> listOf(
+                AppDestination.PharmacyDashboard,
+                AppDestination.PharmacyRadar,
+                AppDestination.PharmacyCustomerOrders,
+                AppDestination.RequestList,
+                AppDestination.Profile,
+            )
+            AppDestination.WarehouseDashboard.route -> listOf(
+                AppDestination.WarehouseDashboard,
+                AppDestination.RequestList,
+                AppDestination.Notifications,
+                AppDestination.Profile,
+            )
+            else -> listOf(AppDestination.Home, AppDestination.Profile)
+        }
     }
 
     val bottomBarTabs = visibleTabs
@@ -206,15 +226,33 @@ fun PharmaNavigator(
 
     val visibleTabRoutes = visibleTabs.map { it.route }.toSet()
     val bottomBarVisibleRoutes = if (accountType == AccountType.PHARMACY) {
-        visibleTabRoutes + AppDestination.CreateRequest.route
+        visibleTabRoutes + setOf(
+            AppDestination.CreateRequest.route,
+            AppDestination.CreateRequestPrefilled.route,
+            AppDestination.PharmacyCustomerOrderDetail.route,
+            AppDestination.RequestDetail.route,
+            AppDestination.PharmacyWarehouseProducts.route,
+            AppDestination.Notifications.route,
+        )
     } else {
         visibleTabRoutes
     }
     val isBottomBarVisible = currentRoute in bottomBarVisibleRoutes
-    val safeWarehouseTopLevelRoute = if (accountType == AccountType.WAREHOUSE) {
-        AppDestination.WarehouseDashboard.route
-    } else {
-        AppDestination.Home.route
+    val showPharmacyCreateFab = accountType == AccountType.PHARMACY &&
+        currentRoute in (visibleTabRoutes + AppDestination.CreateRequest.route)
+    val safeWarehouseTopLevelRoute = when (accountType) {
+        AccountType.WAREHOUSE -> AppDestination.WarehouseDashboard.route
+        AccountType.PHARMACY -> AppDestination.PharmacyDashboard.route
+        else -> AppDestination.Home.route
+    }
+
+    LaunchedEffect(accountType, currentRoute) {
+        if (accountType == AccountType.PHARMACY && currentRoute == AppDestination.Home.route) {
+            navController.navigate(AppDestination.PharmacyDashboard.route) {
+                popUpTo(AppDestination.Home.route) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
     }
 
     BackHandler(enabled = true) {
@@ -260,6 +298,8 @@ fun PharmaNavigator(
             currentRoute in bottomBarRoutes -> {
                 if (accountType == AccountType.WAREHOUSE) {
                     navController.navigateToInnerTopLevel(AppDestination.WarehouseDashboard)
+                } else if (accountType == AccountType.PHARMACY) {
+                    navController.navigateToInnerTopLevel(AppDestination.PharmacyDashboard)
                 } else {
                     navController.navigateToInnerTopLevel(AppDestination.Home)
                 }
@@ -281,7 +321,7 @@ fun PharmaNavigator(
         containerColor = ClinicalCanvas,
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
-            if (isBottomBarVisible && accountType == AccountType.PHARMACY) {
+            if (showPharmacyCreateFab) {
                 FloatingActionButton(
                     onClick = { navController.navigateToInnerTopLevel(AppDestination.CreateRequest) },
                     modifier = Modifier
@@ -309,7 +349,7 @@ fun PharmaNavigator(
                     items = bottomBarTabs,
                     selectedItem = tabSelectedIndex,
                     labelOverrides = if (accountType == AccountType.WAREHOUSE) {
-                        mapOf(AppDestination.RequestList.route to "\u0627\u0644\u0648\u0627\u0631\u062f\u0629")
+                        mapOf(AppDestination.RequestList.route to "\u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639\u0627\u062a")
                     } else {
                         emptyMap()
                     },
@@ -348,21 +388,16 @@ fun PharmaNavigator(
         ) {
             NavHost(
                 navController = navController,
-                startDestination = AppDestination.Splash.route,
+                startDestination = startDestination,
             ) {
-                composable(AppDestination.Splash.route) {
-                    PharmaSplashScreen(
-                        onNavigateToLogin = { navController.navigate(AppDestination.Login.route) { popUpTo(AppDestination.Splash.route) { inclusive = true } } },
-                        onNavigateToAdminDashboard = { navController.navigate(AppDestination.AdminDashboard.route) { popUpTo(AppDestination.Splash.route) { inclusive = true } } },
-                        onNavigateToPharmacyHome = { navController.navigate(AppDestination.PharmacyDashboard.route) { popUpTo(AppDestination.Splash.route) { inclusive = true } } },
-                        onNavigateToWarehouseHome = { navController.navigate(AppDestination.WarehouseDashboard.route) { popUpTo(AppDestination.Splash.route) { inclusive = true } } },
-                        onNavigateToUserHome = { navController.navigate(AppDestination.Home.route) { popUpTo(AppDestination.Splash.route) { inclusive = true } } }
-                    )
-                }
                 composable(AppDestination.PharmacyDashboard.route) {
                     if (accountType == AccountType.PHARMACY) {
                         PharmacyDashboardScreen(
+                            onNavigateToCustomerOrders = { navController.navigateToInnerTopLevel(AppDestination.PharmacyCustomerOrders) },
+                            onNavigateToRadar = { navController.navigateToInnerTopLevel(AppDestination.PharmacyRadar) },
+                            onNavigateToWarehouseRequests = { navController.navigateToInnerTopLevel(AppDestination.RequestList) },
                             onNavigateToNotifications = { navController.navigateToInnerTopLevel(AppDestination.Notifications) },
+                            onNavigateToProfile = { navController.navigateToInnerTopLevel(AppDestination.Profile) },
                         )
                     } else {
                         LaunchedEffect(Unit) { navController.navigate(safeWarehouseTopLevelRoute) { launchSingleTop = true } }
@@ -1143,10 +1178,6 @@ fun PharmaNavigator(
                     ProfileScreen(
                         onLogout = {
                             onProfileLogout()
-                            navController.navigate(AppDestination.Splash.route) {
-                                popUpTo(0) { inclusive = true }
-                                launchSingleTop = true
-                            }
                         },
                         onEditProfile = { navController.navigate(AppDestination.EditProfile.route) },
                         onChangePassword = { navController.navigate(AppDestination.SecurityPrivacy.route) },
@@ -1163,16 +1194,23 @@ fun PharmaNavigator(
                             when (notification.destination) {
                                 NotificationDestination.ORDER ->
                                     notification.destinationId?.let { orderId ->
-                                        if (accountType == AccountType.PHARMACY) {
-                                            navController.navigate(AppDestination.PharmacyCustomerOrderDetail.createRoute(orderId))
-                                        } else {
-                                            navController.navigate(AppDestination.OrderDetail.createRoute(orderId))
+                                        when (accountType) {
+                                            AccountType.PHARMACY ->
+                                                navController.navigate(AppDestination.PharmacyCustomerOrderDetail.createRoute(orderId))
+                                            AccountType.PUBLIC_USER ->
+                                                navController.navigate(AppDestination.CustomerOrderDetail.createRoute(orderId))
+                                            else ->
+                                                navController.navigate(AppDestination.OrderDetail.createRoute(orderId))
                                         }
                                     }
 
                                 NotificationDestination.PHARMACY_CUSTOMER_ORDER ->
                                     notification.destinationId?.let { orderId ->
-                                        navController.navigate(AppDestination.PharmacyCustomerOrderDetail.createRoute(orderId))
+                                        if (accountType == AccountType.PUBLIC_USER) {
+                                            navController.navigate(AppDestination.CustomerOrderDetail.createRoute(orderId))
+                                        } else {
+                                            navController.navigate(AppDestination.PharmacyCustomerOrderDetail.createRoute(orderId))
+                                        }
                                     }
 
                                 NotificationDestination.REQUEST ->

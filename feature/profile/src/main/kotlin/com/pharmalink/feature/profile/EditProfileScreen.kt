@@ -190,6 +190,21 @@ fun EditProfileScreen(
                         AccountTextField(value = pharmacy, onValueChange = { pharmacy = it }, label = organizationNameLabel, icon = Icons.Outlined.Store)
                     }
                 }
+                if (isPharmacy) {
+                    InfoCallout(
+                        text = buildString {
+                            append("الحساب مربوط بصيدلية: ")
+                            append(if (uiState.pharmacyLinked) "نعم" else "لا")
+                            if (uiState.pharmacyLinked && !uiState.pharmacyCoordinatesComplete) {
+                                append("\nإحداثيات الصيدلية غير مكتملة وقد لا يعمل الرادار بشكل صحيح.")
+                            } else if (!uiState.pharmacyLinked) {
+                                append("\nاربط الحساب بصيدلية قبل استخدام طلبات العملاء أو الرادار أو طلبات المستودعات.")
+                            }
+                        },
+                        isSuccess = uiState.pharmacyLinked && uiState.pharmacyCoordinatesComplete,
+                    )
+                    PharmacyEditLinkDetails(uiState = uiState)
+                }
                 AccountSection(title = stringResource(R.string.edit_profile_section_contact_info)) {
                     AccountTextField(value = phone, onValueChange = { phone = it }, label = stringResource(R.string.edit_profile_label_phone), icon = Icons.Outlined.Phone, keyboardType = KeyboardType.Phone)
                     AccountTextField(value = email, onValueChange = { email = it }, label = stringResource(R.string.edit_profile_label_email), icon = Icons.Outlined.Email, keyboardType = KeyboardType.Email, enabled = false)
@@ -587,4 +602,30 @@ fun InfoCallout(text: String, isSuccess: Boolean = true) {
             Text(text, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
         }
     }
+}
+
+@Composable
+private fun PharmacyEditLinkDetails(uiState: ProfileUiState) {
+    InfoCallout(
+        text = buildString {
+            append(
+                if (uiState.pharmacyLinked) {
+                    "الحساب مرتبط بصيدلية"
+                } else {
+                    "الحساب غير مرتبط بصيدلية"
+                },
+            )
+            append("\nالعنوان: ${uiState.pharmacyAddress.ifBlank { "غير محدد" }}")
+            append(
+                "\nالإحداثيات: ${
+                    if (uiState.warehouseLatitude != null && uiState.warehouseLongitude != null) {
+                        "%.5f, %.5f".format(uiState.warehouseLatitude, uiState.warehouseLongitude)
+                    } else {
+                        "غير مكتملة"
+                    }
+                }",
+            )
+        },
+        isSuccess = uiState.pharmacyLinked && uiState.pharmacyCoordinatesComplete,
+    )
 }

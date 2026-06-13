@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "pharmalink-placeholder",
-    "storage_bucket": "pharmalink-placeholder.appspot.com"
+    "project_number": "381611919834",
+    "project_id": "pharmanet-6b077",
+    "storage_bucket": "pharmanet-6b077.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:381611919834:android:3743b50dceb3496fead8e3",
         "android_client_info": {
           "package_name": "com.pharmalink"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "placeholder-replace-with-real-firebase-config"
+          "current_key": "AIzaSyDKknbamKzpr28Rc9MZStNTB7jQBgHPn14"
         }
       ],
       "services": {

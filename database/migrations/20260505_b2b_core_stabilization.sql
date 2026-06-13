@@ -89,9 +89,14 @@ DROP FUNCTION IF EXISTS public.create_order_for_existing_request(UUID);
 
 DROP FUNCTION IF EXISTS public.submit_pharmacy_request(TEXT);
 DROP FUNCTION IF EXISTS public.warehouse_accept_b2b_request(TEXT, BIGINT, TEXT);
+DROP FUNCTION IF EXISTS public.warehouse_accept_b2b_request(TEXT, BIGINT);
 DROP FUNCTION IF EXISTS public.warehouse_reject_b2b_request(TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.warehouse_start_b2b_fulfillment(TEXT);
 DROP FUNCTION IF EXISTS public.warehouse_mark_b2b_delivered(TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.warehouse_accept_b2b_request(UUID, BIGINT, TEXT);
+DROP FUNCTION IF EXISTS public.warehouse_accept_b2b_request(UUID, BIGINT);
+DROP FUNCTION IF EXISTS public.pharmacy_accept_b2b_quote(UUID);
+DROP FUNCTION IF EXISTS public.pharmacy_reject_b2b_quote(UUID, TEXT);
 
 -- --------------------------------------------------------------------
 -- 5. B2B lifecycle RPCs (UUID-based)
@@ -106,14 +111,25 @@ AS $$
 DECLARE
   v_profile RECORD;
   v_request RECORD;
+  v_first_item RECORD;
   v_order RECORD;
+  v_item_count INT;
+  v_items JSONB;
 BEGIN
+  IF p_request_id IS NULL THEN
+    RAISE EXCEPTION 'p_request_id is required' USING ERRCODE = '22023';
+  END IF;
+
   SELECT * INTO v_profile
   FROM public.profiles
   WHERE id = auth.uid();
 
-  IF v_profile IS NULL OR v_profile.account_type != 'PHARMACY' OR v_profile.pharmacy_id IS NULL THEN
-    RAISE EXCEPTION 'Unauthorized: only PHARMACY users can submit pharmacy requests';
+  IF v_profile IS NULL
+      OR v_profile.account_type != 'PHARMACY'
+      OR v_profile.is_active IS DISTINCT FROM true
+      OR v_profile.pharmacy_id IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized: only active PHARMACY users can submit pharmacy requests'
+      USING ERRCODE = '42501';
   END IF;
 
   SELECT * INTO v_request
@@ -122,33 +138,68 @@ BEGIN
   FOR UPDATE;
 
   IF v_request IS NULL THEN
-    RAISE EXCEPTION 'Request not found';
+    RAISE EXCEPTION 'Request not found' USING ERRCODE = 'P0001';
   END IF;
-  IF v_request.pharmacy_id != v_profile.pharmacy_id THEN
-    RAISE EXCEPTION 'Unauthorized: request does not belong to this pharmacy';
+
+  IF v_request.pharmacy_id IS DISTINCT FROM v_profile.pharmacy_id THEN
+    RAISE EXCEPTION 'Unauthorized: request does not belong to this pharmacy'
+      USING ERRCODE = '42501';
   END IF;
-  IF v_request.status != 'DRAFT' THEN
-    RAISE EXCEPTION 'Invalid request status: expected DRAFT, got %', v_request.status;
+
+  IF v_request.status IS DISTINCT FROM 'DRAFT' THEN
+    RAISE EXCEPTION 'Invalid request status: expected DRAFT, got %', v_request.status
+      USING ERRCODE = '22023';
   END IF;
-  IF v_request.medicine_id IS NULL THEN
-    RAISE EXCEPTION 'Cannot submit request without medicine_id';
-  END IF;
+
   IF v_request.warehouse_id IS NULL THEN
-    RAISE EXCEPTION 'Cannot submit request without warehouse_id';
+    RAISE EXCEPTION 'Cannot submit request without warehouse_id' USING ERRCODE = '22023';
   END IF;
-  IF COALESCE(v_request.quantity, 0) <= 0 THEN
-    RAISE EXCEPTION 'Cannot submit request with non-positive quantity';
+
+  SELECT COUNT(*) INTO v_item_count
+  FROM public.request_items
+  WHERE request_id = p_request_id;
+
+  IF v_item_count <= 0 THEN
+    RAISE EXCEPTION 'Cannot submit request without basket items' USING ERRCODE = '22023';
   END IF;
+
+  SELECT * INTO v_first_item
+  FROM public.request_items
+  WHERE request_id = p_request_id
+  ORDER BY line_no ASC, created_at ASC, id ASC
+  LIMIT 1
+  FOR UPDATE;
+
+  PERFORM 1
+  FROM public.request_items
+  WHERE request_id = p_request_id
+  FOR UPDATE;
+
+  IF v_first_item.medicine_id IS NULL THEN
+    RAISE EXCEPTION 'Cannot submit request with invalid first basket item' USING ERRCODE = '22023';
+  END IF;
+
+  IF COALESCE(v_first_item.quantity, 0) <= 0 THEN
+    RAISE EXCEPTION 'Cannot submit request with non-positive first item quantity' USING ERRCODE = '22023';
+  END IF;
+
   IF EXISTS (
-    SELECT 1 FROM public.orders
+    SELECT 1
+    FROM public.orders
     WHERE request_id = p_request_id
       AND order_type = 'PHARMACY_WAREHOUSE'
   ) THEN
-    RAISE EXCEPTION 'Order already exists for this request';
+    RAISE EXCEPTION 'Order already exists for this request'
+      USING ERRCODE = '23505';
   END IF;
 
   UPDATE public.requests
-  SET status = 'PENDING',
+  SET medicine_id = v_first_item.medicine_id,
+      medicine_name = v_first_item.medicine_name,
+      medicine_subtitle = COALESCE(v_first_item.medicine_subtitle, ''),
+      quantity = v_first_item.quantity,
+      unit = v_first_item.unit,
+      status = 'PENDING',
       updated_at = now()
   WHERE id = p_request_id
   RETURNING * INTO v_request;
@@ -179,10 +230,10 @@ BEGIN
     v_request.id,
     v_request.pharmacy_id,
     v_request.warehouse_id,
-    v_request.medicine_id,
-    v_request.medicine_name,
-    v_request.quantity,
-    v_request.unit,
+    v_first_item.medicine_id,
+    v_first_item.medicine_name,
+    v_first_item.quantity,
+    v_first_item.unit,
     'PENDING',
     'DELIVERY',
     NULL,
@@ -204,14 +255,22 @@ BEGIN
   WHERE id = p_request_id
   RETURNING * INTO v_request;
 
-  RETURN jsonb_build_object('request', to_jsonb(v_request), 'order', to_jsonb(v_order));
+  SELECT COALESCE(jsonb_agg(to_jsonb(ri) ORDER BY ri.line_no ASC, ri.created_at ASC, ri.id ASC), '[]'::jsonb)
+  INTO v_items
+  FROM public.request_items ri
+  WHERE ri.request_id = p_request_id;
+
+  RETURN jsonb_build_object(
+    'request', to_jsonb(v_request),
+    'order', to_jsonb(v_order),
+    'items', v_items
+  );
 END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.warehouse_accept_b2b_request(
   p_request_id UUID,
-  p_total_price_cents BIGINT DEFAULT NULL,
-  p_note TEXT DEFAULT NULL
+  p_total_price_cents BIGINT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -252,6 +311,62 @@ BEGIN
   END IF;
 
   UPDATE public.requests
+  SET status = 'QUOTE_PENDING',
+      updated_at = now()
+  WHERE id = p_request_id
+  RETURNING * INTO v_request;
+
+  UPDATE public.orders
+  SET status = 'QUOTE_PENDING',
+      total_price_cents = p_total_price_cents,
+      updated_at = now()
+  WHERE id = v_order.id
+  RETURNING * INTO v_order;
+
+  RETURN jsonb_build_object('request', to_jsonb(v_request), 'order', to_jsonb(v_order));
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.pharmacy_accept_b2b_quote(p_request_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_profile RECORD;
+  v_request RECORD;
+  v_order RECORD;
+BEGIN
+  SELECT * INTO v_profile FROM public.profiles WHERE id = auth.uid();
+  IF v_profile IS NULL OR v_profile.account_type != 'PHARMACY' OR v_profile.pharmacy_id IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized: only PHARMACY users can accept B2B quotes';
+  END IF;
+
+  SELECT * INTO v_request FROM public.requests WHERE id = p_request_id FOR UPDATE;
+  IF v_request IS NULL THEN RAISE EXCEPTION 'Request not found'; END IF;
+  IF v_request.pharmacy_id != v_profile.pharmacy_id THEN
+    RAISE EXCEPTION 'Unauthorized: request does not belong to this pharmacy';
+  END IF;
+  IF v_request.status != 'QUOTE_PENDING' THEN
+    RAISE EXCEPTION 'Invalid request status: expected QUOTE_PENDING, got %', v_request.status;
+  END IF;
+
+  SELECT * INTO v_order
+  FROM public.orders
+  WHERE request_id = p_request_id
+    AND order_type = 'PHARMACY_WAREHOUSE'
+  FOR UPDATE;
+
+  IF v_order IS NULL THEN RAISE EXCEPTION 'B2B order not found for request'; END IF;
+  IF v_order.status != 'QUOTE_PENDING' THEN
+    RAISE EXCEPTION 'Invalid order status: expected QUOTE_PENDING, got %', v_order.status;
+  END IF;
+  IF v_order.total_price_cents IS NULL OR v_order.total_price_cents < 0 THEN
+    RAISE EXCEPTION 'Cannot accept B2B quote without a valid price';
+  END IF;
+
+  UPDATE public.requests
   SET status = 'ACCEPTED',
       updated_at = now()
   WHERE id = p_request_id
@@ -259,9 +374,63 @@ BEGIN
 
   UPDATE public.orders
   SET status = 'CONFIRMED',
-      total_price_cents = p_total_price_cents,
-      notes = COALESCE(p_note, notes),
       confirmed_at = now(),
+      updated_at = now()
+  WHERE id = v_order.id
+  RETURNING * INTO v_order;
+
+  RETURN jsonb_build_object('request', to_jsonb(v_request), 'order', to_jsonb(v_order));
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.pharmacy_reject_b2b_quote(
+  p_request_id UUID,
+  p_rejection_reason TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_profile RECORD;
+  v_request RECORD;
+  v_order RECORD;
+BEGIN
+  SELECT * INTO v_profile FROM public.profiles WHERE id = auth.uid();
+  IF v_profile IS NULL OR v_profile.account_type != 'PHARMACY' OR v_profile.pharmacy_id IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized: only PHARMACY users can reject B2B quotes';
+  END IF;
+
+  SELECT * INTO v_request FROM public.requests WHERE id = p_request_id FOR UPDATE;
+  IF v_request IS NULL THEN RAISE EXCEPTION 'Request not found'; END IF;
+  IF v_request.pharmacy_id != v_profile.pharmacy_id THEN
+    RAISE EXCEPTION 'Unauthorized: request does not belong to this pharmacy';
+  END IF;
+  IF v_request.status != 'QUOTE_PENDING' THEN
+    RAISE EXCEPTION 'Invalid request status: expected QUOTE_PENDING, got %', v_request.status;
+  END IF;
+
+  SELECT * INTO v_order
+  FROM public.orders
+  WHERE request_id = p_request_id
+    AND order_type = 'PHARMACY_WAREHOUSE'
+  FOR UPDATE;
+
+  IF v_order IS NULL THEN RAISE EXCEPTION 'B2B order not found for request'; END IF;
+  IF v_order.status != 'QUOTE_PENDING' THEN
+    RAISE EXCEPTION 'Invalid order status: expected QUOTE_PENDING, got %', v_order.status;
+  END IF;
+
+  UPDATE public.requests
+  SET status = 'REJECTED',
+      rejection_reason = p_rejection_reason,
+      updated_at = now()
+  WHERE id = p_request_id
+  RETURNING * INTO v_request;
+
+  UPDATE public.orders
+  SET status = 'REJECTED',
       updated_at = now()
   WHERE id = v_order.id
   RETURNING * INTO v_order;
@@ -436,7 +605,9 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.submit_pharmacy_request(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.warehouse_accept_b2b_request(UUID, BIGINT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.warehouse_accept_b2b_request(UUID, BIGINT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.pharmacy_accept_b2b_quote(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.pharmacy_reject_b2b_quote(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.warehouse_reject_b2b_request(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.warehouse_start_b2b_fulfillment(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.warehouse_mark_b2b_delivered(UUID, TEXT) TO authenticated;

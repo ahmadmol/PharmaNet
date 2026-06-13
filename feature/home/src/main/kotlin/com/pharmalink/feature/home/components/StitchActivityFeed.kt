@@ -264,6 +264,7 @@ private fun requestChipSpec(request: Request): Pair<String, StatusTone> {
     val label = when (request.status) {
         RequestStatus.DRAFT -> stringResource(R.string.home_status_draft)
         RequestStatus.PENDING -> stringResource(R.string.home_status_submitted)
+        RequestStatus.QUOTE_PENDING -> stringResource(R.string.home_status_under_review)
         RequestStatus.IN_PROGRESS -> stringResource(R.string.home_status_under_review)
         RequestStatus.ACCEPTED -> stringResource(R.string.home_status_approved)
         RequestStatus.FULFILLED -> stringResource(R.string.home_status_completed)

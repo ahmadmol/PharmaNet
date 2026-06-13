@@ -8,6 +8,9 @@ import java.time.Instant
 enum class OrderStatus {
     /** Order created, awaiting seller confirmation with price */
     PENDING,
+
+    /** B2B quote sent by warehouse, awaiting pharmacy approval */
+    QUOTE_PENDING,
     
     /** Seller accepted order, price set */
     CONFIRMED,
@@ -47,7 +50,7 @@ enum class CustomerRequestScope {
  * Invariants:
  * - PHARMACY_WAREHOUSE: requires pharmacyId, warehouseId, requestId; customerId must be null
  * - CUSTOMER_PHARMACY: requires customerId, pharmacyId; warehouseId and requestId must be null
- * - totalPriceCents is null during PENDING, required from CONFIRMED onwards
+     * - totalPriceCents is null during PENDING, required from QUOTE_PENDING onwards
  * - deliveryAddress/Phone required only for B2C DELIVERY
  */
 data class Order(
@@ -170,6 +173,7 @@ data class Order(
         fun validatePriceInvariant(status: OrderStatus, totalPriceCents: Long?): Boolean {
             return when (status) {
                 OrderStatus.PENDING -> totalPriceCents == null
+                OrderStatus.QUOTE_PENDING,
                 OrderStatus.CONFIRMED,
                 OrderStatus.IN_PROGRESS,
                 OrderStatus.READY_FOR_PICKUP,
@@ -187,8 +191,14 @@ data class Order(
             return when (from) {
                 OrderStatus.PENDING -> when (to) {
                     OrderStatus.CONFIRMED -> isSeller
+                    OrderStatus.QUOTE_PENDING -> orderType == OrderType.PHARMACY_WAREHOUSE && isSeller
                     OrderStatus.REJECTED -> isSeller
                     OrderStatus.CANCELLED -> !isSeller // Buyer can cancel
+                    else -> false
+                }
+                OrderStatus.QUOTE_PENDING -> when (to) {
+                    OrderStatus.CONFIRMED -> !isSeller
+                    OrderStatus.REJECTED -> !isSeller
                     else -> false
                 }
                 OrderStatus.CONFIRMED -> when (to) {

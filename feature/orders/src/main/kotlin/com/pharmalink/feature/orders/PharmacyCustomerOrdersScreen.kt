@@ -262,30 +262,32 @@ private fun PharmacyCustomerOrderCard(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
             ) {
-                SuggestionChip(
-                    onClick = {},
-                    enabled = false,
-                    label = {
-                        Text(
-                            text = order.fulfillmentLabel,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
-                    },
-                    modifier = Modifier.widthIn(min = 72.dp),
-                )
-                SuggestionChip(
-                    onClick = {},
-                    enabled = false,
-                    label = {
-                        Text(
-                            text = order.urgencyLabel,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
-                    },
-                    modifier = Modifier.widthIn(min = 64.dp),
-                )
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ) {
+                    Text(
+                        text = order.fulfillmentLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(horizontal = MaterialTheme.dimens.spaceM, vertical = MaterialTheme.dimens.spaceXS),
+                    )
+                }
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ) {
+                    Text(
+                        text = order.urgencyLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(horizontal = MaterialTheme.dimens.spaceM, vertical = MaterialTheme.dimens.spaceXS),
+                    )
+                }
             }
             OrderInfoRow(label = "الكمية", value = order.quantityLabel)
             OrderInfoRow(label = "السعر", value = order.priceLabel)

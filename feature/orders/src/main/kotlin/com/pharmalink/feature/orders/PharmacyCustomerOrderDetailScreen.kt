@@ -208,6 +208,7 @@ private fun ActionButtons(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceM)) {
         when (order.status) {
+            OrderStatus.QUOTE_PENDING,
             OrderStatus.PENDING -> {
                 PharmaButton(
                     text = "تأكيد الطلب",

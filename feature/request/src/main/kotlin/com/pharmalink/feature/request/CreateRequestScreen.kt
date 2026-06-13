@@ -363,7 +363,7 @@ private fun RequestFormCard(
 ) {
     val d = MaterialTheme.dimens
     val quantity = uiState.quantity.toIntOrNull() ?: 1
-    val selectedWarehouse = uiState.warehouses.firstOrNull { it.id == uiState.selectedWarehouseId }
+    val selectedWarehouse = uiState.selectedWarehouseOption()
     val resolvedUnit = uiState.pendingUnit.ifBlank { uiState.selectedMedicine?.strength.orEmpty() }
     val unitOptions = listOf(
         uiState.selectedMedicine?.strength.orEmpty(),
@@ -1026,6 +1026,22 @@ private fun WarehouseOptionRow(
             Text("${warehouse.stockPercent}%", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = if (selected) PharmaBlue500 else MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+private fun CreateRequestUiState.selectedWarehouseOption(): WarehouseOption? {
+    val selectedId = selectedWarehouseId.trim()
+    if (selectedId.isBlank()) return null
+    return warehouses.firstOrNull { it.id == selectedId }
+        ?: WarehouseOption(
+            id = selectedId,
+            name = selectedWarehouseName.ifBlank {
+                items.firstOrNull { it.warehouseId == selectedId }?.warehouseName.orEmpty()
+            },
+            location = "",
+            statusLabel = "",
+            deliveryLabel = "",
+            stockPercent = 0,
+        ).takeIf { it.name.isNotBlank() }
 }
 
 @Composable

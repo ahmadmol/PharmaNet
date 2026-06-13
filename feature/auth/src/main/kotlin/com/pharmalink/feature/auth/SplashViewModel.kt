@@ -11,6 +11,7 @@ import com.pharmalink.domain.model.UserSnapshot
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +22,8 @@ data class SplashUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
 )
+
+private const val MIN_STARTUP_SPLASH_MS = 900L
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
@@ -37,6 +40,7 @@ class SplashViewModel @Inject constructor(
 
         observeJob = viewModelScope.launch {
             _uiState.value = SplashUiState(isLoading = true)
+            delay(MIN_STARTUP_SPLASH_MS)
             when (
                 val authState = authRepository.observeAuthState()
                     .first { state -> state !is AuthSessionState.Loading }

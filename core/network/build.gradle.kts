@@ -21,9 +21,14 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     // Expose Firebase types to consumers so Hilt/KSP can resolve bindings (e.g. FirebaseFirestore) from :app
     api(platform(libs.firebase.bom))
     api(libs.firebase.firestore)
+    api(libs.firebase.messaging)
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
 }
