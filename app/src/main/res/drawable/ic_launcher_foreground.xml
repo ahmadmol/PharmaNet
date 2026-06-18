@@ -1,15 +1,26 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Main Logo Path: House + Linked Heart/Infinity -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M34,54a20,20 0,1 0,40 0a20,20 0,1 0,-40 0" />
-    <path
-        android:fillColor="#0F9F74"
-        android:pathData="M50,41h8v9h9v8h-9v9h-8v-9h-9v-8h9z" />
-    <path
-        android:fillColor="#E7FFF6"
-        android:pathData="M39,78c0,-2.2 1.8,-4 4,-4h22c2.2,0 4,1.8 4,4v4c0,2.2 -1.8,4 -4,4H43c-2.2,0 -4,-1.8 -4,-4z" />
+        android:pathData="M54,22L22,46v38h12V52l20,-15l20,15v32h12V46L54,22z
+                  M54,39c-4,0 -7.5,3 -8.5,7c-1,4 1,8 4.5,10l-10,12c-2,2 -2,5 0,7s5,2 7,0l12,-14l12,14c2,2 5,2 7,0s2,-5 0,-7l-10,-12c3.5,-2 5.5,-6 4.5,-10c-1,-4 -4.5,-7 -8.5,-7c-3,0 -5.5,1.5 -7,4c-1.5,-2.5 -4,-4 -7,-4z"
+        android:strokeWidth="1">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="22"
+                android:startY="22"
+                android:endX="86"
+                android:endY="84"
+                android:type="linear">
+                <item android:offset="0" android:color="#006B62"/>
+                <item android:offset="0.5" android:color="#008075"/>
+                <item android:offset="1" android:color="#2DD4BF"/>
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>

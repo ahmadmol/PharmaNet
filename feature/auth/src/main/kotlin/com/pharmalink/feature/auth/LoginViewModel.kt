@@ -66,12 +66,6 @@ class LoginViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.value = currentState.copy(isLoading = true, errorMessage = null)
-
-            // DEBUG: Log request payload
-            Log.d("LoginDebug", "=== LOGIN ATTEMPT DEBUG ===")
-            Log.d("LoginDebug", "Phone number: ${currentState.phoneNumber}")
-            Log.d("LoginDebug", "Password length: ${currentState.password.length}")
-            Log.d("LoginDebug", "Phone validation: ${SyrianPhone.isValid(currentState.phoneNumber)}")
             
             val result = authRepository.login(
                 LoginRequest(
@@ -85,32 +79,16 @@ class LoginViewModel @Inject constructor(
                     completeIdentityBootstrap(currentState, user)
                 },
                 onFailure = { exception ->
-                    // DEBUG: Log the real exception details
-                    Log.e("LoginDebug", "=== LOGIN FAILURE DEBUG ===")
-                    Log.e("LoginDebug", "Exception type: ${exception::class.simpleName}")
-                    Log.e("LoginDebug", "Exception message: ${exception.message}")
-                    Log.e("LoginDebug", "Exception cause: ${exception.cause?.message}")
-                    Log.e("LoginDebug", "Exception stack: ${exception.stackTraceToString()}")
-                    
-                    // Show REAL error message from Supabase, not generic
                     val backendMessage = exception.message.orEmpty()
                     val userMessage = when {
                         backendMessage.contains("Invalid login credentials", ignoreCase = true) ||
                             backendMessage.contains("Invalid credentials", ignoreCase = true) ->
                             context.getString(R.string.auth_error_invalid_credentials)
-                        backendMessage.contains("User not found", ignoreCase = true) ->
-                            context.getString(R.string.auth_error_user_not_found)
-                        backendMessage.contains("Email not confirmed", ignoreCase = true) ||
-                            backendMessage.contains("not confirmed", ignoreCase = true) ->
-                            context.getString(R.string.auth_error_email_not_confirmed)
                         backendMessage.contains("Network", ignoreCase = true) ||
-                            backendMessage.contains("Unable to resolve host", ignoreCase = true) ||
                             backendMessage.contains("timeout", ignoreCase = true) ->
                             context.getString(R.string.error_network)
                         else -> exception.message ?: context.getString(R.string.error_unknown)
                     }
-                    
-                    Log.e("LoginDebug", "User message: $userMessage")
                     
                     currentState.copy(
                         isLoading = false,
@@ -122,12 +100,15 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    fun loginWithBiometrics() {
+        Log.d("LoginDebug", "Biometric login triggered - implementing native biometric prompt")
+        // Note: Real implementation would use BiometricPrompt
+    }
+
     private suspend fun completeIdentityBootstrap(
         currentState: LoginUiState,
         user: User,
     ): LoginUiState {
-        Log.d("LoginDebug", "Login SUCCESS: User ID: ${user.id}, Name: ${user.fullName}")
-
         val bootstrapResult = authRepository.bootstrapAuthenticatedUser(user)
         return bootstrapResult.fold(
             onSuccess = {

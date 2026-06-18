@@ -517,6 +517,16 @@ fun PharmaNavigator(
                     val medicineBrand = previousState?.get<String>(PublicUserOrderNavStateKeys.MEDICINE_BRAND).orEmpty()
                     val medicineStrength = previousState?.get<String>(PublicUserOrderNavStateKeys.MEDICINE_STRENGTH).orEmpty()
 
+                    if (accountType == AccountType.PUBLIC_USER && medicineName.isBlank()) {
+                        LaunchedEffect(Unit) {
+                            navController.navigate(AppDestination.MedicineSearch.route) {
+                                popUpTo(AppDestination.MedicineSearch.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                        return@composable
+                    }
+
                     entry.savedStateHandle[PublicUserOrderNavStateKeys.MEDICINE_NAME] = medicineName
                     entry.savedStateHandle[PublicUserOrderNavStateKeys.MEDICINE_BRAND] = medicineBrand
                     entry.savedStateHandle[PublicUserOrderNavStateKeys.MEDICINE_STRENGTH] = medicineStrength
@@ -595,6 +605,17 @@ fun PharmaNavigator(
                     val medicineBrand = previousState?.get<String>(PublicUserOrderNavStateKeys.MEDICINE_BRAND).orEmpty()
                     val medicineStrength = previousState?.get<String>(PublicUserOrderNavStateKeys.MEDICINE_STRENGTH).orEmpty()
                     val pharmacyName = previousState?.get<String>(PublicUserOrderNavStateKeys.PHARMACY_NAME).orEmpty()
+
+                    if (accountType == AccountType.PUBLIC_USER && medicineName.isBlank()) {
+                        LaunchedEffect(Unit) {
+                            navController.navigate(AppDestination.MedicineSearch.route) {
+                                popUpTo(AppDestination.MedicineSearch.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                        return@composable
+                    }
+
                     val pharmacyLocation = previousState?.get<String>(PublicUserOrderNavStateKeys.PHARMACY_LOCATION).orEmpty()
                     val supportsPickup = previousState?.get<Boolean>(PublicUserOrderNavStateKeys.PHARMACY_SUPPORTS_PICKUP) ?: true
                     val supportsDelivery = previousState?.get<Boolean>(PublicUserOrderNavStateKeys.PHARMACY_SUPPORTS_DELIVERY) ?: false
@@ -660,6 +681,14 @@ fun PharmaNavigator(
                     val medicineName = previousState?.get<String>(PublicUserOrderNavStateKeys.MEDICINE_NAME).orEmpty()
                     val pharmacyName = previousState?.get<String>(PublicUserOrderNavStateKeys.PHARMACY_NAME).orEmpty()
                     val fulfillmentTypeName = previousState?.get<String>(PublicUserOrderNavStateKeys.FULFILLMENT_TYPE).orEmpty()
+
+                    if (accountType == AccountType.PUBLIC_USER && (medicineName.isBlank() || pharmacyName.isBlank())) {
+                        LaunchedEffect(Unit) {
+                            navController.navigate(AppDestination.MyCustomerOrders.route) { launchSingleTop = true }
+                        }
+                        return@composable
+                    }
+
                     val fulfillmentType = runCatching {
                         com.pharmalink.domain.model.FulfillmentType.valueOf(fulfillmentTypeName)
                     }.getOrElse { com.pharmalink.domain.model.FulfillmentType.PICKUP }

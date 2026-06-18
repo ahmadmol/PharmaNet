@@ -44,7 +44,11 @@ import com.pharmalink.feature.request.R
 import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.RequestPriority
 import androidx.compose.material.icons.filled.FlashOn
+import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral100
 import com.pharmalink.designsystem.theme.PremiumUrgent
+import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -74,6 +78,7 @@ fun RequestListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isPharmacyUser = uiState.accountType == AccountType.PHARMACY
+    val d = MaterialTheme.dimens
     val headerTitle = if (uiState.accountType == AccountType.WAREHOUSE) {
         stringResource(R.string.request_list_incoming_title)
     } else {
@@ -97,13 +102,26 @@ fun RequestListScreen(
         ) {
             Text(
                 text = headerTitle,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             if (isPharmacyUser) {
-                Button(onClick = onNavigateToCreateRequest) {
-                    Text(stringResource(R.string.request_create_new))
+                Surface(
+                    onClick = onNavigateToCreateRequest,
+                    shape = RoundedCornerShape(d.radiusM),
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.ListAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Text(text = "طلب جديد", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -300,60 +318,57 @@ private fun RequestItemCard(
 ) {
     val d = MaterialTheme.dimens
     val basketItems = request.displayItems()
-    val previewItems = basketItems.take(2)
-    val extraItemsCount = (basketItems.size - previewItems.size).coerceAtLeast(0)
 
-    Card(
+    Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(d.radiusL),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = d.cardElevation
     ) {
         Column(
-            modifier = Modifier.padding(d.spaceM),
-            verticalArrangement = Arrangement.spacedBy(d.spaceS),
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = request.primaryPartyName(accountType),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    if (accountType == AccountType.WAREHOUSE) {
-                        RequesterIdentityPreview(request = request)
-                    }
-                    Text(
-                        text = "\u0639\u0646\u0627\u0635\u0631 \u0627\u0644\u0633\u0644\u0629: ${basketItems.size}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
+                Text(
+                    text = "طلب #${request.id.takeLast(5)}",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = PharmaNeutral600,
+                )
                 StatusPill(status = request.status)
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                previewItems.forEach { item ->
-                    IncomingBasketPreviewRow(item = item)
-                }
-                if (extraItemsCount > 0) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = request.primaryPartyName(accountType),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "+$extraItemsCount \u0639\u0646\u0627\u0635\u0631 \u0623\u062E\u0631\u0649",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
+                        text = "${basketItems.size} أصناف",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = "•",
+                        color = PharmaNeutral100,
+                    )
+                    Text(
+                        text = request.updatedAtLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -363,20 +378,13 @@ private fun RequestItemCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    PriceStatePill(request = request)
-                    if (request.priority == RequestPriority.URGENT) {
-                        UrgentPill()
-                    }
-                }
-
+                PriceStatePill(request = request)
+                
                 Text(
-                    text = request.updatedAtLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "عرض التفاصيل >",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

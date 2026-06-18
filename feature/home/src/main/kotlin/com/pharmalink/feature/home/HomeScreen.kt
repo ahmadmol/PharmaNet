@@ -85,7 +85,13 @@ import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.designsystem.theme.PharmaBlue50
 import com.pharmalink.designsystem.theme.PharmaBlue500
 import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaNeutral400
 import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral900
+import com.pharmalink.designsystem.theme.PharmaBlue100
+import com.pharmalink.designsystem.theme.PremiumPrimary
+import com.pharmalink.designsystem.theme.PremiumAccent
+import com.pharmalink.designsystem.theme.PharmaGradients
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
@@ -266,56 +272,48 @@ private fun HomeHeader(
     val d = MaterialTheme.dimens
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
+        // Profile Image (Placeholder for now)
         Surface(
             modifier = Modifier
-                .size(44.dp)
+                .size(40.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple(),
                     onClick = onProfileClick,
                 ),
             shape = CircleShape,
-            color = PharmaBlue500,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            shadowElevation = d.cardElevation,
+            color = PharmaNeutral100,
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    painter = painterResource(id = DsR.drawable.sydaliti_logo_icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(d.iconM),
-                )
-            }
-        }
-
-        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-            Text("يومك سعيد", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(
-                text = "أهلاً، $userName",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Start,
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Profile",
+                modifier = Modifier.padding(8.dp),
+                tint = PharmaNeutral600
             )
         }
 
-        if (showNotifications) {
-            Box {
-                HeaderIconButton(Icons.Outlined.Notifications, stringResource(R.string.home_alerts_title), onNotificationsClick)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 8.dp, end = 8.dp)
-                        .size(8.dp)
-                        .background(PremiumUrgent, CircleShape),
-                )
-            }
+        // Logo / Title
+        Text(
+            text = "PharmaNet",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = PremiumPrimary,
+        )
+
+        // Menu Icon
+        IconButton(onClick = { /* No-op per Rule 9 */ }) {
+            Icon(
+                painter = painterResource(id = DsR.drawable.ic_app_logo),
+                contentDescription = "Menu",
+                modifier = Modifier.size(d.iconM),
+                tint = Color.Unspecified
+            )
         }
     }
 }
@@ -326,40 +324,36 @@ private fun HomeSearchCard(onSearchClick: () -> Unit) {
     val d = MaterialTheme.dimens
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(d.radiusXXL),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(),
+                onClick = onSearchClick,
+            ),
+        shape = RoundedCornerShape(d.radiusL),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = d.cardElevation,
+        border = BorderStroke(1.dp, PharmaNeutral100),
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(),
-                    onClick = onSearchClick,
-                )
                 .padding(horizontal = d.spaceL, vertical = d.spaceM),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
-            Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+                tint = PharmaNeutral400,
+                modifier = Modifier.size(d.iconM)
+            )
             Text(
-                text = stringResource(R.string.home_search_placeholder),
+                text = "ابحث عن دواء، صيدلية، أو منتج...",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = PharmaNeutral400,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Start,
             )
-            Surface(shape = RoundedCornerShape(d.radiusM), color = PharmaBlue50, contentColor = PharmaBlue500) {
-                Icon(
-                    imageVector = Icons.Outlined.Inventory2,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(d.spaceS)
-                        .size(d.iconS),
-                )
-            }
         }
     }
 }
@@ -378,35 +372,91 @@ private fun PublicUserCustomerActions(
         verticalArrangement = Arrangement.spacedBy(d.spaceL),
         horizontalAlignment = Alignment.Start,
     ) {
-        SectionHeader(title = "ماذا تحتاج اليوم؟")
-        PublicUserActionCard(
-            icon = Icons.Outlined.Search,
-            title = "ابحث عن دواء",
-            subtitle = "اختر الدواء ثم ابحث في الصيدليات القريبة أو المناوبة",
-            onClick = onSearchClick,
-        )
+        // Hero Banner
+        HeroBanner(onClick = onSearchClick)
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             PublicUserActionCard(
-                icon = Icons.AutoMirrored.Outlined.ReceiptLong,
-                title = "طلباتي",
-                subtitle = "تابع طلبك",
-                onClick = onOrdersClick,
-                modifier = Modifier.weight(1f),
-            )
-            PublicUserActionCard(
                 icon = Icons.Filled.Person,
                 title = "الملف الشخصي",
-                subtitle = "بياناتك ومساعدة التطبيق",
+                iconColor = PremiumPrimary,
+                containerColor = PharmaBlue50,
                 onClick = onProfileClick,
                 modifier = Modifier.weight(1f),
             )
+            PublicUserActionCard(
+                icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                title = "طلباتي",
+                iconColor = PremiumAccent,
+                containerColor = Color(0xFFFFF7ED), // Subtle orange
+                onClick = onOrdersClick,
+                modifier = Modifier.weight(1f),
+            )
         }
+        
         InfoBannerLikeCard(
-            title = "تصفح الصيدليات",
-            body = "تصفح الصيدليات المتاحة والمناوبة مباشرة من تبويب الصيدليات.",
+            title = "خدمة التوصيل المجاني",
+            body = "على جميع الطلبات فوق 100 ريال.",
+        )
+    }
+}
+
+@Composable
+private fun HeroBanner(onClick: () -> Unit) {
+    val d = MaterialTheme.dimens
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp)
+            .clip(RoundedCornerShape(d.radiusXXL))
+            .background(PharmaGradients.headerBlueToGreen)
+            .clickable(onClick = onClick)
+            .padding(d.spaceL),
+    ) {
+        Column(
+            modifier = Modifier.align(Alignment.CenterStart),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "ابحث عن دواء",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Text(
+                text = "تصفح آلاف الأدوية والمنتجات الطبية",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.9f)
+            )
+            
+            Spacer(modifier = Modifier.height(d.spaceS))
+            
+            Surface(
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.padding(4.dp)
+                )
+            }
+        }
+        
+        // Background Icon/Illustration placeholder
+        Icon(
+            imageVector = Icons.Outlined.LocalPharmacy,
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.1f),
+            modifier = Modifier
+                .size(120.dp)
+                .align(Alignment.CenterEnd)
+                .graphicsLayer { translationX = 40f }
         )
     }
 }
@@ -415,7 +465,8 @@ private fun PublicUserCustomerActions(
 private fun PublicUserActionCard(
     icon: ImageVector,
     title: String,
-    subtitle: String,
+    iconColor: Color,
+    containerColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -423,31 +474,24 @@ private fun PublicUserActionCard(
 
     Surface(
         modifier = modifier
-            .fillMaxWidth()
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(),
                 onClick = onClick,
             ),
-        shape = RoundedCornerShape(d.radiusXXL),
+        shape = RoundedCornerShape(d.radiusXL),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = d.cardElevation,
     ) {
-        Column(
-            modifier = Modifier.padding(d.spaceL),
-            verticalArrangement = Arrangement.spacedBy(d.spaceS),
-            horizontalAlignment = Alignment.Start,
+        Row(
+            modifier = Modifier.padding(d.spaceM),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
-            Surface(shape = CircleShape, color = PharmaBlue50, contentColor = PharmaBlue500) {
+            Surface(shape = RoundedCornerShape(d.radiusM), color = containerColor, contentColor = iconColor) {
                 Icon(icon, contentDescription = null, modifier = Modifier.padding(d.spaceS).size(d.iconM))
             }
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Start,
-            )
         }
     }
 }
@@ -458,18 +502,37 @@ private fun InfoBannerLikeCard(
     body: String,
     modifier: Modifier = Modifier,
 ) {
+    val d = MaterialTheme.dimens
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(MaterialTheme.dimens.radiusXXL),
-        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = RoundedCornerShape(d.radiusXL),
+        color = PharmaBlue50,
     ) {
-        Column(
-            modifier = Modifier.padding(MaterialTheme.dimens.spaceL),
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceXS),
-            horizontalAlignment = Alignment.Start,
+        Row(
+            modifier = Modifier.padding(d.spaceL),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM)
         ) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text(body, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Start)
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(d.radiusM),
+                color = Color.White
+            ) {
+                Icon(
+                    painter = painterResource(id = DsR.drawable.ic_app_logo),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PremiumPrimary)
+                Text(body, style = MaterialTheme.typography.bodySmall, color = PharmaNeutral600, textAlign = TextAlign.Start)
+            }
         }
     }
 }
@@ -718,6 +781,7 @@ private fun PublicMedicinesRow(
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        contentPadding = PaddingValues(bottom = 8.dp)
     ) {
         items(medicines, key = { it.id }) { medicine ->
             Surface(
@@ -733,17 +797,26 @@ private fun PublicMedicinesRow(
                 shadowElevation = d.cardElevation,
             ) {
                 Column(
-                    modifier = Modifier.padding(d.spaceL),
+                    modifier = Modifier.padding(d.spaceM),
                     verticalArrangement = Arrangement.spacedBy(d.spaceS),
                     horizontalAlignment = Alignment.Start,
                 ) {
-                    Surface(shape = CircleShape, color = PharmaBlue50, contentColor = PharmaBlue500) {
+                    // Medicine Image Placeholder
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .background(PharmaNeutral100, RoundedCornerShape(d.radiusL)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
                             Icons.Outlined.LocalPharmacy,
                             contentDescription = null,
-                            modifier = Modifier.padding(d.spaceS).size(d.iconM),
+                            tint = PharmaNeutral400,
+                            modifier = Modifier.size(d.iconL)
                         )
                     }
+                    
                     Text(
                         text = medicine.name,
                         style = MaterialTheme.typography.titleSmall,
@@ -751,14 +824,35 @@ private fun PublicMedicinesRow(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (medicine.brand.isNotBlank()) {
+                    Text(
+                        text = medicine.strength.ifBlank { medicine.brand },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PharmaNeutral600,
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = medicine.brand,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            text = "${medicine.price} ${medicine.currency}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = PremiumPrimary
                         )
+                        Surface(
+                            shape = CircleShape,
+                            color = PharmaBlue50,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                tint = PremiumPrimary,
+                                modifier = Modifier.padding(4.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -776,37 +870,68 @@ private fun PublicPharmacyRow(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(d.radiusXL),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp,
+        shadowElevation = d.cardElevation,
     ) {
         Row(
-            modifier = Modifier.padding(d.spaceL),
+            modifier = Modifier.padding(d.spaceM),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
-            Surface(shape = CircleShape, color = PharmaBlue50, contentColor = PharmaBlue500) {
+            // Pharmacy Image Placeholder
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(PharmaNeutral100, RoundedCornerShape(d.radiusM)),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
                     Icons.Outlined.LocalPharmacy,
                     contentDescription = null,
-                    modifier = Modifier.padding(d.spaceS).size(d.iconM),
+                    tint = PharmaNeutral400,
+                    modifier = Modifier.size(d.iconL)
                 )
             }
+
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                 Text(
                     text = pharmacy.pharmacyName,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (pharmacy.location.isNotBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Add, // Using Star icon if available would be better
+                        contentDescription = null,
+                        tint = PremiumAccent,
+                        modifier = Modifier.size(12.dp)
+                    )
                     Text(
-                        text = pharmacy.location,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        text = "4.8", // Placeholder as rating is not in model yet
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PharmaNeutral600,
                     )
                 }
+                Text(
+                    text = pharmacy.location.ifBlank { "مفتوح الآن" },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PharmaNeutral600,
+                )
+            }
+            
+            Surface(
+                modifier = Modifier.size(36.dp),
+                shape = CircleShape,
+                color = PharmaBlue50,
+                border = BorderStroke(1.dp, PharmaBlue100)
+            ) {
+                Icon(
+                    painter = painterResource(id = DsR.drawable.ic_app_logo),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.padding(8.dp)
+                )
             }
         }
     }
@@ -952,13 +1077,13 @@ private fun SectionHeader(
     onActionClick: (() -> Unit)? = null,
 ) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = PharmaNeutral900)
         if (actionText != null && onActionClick != null) {
             Text(
                 text = actionText,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = PharmaBlue500,
+                color = PremiumAccent,
                 modifier = Modifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple(),

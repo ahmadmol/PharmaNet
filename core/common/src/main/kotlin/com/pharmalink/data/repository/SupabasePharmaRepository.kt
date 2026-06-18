@@ -64,6 +64,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlin.time.Duration.Companion.hours
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -1918,6 +1919,33 @@ class SupabasePharmaRepository @Inject constructor(
         bucket.publicUrl(fileName)
     }
 
+    /**
+     * Generates a short-lived signed URL for a stored prescription object.
+     * The 'prescriptions' bucket is private (PHI); only the owning customer and the
+     * order's assigned pharmacy can read it via RLS. Returns null on any failure so the
+     * caller degrades gracefully (image simply not shown) instead of failing the screen.
+     */
+    private suspend fun signedPrescriptionUrlOrNull(storedUrlOrPath: String?): String? {
+        val objectName = extractPrescriptionObjectName(storedUrlOrPath) ?: return null
+        return runCatching {
+            supabase.storage.from("prescriptions").createSignedUrl(objectName, 1.hours)
+        }.getOrElse { error ->
+            Log.w(TAG, "Failed to create signed prescription URL: ${error.message}")
+            null
+        }
+    }
+
+    private fun extractPrescriptionObjectName(storedUrlOrPath: String?): String? {
+        if (storedUrlOrPath.isNullOrBlank()) return null
+        val marker = "/prescriptions/"
+        val candidate = if (storedUrlOrPath.contains(marker)) {
+            storedUrlOrPath.substringAfterLast(marker)
+        } else {
+            storedUrlOrPath
+        }.substringBefore('?').trim()
+        return candidate.takeIf { it.isNotBlank() && !it.contains('/') && !it.contains("..") }
+    }
+
     override suspend fun uploadMedicineImage(uri: android.net.Uri): Result<String> = runCatching {
         val identity = resolveAccessContext()
         val ownerPath = when (identity.role) {
@@ -2335,12 +2363,16 @@ class SupabasePharmaRepository @Inject constructor(
             "PHARMACY missing organizationId"
         }
 
-        supabase.postgrest.rpc(
+        val detail = supabase.postgrest.rpc(
             "get_pharmacy_customer_order_detail",
             PharmacyCustomerOrderDetailRpcParams(orderId),
         ).decodeSingle<PharmacyCustomerOrderDto>()
             .toDomain()
             .getOrThrow()
+
+        // The prescriptions bucket is private (PHI); replace the stored path with a
+        // short-lived signed URL the pharmacy is authorized to read via RLS.
+        detail.copy(prescriptionUrl = signedPrescriptionUrlOrNull(detail.prescriptionUrl))
     }
 
     override suspend fun claimNearbyCustomerOrder(orderId: String, radiusKm: Double): Result<Unit> = runCatching {

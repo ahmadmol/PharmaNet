@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Vaccines
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +57,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -65,6 +65,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.data.dto.NearbyOrderDto
 import com.pharmalink.designsystem.theme.ClinicalCanvas
+import androidx.compose.material.icons.outlined.LocationOff
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import com.pharmalink.designsystem.theme.dimens
 
 @Composable
 fun PharmacyRadarScreen(
@@ -183,10 +187,10 @@ private fun RadarContent(
     ) {
         item {
             Text(
-                text = stringResource(R.string.pharmacy_radar_tab),
+                text = "طلبات قريبة",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
 
@@ -196,94 +200,44 @@ private fun RadarContent(
 
         item {
             if (uiState.isLoading) {
-                Text(
-                    text = stringResource(R.string.pharmacy_dashboard_loading_orders),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(32.dp), strokeWidth = 3.dp)
+                }
             } else if (!errorMessage.isNullOrBlank()) {
                 val isGpsDisabled = errorMessage == stringResource(R.string.pharmacy_dashboard_error_location_disabled)
                 Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
                         text = errorMessage,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
                     )
-                    TextButton(onClick = onRetryLocationClick) {
-                        Text(text = stringResource(R.string.pharmacy_dashboard_retry_location))
-                    }
-                    TextButton(onClick = if (isGpsDisabled) onOpenLocationSettingsClick else onAllowLocationClick) {
-                        Text(
-                            text = if (isGpsDisabled) {
-                                stringResource(R.string.pharmacy_dashboard_open_settings)
-                            } else if (isPermanentlyDenied) {
-                                stringResource(R.string.pharmacy_dashboard_open_settings)
-                            } else {
-                                stringResource(R.string.pharmacy_dashboard_allow_location)
-                            },
-                        )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = onRetryLocationClick) {
+                            Text(text = stringResource(R.string.pharmacy_dashboard_retry_location))
+                        }
+                        TextButton(onClick = if (isGpsDisabled) onOpenLocationSettingsClick else onAllowLocationClick) {
+                            Text(
+                                text = if (isGpsDisabled) {
+                                    stringResource(R.string.pharmacy_dashboard_open_settings)
+                                } else if (isPermanentlyDenied) {
+                                    stringResource(R.string.pharmacy_dashboard_open_settings)
+                                } else {
+                                    stringResource(R.string.pharmacy_dashboard_allow_location)
+                                },
+                            )
+                        }
                     }
                 }
             } else if (uiState.nearbyOrdersCount == 0) {
                 if (uiState.isLocationMissing) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                        ),
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            Text(
-                                text = "موقع الصيدلية غير محدد",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = "الرادار يحتاج إلى إحداثيات الصيدلية. يرجى تحديث موقع الصيدلية من الملف الشخصي.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    LocationMissingCard()
                 } else {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                        ),
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            Text(
-                                text = "لا توجد طلبات عامة قريبة",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = "يعرض الرادار فقط طلبات العملاء العامة القريبة. الطلبات المرسلة لصيدليتك تظهر في طلبات العملاء.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    EmptyNearbyOrdersCard()
                 }
             }
         }
@@ -301,7 +255,82 @@ private fun RadarContent(
 }
 
 @Composable
+private fun LocationMissingCard() {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = d.cardElevation,
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.LocationOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(48.dp),
+            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(d.spaceXS)) {
+                Text(
+                    text = "موقع الصيدلية غير محدد",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = "الرادار يحتاج إلى إحداثيات الصيدلية. يرجى تحديث موقع الصيدلية من الملف الشخصي.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            OutlinedButton(
+                onClick = { /* This is handled by navigation to profile from parent */ },
+                shape = RoundedCornerShape(d.radiusM),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+            ) {
+                Text(text = "تحديث الموقع", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyNearbyOrdersCard() {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = d.cardElevation,
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+        ) {
+            Text(
+                text = "لا توجد طلبات عامة قريبة",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = "يعرض الرادار فقط طلبات العملاء العامة القريبة. الطلبات المرسلة لصيدليتك تظهر في قائمة طلبات العملاء.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun RadarHero(closestDistance: Double?) {
+    val d = MaterialTheme.dimens
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -314,28 +343,34 @@ private fun RadarHero(closestDistance: Double?) {
         ) {
             RadarPulseEffect()
             if (closestDistance != null) {
-                BadgeChip(
-                    text = stringResource(R.string.pharmacy_dashboard_badge_distance, closestDistance),
-                    modifier = Modifier.offset(x = (-82).dp, y = 94.dp),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                )
+                Surface(
+                    modifier = Modifier.offset(x = (-90).dp, y = (-90).dp),
+                    shape = RoundedCornerShape(d.radiusL),
+                    color = MaterialTheme.colorScheme.primary,
+                    shadowElevation = 4.dp
+                ) {
+                    Text(
+                        text = stringResource(R.string.pharmacy_dashboard_badge_distance, closestDistance),
+                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = 6.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
-            Card(
-                shape = RoundedCornerShape(26.dp),
-                modifier = Modifier
-                    .size(136.dp)
-                    .shadow(12.dp, RoundedCornerShape(26.dp)),
+            Surface(
+                shape = RoundedCornerShape(d.radiusXXL),
+                modifier = Modifier.size(136.dp),
+                shadowElevation = 8.dp,
+                color = Color.White,
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(106.dp)
+                            .size(100.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary),
                         contentAlignment = Alignment.Center,
@@ -343,7 +378,7 @@ private fun RadarHero(closestDistance: Double?) {
                         Icon(
                             imageVector = Icons.Default.LocalPharmacy,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = Color.White,
                             modifier = Modifier.size(48.dp),
                         )
                     }
@@ -384,7 +419,7 @@ private fun RadarPulseEffect() {
         label = "Pulse3",
     )
 
-    listOf(pulse1, pulse2, pulse3).forEach { pulse ->
+        listOf(pulse1, pulse2, pulse3).forEach { pulse ->
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -393,7 +428,7 @@ private fun RadarPulseEffect() {
                     scaleY = pulse.value
                     alpha = 1f - (pulse.value - 1f) / 1.5f
                 }
-                .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape),
+                .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f), CircleShape),
         )
     }
 }
@@ -426,39 +461,31 @@ private fun RadarOrderItem(
     order: NearbyOrderDto,
     onClick: (() -> Unit)?,
 ) {
-    if (onClick == null) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 3.dp,
-        ) {
-            RadarOrderItemContent(order = order)
-        }
-    } else {
-        Surface(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 3.dp,
-        ) {
-            RadarOrderItemContent(order = order)
-        }
+    val d = MaterialTheme.dimens
+    Surface(
+        onClick = onClick ?: {},
+        enabled = onClick != null,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 3.dp,
+    ) {
+        RadarOrderItemContent(order = order)
     }
 }
 
 @Composable
 private fun RadarOrderItemContent(order: NearbyOrderDto) {
+    val d = MaterialTheme.dimens
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(14.dp),
+            .padding(d.spaceM),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(d.spaceM),
     ) {
         Surface(
-            modifier = Modifier.size(58.dp),
+            modifier = Modifier.size(56.dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primaryContainer,
         ) {
@@ -478,40 +505,31 @@ private fun RadarOrderItemContent(order: NearbyOrderDto) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = order.userName.orEmpty(),
+                text = order.medicineName ?: "طلب عام",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = order.medicineName.orEmpty(),
-                style = MaterialTheme.typography.bodyLarge,
+                text = order.userName.orEmpty(),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-            ) {
-                Text(
-                    text = stringResource(R.string.pharmacy_dashboard_distance_badge, order.distanceKm ?: 0.0),
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.ArrowBackIosNew,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
+        Surface(
+            shape = RoundedCornerShape(d.radiusM),
+            color = MaterialTheme.colorScheme.primaryContainer,
+        ) {
+            Text(
+                text = stringResource(R.string.pharmacy_dashboard_distance_badge, order.distanceKm ?: 0.0),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
             )
         }
     }

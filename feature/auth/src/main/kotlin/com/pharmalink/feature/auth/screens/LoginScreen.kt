@@ -1,5 +1,6 @@
 package com.pharmalink.feature.auth.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,14 +10,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Fingerprint
-import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.VerifiedUser
@@ -25,11 +27,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -54,6 +56,7 @@ fun LoginScreen(
     onPhoneNumberChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
+    onBiometricClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onSignUpClick: () -> Unit,
     onGuestClick: (() -> Unit)? = null,
@@ -61,7 +64,6 @@ fun LoginScreen(
 ) {
     val d = MaterialTheme.dimens
     val scroll = rememberScrollState()
-    // Real-time validation errors (independent of errorMessage)
     val phoneEmpty = uiState.phoneNumber.isBlank()
     val passEmpty = uiState.password.isBlank()
 
@@ -79,51 +81,58 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(d.spaceL))
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Decorative Circle
                 Surface(
-                    shape = RoundedCornerShape(d.radiusL),
-                    shadowElevation = 6.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                ) {
-                    Icon(
-                        painter = painterResource(id = DsR.drawable.sydaliti_logo_full),
+                    modifier = Modifier
+                        .size(140.dp)
+                        .offset(x = 60.dp, y = (-30).dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                ) {}
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(
+                        painter = painterResource(id = DsR.drawable.ic_app_logo),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .padding(d.spaceL)
-                            .size(40.dp),
+                        modifier = Modifier.size(110.dp),
+                    )
+                    Spacer(Modifier.height(d.spaceM))
+                    Text(
+                        text = stringResource(R.string.auth_brand_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
                     )
                 }
-                Spacer(Modifier.height(d.spaceM))
-                Text(
-                    text = stringResource(R.string.auth_brand_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    text = stringResource(R.string.auth_tagline),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(d.spaceL))
-                Text(
-                    text = stringResource(R.string.auth_welcome_back),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(d.spaceXS))
-                Text(
-                    text = stringResource(R.string.auth_login_subtitle),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
             }
+
+            Text(
+                text = stringResource(R.string.auth_tagline),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(d.spaceL))
+            Text(
+                text = stringResource(R.string.auth_welcome_back),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(d.spaceXS))
+            Text(
+                text = stringResource(R.string.auth_login_subtitle),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
 
             Spacer(Modifier.height(d.spaceXXL))
 
@@ -197,7 +206,7 @@ fun LoginScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(onClick = onGuestClick)
+                                .clickable(onClick = onBiometricClick)
                                 .padding(vertical = d.spaceS),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically,
@@ -314,4 +323,3 @@ private fun TrustMiniTile(
         }
     }
 }
-

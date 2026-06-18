@@ -125,6 +125,7 @@ fun PharmaNavHost(
                 onPhoneNumberChange = loginViewModel::updatePhoneNumber,
                 onPasswordChange = loginViewModel::updatePassword,
                 onLoginClick = loginViewModel::login,
+                onBiometricClick = loginViewModel::loginWithBiometrics,
                 onForgotPasswordClick = {
                     navController.navigate(AppDestination.ForgotPassword.route) {
                         launchSingleTop = true
@@ -199,6 +200,7 @@ fun PharmaNavHost(
                 onPhoneNumberChange = signUpViewModel::updatePhoneNumber,
                 onPasswordChange = signUpViewModel::updatePassword,
                 onConfirmPasswordChange = signUpViewModel::updateConfirmPassword,
+                onAgreedToTermsChange = signUpViewModel::updateAgreedToTerms,
                 onSignUpClick = signUpViewModel::signUp,
                 onLoginClick = { navController.popBackStack() },
             )

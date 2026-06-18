@@ -19,6 +19,8 @@ import kotlinx.coroutines.launch
 data class MyCustomerOrdersUiState(
     val screenState: ScreenState<List<CustomerOrderListItemUi>> = ScreenState.Loading,
     val isRefreshing: Boolean = false,
+    val selectedFilter: String = "الكل",
+    val allOrders: List<CustomerOrderListItemUi> = emptyList(),
 )
 
 @HiltViewModel
@@ -73,10 +75,11 @@ class MyCustomerOrdersViewModel @Inject constructor(
 
                     _uiState.update {
                         it.copy(
+                            allOrders = visibleOrders,
                             screenState = if (visibleOrders.isEmpty()) {
                                 ScreenState.Empty
                             } else {
-                                ScreenState.Success(visibleOrders)
+                                ScreenState.Success(applyOrderFilter(visibleOrders, it.selectedFilter))
                             },
                             isRefreshing = false,
                         )
@@ -91,6 +94,25 @@ class MyCustomerOrdersViewModel @Inject constructor(
                     }
                 },
             )
+        }
+    }
+
+    fun onFilterSelected(filter: String) {
+        _uiState.update { 
+            it.copy(
+                selectedFilter = filter,
+                screenState = if (it.allOrders.isEmpty()) ScreenState.Empty else ScreenState.Success(applyOrderFilter(it.allOrders, filter))
+            )
+        }
+    }
+
+    private fun applyOrderFilter(orders: List<CustomerOrderListItemUi>, filter: String): List<CustomerOrderListItemUi> {
+        return when (filter) {
+            "الكل" -> orders
+            "قيد المراجعة" -> orders.filter { it.status == com.pharmalink.domain.model.OrderStatus.PENDING }
+            "مؤكد" -> orders.filter { it.status == com.pharmalink.domain.model.OrderStatus.CONFIRMED }
+            "مسلم" -> orders.filter { it.status == com.pharmalink.domain.model.OrderStatus.DELIVERED }
+            else -> orders
         }
     }
 

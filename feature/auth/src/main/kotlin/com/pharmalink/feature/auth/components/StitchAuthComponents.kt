@@ -58,6 +58,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import com.pharmalink.feature.auth.R
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AccountType
@@ -93,10 +98,21 @@ fun StitchAmbientBackground(modifier: Modifier = Modifier) {
 internal fun nationalDigitsFromStoredPhone(full: String): String {
     val d = full.filter { it.isDigit() }
     return when {
-        d.startsWith("963") && d.length > 3 -> d.drop(3).take(9)
-        d.length == 10 && d[0] == '0' && d[1] == '9' -> d.drop(1).take(9)
-        d.length == 9 && d[0] == '9' -> d
-        else -> d.take(9)
+        d.startsWith("963") && d.length > 3 -> d.drop(3)
+        d.length == 10 && d[0] == '0' && d[1] == '9' -> d.drop(1)
+        else -> d
+    }
+}
+
+private fun formatNational(digits: String): String {
+    val d = digits.filter { it.isDigit() }
+    return buildString {
+        d.forEachIndexed { index, c ->
+            append(c)
+            if ((index == 2 || index == 5) && index < d.length - 1) {
+                append(" ")
+            }
+        }
     }
 }
 
@@ -168,9 +184,10 @@ fun StitchPhoneRow(
                     )
                     Spacer(Modifier.width(d.spaceS))
                     BasicTextField(
-                        value = national,
+                        value = formatNational(national),
                         onValueChange = { typed ->
-                            val next = mergeSyrianE164(typed)
+                            val clean = typed.filter { it.isDigit() }.take(9)
+                            val next = mergeSyrianE164(clean)
                             onFullPhoneNumberChange(next)
                         },
                         textStyle = MaterialTheme.typography.bodyLarge.copy(
@@ -351,6 +368,108 @@ fun StitchGradientPrimaryButton(
 }
 
 @Composable
+fun PasswordStrengthMeter(
+    password: String,
+    modifier: Modifier = Modifier,
+) {
+    if (password.isEmpty()) return
+    val d = MaterialTheme.dimens
+    
+    val strength = remember(password) {
+        var score = 0
+        if (password.length >= 8) score++
+        if (password.any { it.isUpperCase() }) score++
+        if (password.any { it.isDigit() }) score++
+        if (password.any { !it.isLetterOrDigit() }) score++
+        score
+    }
+    
+    val (label, color) = when {
+        strength <= 1 -> "ضعيفة" to Color(0xFFEF4444)
+        strength <= 2 -> "متوسطة" to Color(0xFFF59E0B)
+        else -> "قوية" to Color(0xFF10B981)
+    }
+    
+    Column(modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "قوة كلمة المرور",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            repeat(4) { index ->
+                val segmentColor = if (index < strength) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(segmentColor)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TermsAndConditionsRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    Row(
+        modifier = modifier.fillMaxWidth().clickable { onCheckedChange(!checked) },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(d.spaceS)
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = CheckboxDefaults.colors(
+                checkedColor = MaterialTheme.colorScheme.primary,
+                uncheckedColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.size(24.dp)
+        )
+        
+        val text = buildAnnotatedString {
+            append("أوافق على ")
+            withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+                append("سياسة الخصوصية")
+            }
+            append(" و ")
+            withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+                append("شروط الاستخدام")
+            }
+            append(" الخاصة بـ PharmaNet")
+        }
+        
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 fun StitchOrDivider(modifier: Modifier = Modifier) {
     val d = MaterialTheme.dimens
     Row(
@@ -446,68 +565,71 @@ private fun StitchAccountTypeCard(
     onClick: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
-    val shape = RoundedCornerShape(24.dp)
+    val shape = RoundedCornerShape(d.radiusL)
     val borderColor = if (selected) {
-        Color(0xFF00796B)
+        MaterialTheme.colorScheme.primary
     } else {
-        Color.Transparent
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
     }
+    
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(88.dp)
-            .border(2.dp, borderColor, shape)
+            .height(72.dp)
             .clickable(onClick = onClick),
         shape = shape,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp,
+        color = containerColor,
+        border = androidx.compose.foundation.BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
+        tonalElevation = if (selected) 2.dp else 0.dp,
     ) {
-        Box(Modifier.fillMaxSize()) {
-            if (selected) {
-                Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(0.dp),
-                    shape = RoundedCornerShape(bottomStart = d.radiusS),
-                    color = MaterialTheme.colorScheme.primary,
-                ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = d.spaceL),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        Icons.Outlined.Check,
+                        imageVector = icon,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier
-                            .padding(d.spaceXS)
-                            .size(18.dp),
+                        tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(d.spaceM),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
+            
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            
+            if (selected) {
                 Icon(
-                    imageVector = icon,
+                    imageVector = Icons.Outlined.Check,
                     contentDescription = null,
-                    tint = if (selected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.outline
-                    },
-                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
                 )
-                Spacer(Modifier.height(d.spaceXS))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (selected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
                 )
             }
         }

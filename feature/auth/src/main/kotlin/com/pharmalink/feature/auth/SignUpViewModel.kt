@@ -44,6 +44,7 @@ data class SignUpUiState(
     val locationMessage: String? = null,
     val locationMessageIsError: Boolean = false,
     val locationSettingsAction: SignUpLocationSettingsAction? = null,
+    val agreedToTerms: Boolean = false,
 )
 
 enum class SignUpLocationSettingsAction {
@@ -80,6 +81,10 @@ class SignUpViewModel @Inject constructor(
 
     fun updateFullName(value: String) {
         _uiState.update { it.copy(fullName = value) }
+    }
+
+    fun updateAgreedToTerms(value: Boolean) {
+        _uiState.update { it.copy(agreedToTerms = value) }
     }
 
     fun updateAccountType(value: AccountType) {

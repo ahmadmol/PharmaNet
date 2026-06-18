@@ -38,7 +38,48 @@ import com.pharmalink.core.common.ui.ScreenState
 import com.pharmalink.designsystem.components.PharmaButton
 import com.pharmalink.designsystem.components.PharmaButtonStyle
 import com.pharmalink.designsystem.theme.ClinicalCanvas
+import com.pharmalink.designsystem.theme.PharmaBlue50
+import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaNeutral400
+import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral900
+import com.pharmalink.designsystem.theme.PharmaBlue100
+import com.pharmalink.designsystem.theme.PremiumPrimary
+import com.pharmalink.designsystem.theme.PremiumSecondary
+import com.pharmalink.designsystem.theme.PremiumAccent
+import com.pharmalink.designsystem.theme.PremiumUrgent
+import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.designsystem.R as DsR
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.IconButton
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.outlined.Inventory2
 import com.pharmalink.domain.model.OrderStatus
 
 @Composable
@@ -51,6 +92,7 @@ fun MyCustomerOrdersScreen(
     viewModel: MyCustomerOrdersViewModel = hiltViewModel(),
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    val d = MaterialTheme.dimens
 
     LaunchedEffect(refreshRequested) {
         if (!refreshRequested) return@LaunchedEffect
@@ -58,101 +100,151 @@ fun MyCustomerOrdersScreen(
         onRefreshHandled()
     }
 
-    MyCustomerOrdersContent(
-        uiState = uiState,
-        onBackClick = onBackClick,
-        onStartSearchClick = onStartSearchClick,
-        onRetryClick = viewModel::refreshOrders,
-        onOpenOrderDetail = onOpenOrderDetail,
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MyCustomerOrdersContent(
-    uiState: MyCustomerOrdersUiState,
-    onBackClick: () -> Unit,
-    onStartSearchClick: () -> Unit,
-    onRetryClick: () -> Unit,
-    onOpenOrderDetail: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val d = MaterialTheme.dimens
-
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Scaffold(
-            modifier = modifier,
             containerColor = ClinicalCanvas,
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = stringResource(R.string.my_customer_orders_title),
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.customer_order_back),
-                            )
-                        }
-                    },
-                )
-            },
         ) { innerPadding ->
-            when (val screenState = uiState.screenState) {
-                ScreenState.Loading -> {
-                    LoadingState(modifier = Modifier.padding(innerPadding))
-                }
-                ScreenState.Empty -> {
-                    EmptyState(
-                        onStartSearchClick = onStartSearchClick,
-                        modifier = Modifier.padding(innerPadding),
-                    )
-                }
-                is ScreenState.Error -> {
-                    ErrorState(
-                        message = screenState.message ?: stringResource(R.string.order_error_loading_failed),
-                        onRetryClick = onRetryClick,
-                        title = stringResource(R.string.my_customer_orders_error_title),
-                        modifier = Modifier.padding(innerPadding),
-                    )
-                }
-                is ScreenState.Success -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        contentPadding = PaddingValues(d.spaceL),
-                        verticalArrangement = Arrangement.spacedBy(d.spaceL),
-                    ) {
-                        if (uiState.isRefreshing) {
-                            item {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center,
-                                ) {
-                                    CircularProgressIndicator()
-                                }
-                            }
-                        }
-                        items(screenState.data, key = { it.id }) { order ->
-                            CustomerOrderListCard(
-                                order = order,
-                                onAction = { onOpenOrderDetail(order.id) },
-                            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = d.spaceL)
+            ) {
+                OrdersHeader()
+                
+                Text(
+                    text = "طلباتي",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = PharmaNeutral900
+                )
+                Text(
+                    text = "تتبع وإدارة طلبات الأدوية الخاصة بك",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PharmaNeutral600
+                )
+                
+                Spacer(modifier = Modifier.height(d.spaceM))
+                
+                OrdersFilterTabs(
+                    selectedTab = uiState.selectedFilter,
+                    onTabSelected = viewModel::onFilterSelected
+                )
+                
+                Spacer(modifier = Modifier.height(d.spaceM))
+
+                when (val screenState = uiState.screenState) {
+                    ScreenState.Loading -> {
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = PremiumPrimary)
                         }
                     }
+                    ScreenState.Empty -> {
+                        EmptyState(
+                            onStartSearchClick = onStartSearchClick,
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                        )
+                    }
+                    is ScreenState.Error -> {
+                        ErrorState(
+                            message = screenState.message ?: stringResource(R.string.order_error_loading_failed),
+                            onRetryClick = viewModel::refreshOrders,
+                            title = stringResource(R.string.my_customer_orders_error_title),
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                        )
+                    }
+                    is ScreenState.Success -> {
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(vertical = d.spaceM),
+                            verticalArrangement = Arrangement.spacedBy(d.spaceM),
+                        ) {
+                            items(screenState.data, key = { it.id }) { order ->
+                                CustomerOrderListCard(
+                                    order = order,
+                                    onAction = { onOpenOrderDetail(order.id) },
+                                )
+                            }
+                        }
+                    }
+                    is ScreenState.Offline -> {
+                        ErrorState(
+                            message = stringResource(R.string.error_network),
+                            onRetryClick = viewModel::refreshOrders,
+                            title = stringResource(R.string.my_customer_orders_error_title),
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                        )
+                    }
                 }
-                is ScreenState.Offline -> {
-                    ErrorState(
-                        message = stringResource(R.string.error_network),
-                        onRetryClick = onRetryClick,
-                        title = stringResource(R.string.my_customer_orders_error_title),
-                        modifier = Modifier.padding(innerPadding),
-                    )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OrdersHeader() {
+    val d = MaterialTheme.dimens
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = d.spaceM),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = CircleShape,
+            color = PharmaNeutral100,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.padding(8.dp),
+                tint = PharmaNeutral600
+            )
+        }
+
+        Text(
+            text = "PharmaNet",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = PremiumPrimary,
+        )
+
+        IconButton(onClick = { /* No-op per Rule 9 */ }) {
+            Icon(
+                painter = painterResource(id = DsR.drawable.ic_app_logo),
+                contentDescription = null,
+                modifier = Modifier.size(d.iconM),
+                tint = Color.Unspecified
+            )
+        }
+    }
+}
+
+@Composable
+private fun OrdersFilterTabs(
+    selectedTab: String,
+    onTabSelected: (String) -> Unit,
+) {
+    val d = MaterialTheme.dimens
+    val tabs = listOf("الكل", "قيد المراجعة", "مؤكد", "مسلم")
+
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(d.spaceXL)) {
+        items(tabs) { tab ->
+            Column(
+                modifier = Modifier.clickable { onTabSelected(tab) },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = tab,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (tab == selectedTab) FontWeight.Bold else FontWeight.Normal,
+                    color = if (tab == selectedTab) PremiumPrimary else PharmaNeutral600
+                )
+                if (tab == selectedTab) {
+                    Box(modifier = Modifier.width(20.dp).height(2.dp).background(PremiumPrimary, CircleShape))
                 }
             }
         }
@@ -169,89 +261,107 @@ private fun CustomerOrderListCard(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(d.radiusXL),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = d.cardElevation,
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, PharmaNeutral100)
     ) {
         Column(
             modifier = Modifier.padding(d.spaceL),
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+                // Icon Placeholder
+                Surface(
+                    shape = CircleShape,
+                    color = PharmaBlue50,
+                    modifier = Modifier.size(48.dp)
                 ) {
-                    CustomerOrderStatusChip(status = order.status, label = order.statusLabel)
-                    Text(
-                        text = order.medicineName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(d.spaceXS),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Outlined.LocalPharmacy,
+                            imageVector = Icons.Outlined.Inventory2,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                        Text(
-                            text = order.pharmacyName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = PremiumPrimary,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
-                Text(
-                    text = order.createdAtLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.End,
-                )
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = statusContainerColor(order.status).copy(alpha = 0.1f),
+                            contentColor = statusContainerColor(order.status)
+                        ) {
+                            Text(
+                                text = order.statusLabel,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        Text(
+                            text = order.createdAtLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = PharmaNeutral400
+                        )
+                    }
+                    
+                    Text(
+                        text = "${order.medicineName} (${order.quantity} عبوة)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PharmaNeutral900,
+                    )
+                    Text(
+                        text = order.pharmacyName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PharmaNeutral600,
+                    )
+                }
             }
 
-            OrderInfoRow(
-                label = stringResource(R.string.customer_order_detail_quantity_label),
-                value = stringResource(R.string.customer_order_quantity_value, order.quantity, order.unit),
-            )
-            OrderInfoRow(
-                label = stringResource(R.string.customer_order_request_type_title),
-                value = order.urgencyLabel,
-            )
-            OrderInfoRow(
-                label = stringResource(R.string.customer_order_request_scope_title),
-                value = order.requestScopeLabel,
-            )
-            OrderInfoRow(
-                label = stringResource(R.string.customer_order_detail_fulfillment_label),
-                value = order.fulfillmentLabel,
-            )
-            OrderInfoRow(
-                label = stringResource(R.string.customer_order_detail_status_label),
-                value = order.statusSupportingText,
-            )
-            OrderInfoRow(
-                label = if (order.totalPriceLabel == null) {
-                    stringResource(R.string.customer_order_pending_price_label)
-                } else {
-                    stringResource(R.string.customer_order_confirmed_price_label)
-                },
-                value = order.totalPriceLabel ?: stringResource(R.string.customer_order_pending_price_value),
-            )
-
-            PharmaButton(
-                text = stringResource(R.string.customer_order_view_details_action),
+            Button(
                 onClick = onAction,
-                style = PharmaButtonStyle.Outlined,
-            )
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(d.radiusL),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = PremiumPrimary
+                ),
+                border = BorderStroke(1.dp, PharmaNeutral100)
+            ) {
+                Text(
+                    text = "عرض التفاصيل",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun statusContainerColor(status: com.pharmalink.domain.model.OrderStatus) = when (status) {
+    com.pharmalink.domain.model.OrderStatus.PENDING -> PremiumAccent
+    com.pharmalink.domain.model.OrderStatus.CONFIRMED -> PremiumSecondary
+    com.pharmalink.domain.model.OrderStatus.DELIVERED -> PharmaSuccess
+    com.pharmalink.domain.model.OrderStatus.CANCELLED,
+    com.pharmalink.domain.model.OrderStatus.REJECTED -> PremiumUrgent
+    else -> PremiumPrimary
 }
 
 @Composable

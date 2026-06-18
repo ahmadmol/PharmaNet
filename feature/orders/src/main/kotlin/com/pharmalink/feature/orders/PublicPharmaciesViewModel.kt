@@ -82,7 +82,9 @@ class PublicPharmaciesViewModel @Inject constructor(
             PublicPharmacyFilter.AVAILABLE -> currentState.pharmacies.filter {
                 it.availabilityStatus == PublicPharmacyAvailabilityStatus.AVAILABLE
             }
-            PublicPharmacyFilter.NEARBY -> currentState.pharmacies // No real distance filtering yet
+            PublicPharmacyFilter.NEARBY -> currentState.pharmacies.sortedBy { 
+                it.distanceLabel?.filter { char -> char.isDigit() }?.toIntOrNull() ?: Int.MAX_VALUE 
+            }
         }
         _uiState.update { it.copy(visiblePharmacies = filtered) }
     }
