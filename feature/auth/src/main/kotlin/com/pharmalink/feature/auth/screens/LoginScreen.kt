@@ -80,38 +80,6 @@ fun LoginScreen(
                 .padding(vertical = d.spaceXL),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.height(d.spaceL))
-            
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                // Decorative Circle
-                Surface(
-                    modifier = Modifier
-                        .size(140.dp)
-                        .offset(x = 60.dp, y = (-30).dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
-                ) {}
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = DsR.drawable.ic_app_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(110.dp),
-                    )
-                    Spacer(Modifier.height(d.spaceM))
-                    Text(
-                        text = stringResource(R.string.auth_brand_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
-
             Text(
                 text = stringResource(R.string.auth_tagline),
                 style = MaterialTheme.typography.bodyMedium,

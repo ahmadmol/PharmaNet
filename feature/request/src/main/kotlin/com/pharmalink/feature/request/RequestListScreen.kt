@@ -1,74 +1,80 @@
 package com.pharmalink.feature.request
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ListAlt
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.pharmalink.designsystem.theme.dimens
-import com.pharmalink.domain.model.AccountType
-import com.pharmalink.domain.model.Request
-import com.pharmalink.feature.request.R
-import com.pharmalink.domain.model.RequestStatus
-import com.pharmalink.domain.model.RequestPriority
-import androidx.compose.material.icons.filled.FlashOn
-import com.pharmalink.designsystem.theme.PharmaNeutral600
-import com.pharmalink.designsystem.theme.PharmaNeutral100
-import com.pharmalink.designsystem.theme.PremiumUrgent
-import androidx.compose.material.icons.filled.ListAlt
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.LightGray
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.remember
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Phone
-import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.pharmalink.designsystem.theme.PharmaBlue50
+import com.pharmalink.designsystem.theme.PharmaBlue500
+import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaNeutral400
+import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral900
+import com.pharmalink.designsystem.theme.PharmaSuccess
+import com.pharmalink.designsystem.theme.PremiumUrgent
+import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.domain.model.AccountType
+import com.pharmalink.domain.model.Request
 import com.pharmalink.domain.model.RequestItem
-
+import com.pharmalink.domain.model.RequestPriority
+import com.pharmalink.domain.model.RequestStatus
 
 @Composable
 fun RequestListScreen(
@@ -77,6 +83,24 @@ fun RequestListScreen(
     viewModel: RequestListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    RequestListContent(
+        uiState = uiState,
+        onNavigateToCreateRequest = onNavigateToCreateRequest,
+        onNavigateToRequestDetails = onNavigateToRequestDetails,
+        onRefresh = viewModel::refreshRequests,
+        onFilterByStatus = viewModel::filterByStatus
+    )
+}
+
+@Composable
+private fun RequestListContent(
+    uiState: RequestListUiState,
+    onNavigateToCreateRequest: () -> Unit,
+    onNavigateToRequestDetails: (String) -> Unit,
+    onRefresh: () -> Unit,
+    onFilterByStatus: (RequestStatus?) -> Unit
+) {
     val isPharmacyUser = uiState.accountType == AccountType.PHARMACY
     val d = MaterialTheme.dimens
     val headerTitle = if (uiState.accountType == AccountType.WAREHOUSE) {
@@ -85,163 +109,171 @@ fun RequestListScreen(
         stringResource(R.string.request_list_title)
     }
 
-    LaunchedEffect(uiState.errorMessage) {
-        // Handle error display if needed
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(MaterialTheme.dimens.spaceM)
+            .background(Color.White)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = headerTitle,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            if (isPharmacyUser) {
-                Surface(
-                    onClick = onNavigateToCreateRequest,
-                    shape = RoundedCornerShape(d.radiusM),
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White,
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.ListAlt, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Text(text = "طلب جديد", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(MaterialTheme.dimens.spaceM))
-
-        // Status Filter
-        RequestStatusFilter(
-            selectedStatus = uiState.selectedStatus,
-            onStatusSelected = viewModel::filterByStatus
-        )
-
-        Spacer(modifier = Modifier.height(MaterialTheme.dimens.spaceM))
-
-        // Error State
-        uiState.errorMessage?.let { error ->
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+        // Top Brand Header
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = d.spaceM, vertical = d.spaceS),
+                contentAlignment = Alignment.Center
             ) {
+                IconButton(
+                    onClick = { /* Handle back or internal navigation */ },
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        tint = PharmaBlue500
+                    )
+                }
                 Text(
-                    text = error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
+                    text = "فارمانيت",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = PharmaBlue500
                 )
-                
-                Spacer(modifier = Modifier.height(MaterialTheme.dimens.spaceM))
-                
-                Button(
-                    onClick = { viewModel.refreshRequests() }
-                ) {
-                    Text(stringResource(R.string.request_retry_loading))
-                }
             }
+            HorizontalDivider(color = PharmaNeutral100, thickness = 1.dp)
         }
-        
-        // Content
-        when {
-            uiState.isLoading && uiState.requests.isEmpty() -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
-                    modifier = Modifier.fillMaxSize()
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = d.spaceXL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM)
+        ) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = d.spaceL, vertical = d.spaceM),
+                    verticalArrangement = Arrangement.spacedBy(d.spaceM)
                 ) {
-                    items(5) { // Show 5 shimmer items
-                        RequestItemCardPlaceholder()
-                    }
+                    Text(
+                        text = headerTitle,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = PharmaNeutral900,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start
+                    )
+
+                    // Status Filter
+                    RequestStatusFilter(
+                        selectedStatus = uiState.selectedStatus,
+                        onStatusSelected = onFilterByStatus
+                    )
                 }
             }
-            
-            uiState.requests.isEmpty() && !uiState.isLoading && uiState.errorMessage == null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+
+            // Error State
+            uiState.errorMessage?.let { error ->
+                item {
                     Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(d.spaceXL),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS)
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        androidx.compose.material3.Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = stringResource(R.string.request_list_empty),
-                            modifier = Modifier.size(72.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                         Text(
-                            text = stringResource(R.string.request_list_empty),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = if (isPharmacyUser) {
-                                stringResource(R.string.request_empty_subtitle)
-                            } else {
-                                stringResource(R.string.request_empty_incoming_subtitle)
-                            },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
                             textAlign = TextAlign.Center
                         )
-
-                        if (isPharmacyUser) {
-                            Spacer(modifier = Modifier.height(MaterialTheme.dimens.spaceM))
-
-                            Button(
-                                onClick = { onNavigateToCreateRequest() }
-                            ) {
-                                Text(stringResource(R.string.request_create_first))
-                            }
+                        Spacer(modifier = Modifier.height(d.spaceM))
+                        Button(onClick = onRefresh) {
+                            Text(stringResource(R.string.request_retry_loading))
                         }
                     }
                 }
             }
-            
-            else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS)
-                ) {
-                    // Loading indicator at top when refreshing
+
+            // Content
+            when {
+                uiState.isLoading && uiState.requests.isEmpty() -> {
+                    items(5) {
+                        Box(modifier = Modifier.padding(horizontal = d.spaceL)) {
+                            RequestItemCardPlaceholder()
+                        }
+                    }
+                }
+
+                uiState.requests.isEmpty() && !uiState.isLoading && uiState.errorMessage == null -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillParentMaxHeight(0.7f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(d.spaceS),
+                                modifier = Modifier.padding(d.spaceL)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Outlined.ListAlt,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(72.dp),
+                                    tint = PharmaNeutral400
+                                )
+                                Text(
+                                    text = stringResource(R.string.request_list_empty),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PharmaNeutral900
+                                )
+                                Text(
+                                    text = if (isPharmacyUser) {
+                                        stringResource(R.string.request_empty_subtitle)
+                                    } else {
+                                        stringResource(R.string.request_empty_incoming_subtitle)
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = PharmaNeutral600,
+                                    textAlign = TextAlign.Center
+                                )
+
+                                if (isPharmacyUser) {
+                                    Spacer(modifier = Modifier.height(d.spaceM))
+                                    Button(onClick = onNavigateToCreateRequest) {
+                                        Text(stringResource(R.string.request_create_first))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                else -> {
                     if (uiState.isLoading && uiState.requests.isNotEmpty()) {
                         item {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(MaterialTheme.dimens.spaceM),
+                                    .padding(d.spaceM),
                                 contentAlignment = Alignment.Center
                             ) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp))
                             }
                         }
                     }
-                    
-                    items(uiState.requests) { request ->
-                        RequestItemCard(
-                            request = request,
-                            accountType = uiState.accountType,
-                            onClick = { onNavigateToRequestDetails(request.id) }
-                        )
+
+                    items(uiState.requests, key = { it.id }) { request ->
+                        Box(modifier = Modifier.padding(horizontal = d.spaceL)) {
+                            RequestItemCard(
+                                request = request,
+                                accountType = uiState.accountType,
+                                onClick = { onNavigateToRequestDetails(request.id) }
+                            )
+                        }
                     }
                 }
             }
@@ -268,7 +300,7 @@ private fun RequestStatusFilter(
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = MaterialTheme.dimens.spaceXS),
+        contentPadding = PaddingValues(horizontal = MaterialTheme.dimens.spaceXS),
     ) {
         items(statuses, key = { it.first?.name ?: "ALL" }) { (status, label) ->
             FilterChip(
@@ -286,25 +318,28 @@ private fun FilterChip(
     label: String,
     onClick: () -> Unit
 ) {
-    Card(
+    Surface(
         onClick = onClick,
         modifier = Modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
-        )
+        shape = CircleShape,
+        color = if (selected) {
+            PharmaBlue500.copy(alpha = 0.1f)
+        } else {
+            PharmaNeutral100.copy(alpha = 0.5f)
+        },
+        border = if (selected) {
+            BorderStroke(1.dp, PharmaBlue500.copy(alpha = 0.2f))
+        } else null
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             color = if (selected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
+                PharmaBlue500
             } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
+                PharmaNeutral600
             }
         )
     }
@@ -318,135 +353,135 @@ private fun RequestItemCard(
 ) {
     val d = MaterialTheme.dimens
     val basketItems = request.displayItems()
+    val isWarehouse = accountType == AccountType.WAREHOUSE
 
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(d.radiusXXL),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = d.cardElevation
+        color = Color.White,
+        shadowElevation = 0.5.dp,
+        border = BorderStroke(1.dp, PharmaNeutral100)
     ) {
         Column(
             modifier = Modifier.padding(d.spaceL),
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
+            // Pharmacy Name and Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = "طلب #${request.id.takeLast(5)}",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = PharmaNeutral600,
-                )
                 StatusPill(status = request.status)
+                Text(
+                    text = if (isWarehouse) request.pharmacyName.ifBlank { "صيدلية" } else request.warehouseName.ifBlank { "مستودع" },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = PharmaNeutral900,
+                )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = request.primaryPartyName(accountType),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${basketItems.size} أصناف",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = "•",
-                        color = PharmaNeutral100,
-                    )
-                    Text(
-                        text = request.updatedAtLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            // Contact Info
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isWarehouse) {
+                    ContactRow(icon = Icons.Outlined.Phone, text = request.pharmacyPhone.ifBlank { "غير متوفر" })
+                    ContactRow(icon = Icons.Outlined.LocationOn, text = request.pharmacyLocation.ifBlank { "غير متوفر" })
                 }
             }
 
+            // Basket Preview Box
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(d.radiusL),
+                color = PharmaBlue50.copy(alpha = 0.5f),
+            ) {
+                Column(
+                    modifier = Modifier.padding(d.spaceM),
+                    verticalArrangement = Arrangement.spacedBy(d.spaceS),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = "عناصر السلة: ${basketItems.size}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = PharmaBlue500,
+                        textAlign = TextAlign.End
+                    )
+                    
+                    basketItems.firstOrNull()?.let { firstItem ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${firstItem.medicineName} - ${firstItem.quantity} ${firstItem.unit}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = PharmaNeutral900,
+                                textAlign = TextAlign.End
+                            )
+                            Spacer(Modifier.width(d.spaceXS))
+                            Icon(
+                                imageVector = Icons.Outlined.Inventory2,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = PharmaBlue500
+                            )
+                        }
+                    }
+                    
+                    if (basketItems.size > 1) {
+                        Text(
+                            text = "+${basketItems.size - 1} عناصر أخرى",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = PharmaBlue500,
+                            textDecoration = TextDecoration.Underline,
+                            textAlign = TextAlign.End
+                        )
+                    }
+                }
+            }
+
+            // Bottom Actions (Price & Priority)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PriceStatePill(request = request)
+                if (request.priority == RequestPriority.URGENT) {
+                    UrgentPill()
+                } else {
+                    Spacer(Modifier.width(1.dp))
+                }
                 
-                Text(
-                    text = "عرض التفاصيل >",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                PriceStatePill(request = request)
             }
         }
     }
 }
 
 @Composable
-private fun RequesterIdentityPreview(request: Request) {
-    val d = MaterialTheme.dimens
-    val details = listOfNotNull(
-        request.pharmacyPhone.takeIf { it.isNotBlank() }?.let {
-            Icons.Outlined.Phone to it
-        },
-        request.pharmacyLocation.takeIf { it.isNotBlank() }?.let {
-            Icons.Outlined.LocationOn to it
-        },
-    )
-
-    details.forEach { (icon, value) ->
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(d.spaceXS),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun IncomingBasketPreviewRow(item: RequestItem) {
+private fun ContactRow(icon: ImageVector, text: String) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceXS)
     ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = PharmaNeutral600
+        )
         Icon(
-            imageVector = Icons.Outlined.Inventory2,
+            imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(16.dp),
-        )
-        Text(
-            text = item.medicineName,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = "${item.quantity} ${item.unit}",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(14.dp),
+            tint = PharmaNeutral400
         )
     }
 }
@@ -455,12 +490,12 @@ private fun IncomingBasketPreviewRow(item: RequestItem) {
 private fun StatusPill(status: RequestStatus) {
     Surface(
         shape = CircleShape,
-        color = statusContainerColor(status),
+        color = statusContainerColor(status).copy(alpha = 0.12f),
         contentColor = statusContentColor(status),
     ) {
         Text(
             text = statusLabel(status),
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
         )
@@ -471,61 +506,51 @@ private fun StatusPill(status: RequestStatus) {
 private fun PriceStatePill(request: Request) {
     val isPriced = request.totalPrice > 0.0
     Surface(
-        shape = CircleShape,
+        shape = RoundedCornerShape(MaterialTheme.dimens.radiusM),
         color = if (isPriced) {
-            MaterialTheme.colorScheme.primaryContainer
+            PharmaSuccess.copy(alpha = 0.1f)
         } else {
-            MaterialTheme.colorScheme.secondaryContainer
+            PharmaBlue500.copy(alpha = 0.1f)
         },
         contentColor = if (isPriced) {
-            MaterialTheme.colorScheme.onPrimaryContainer
+            PharmaSuccess
         } else {
-            MaterialTheme.colorScheme.onSecondaryContainer
+            PharmaBlue500
         },
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Payments,
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
-            )
-            Text(
-                text = if (isPriced) {
-                    "${request.totalPrice.toLong()} \u0644.\u0633"
-                } else {
-                    "\u0628\u0627\u0646\u062A\u0638\u0627\u0631 \u0627\u0644\u062A\u0633\u0639\u064A\u0631"
-                },
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
+        Text(
+            text = if (isPriced) {
+                "${request.totalPrice.toLong()} \u0644.\u0633"
+            } else {
+                "\u0628\u0627\u0646\u062A\u0638\u0627\u0631 \u0627\u0644\u062A\u0633\u0639\u064A\u0631"
+            },
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
 @Composable
 private fun UrgentPill() {
     Surface(
-        shape = CircleShape,
-        color = PremiumUrgent.copy(alpha = 0.12f),
+        shape = RoundedCornerShape(MaterialTheme.dimens.radiusM),
+        color = PremiumUrgent.copy(alpha = 0.1f),
         contentColor = PremiumUrgent,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Filled.FlashOn,
-                contentDescription = stringResource(R.string.request_priority_urgent),
+                contentDescription = null,
                 modifier = Modifier.size(14.dp)
             )
             Text(
                 text = stringResource(R.string.request_priority_urgent),
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
             )
         }
@@ -582,13 +607,6 @@ private fun Request.displayItems(): List<RequestItem> =
         )
     }
 
-private fun Request.primaryPartyName(accountType: AccountType?): String =
-    if (accountType == AccountType.WAREHOUSE) {
-        pharmacyName.ifBlank { "\u0635\u064A\u062F\u0644\u064A\u0629" }
-    } else {
-        warehouseName.ifBlank { supplierName.ifBlank { medicineName } }
-    }
-
 @Composable
 private fun Modifier.shimmerEffect(shape: RoundedCornerShape = RoundedCornerShape(MaterialTheme.dimens.radiusM)): Modifier {
     val shimmerColors = listOf(
@@ -643,5 +661,55 @@ private fun RequestItemCardPlaceholder() {
             Spacer(modifier = Modifier.height(d.spaceS))
             Spacer(modifier = Modifier.width(120.dp).height(16.dp).shimmerEffect())
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RequestListPreview() {
+    com.pharmalink.designsystem.theme.PharmaTheme {
+        RequestListContent(
+            uiState = RequestListUiState(
+                requests = listOf(
+                    Request(
+                        id = "1",
+                        pharmacyId = "p1",
+                        pharmacyName = "صيدلية الصحة",
+                        medicineName = "بانادول",
+                        quantity = 10,
+                        unit = "علبة",
+                        status = RequestStatus.PENDING,
+                        updatedAtLabel = "منذ ساعة",
+                        priority = RequestPriority.NORMAL,
+                        notes = "",
+                        warehouseId = "w1",
+                        warehouseName = "مستودع الأمل",
+                        supplierName = "مستودع الأمل",
+                        createdAtLabel = "منذ ساعة"
+                    ),
+                    Request(
+                        id = "2",
+                        pharmacyId = "p1",
+                        pharmacyName = "صيدلية الأمل",
+                        medicineName = "أسبيرين",
+                        quantity = 5,
+                        unit = "علبة",
+                        status = RequestStatus.QUOTE_PENDING,
+                        updatedAtLabel = "منذ ساعتين",
+                        priority = RequestPriority.URGENT,
+                        notes = "",
+                        warehouseId = "w1",
+                        warehouseName = "مستودع الأمل",
+                        supplierName = "مستودع الأمل",
+                        createdAtLabel = "منذ ساعتين"
+                    )
+                ),
+                accountType = AccountType.WAREHOUSE
+            ),
+            onNavigateToCreateRequest = {},
+            onNavigateToRequestDetails = {},
+            onRefresh = {},
+            onFilterByStatus = {}
+        )
     }
 }

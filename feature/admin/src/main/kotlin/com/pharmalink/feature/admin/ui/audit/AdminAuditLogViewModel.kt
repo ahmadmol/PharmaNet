@@ -183,6 +183,8 @@ class AdminAuditLogViewModel @Inject constructor(
             actionTitle = actionLabel,
             description = targetEntityName,
             relativeTime = formatRelativeTime(createdAt, now),
+            adminName = adminName,
+            ipAddress = ipAddress,
             statusChip = if (isSuccess) "نجح" else "فشل",
             exactTimestamp = formatExactTime(createdAt),
             borderColor = borderColor,

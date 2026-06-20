@@ -52,24 +52,11 @@ class RequestListViewModel @Inject constructor(
             val userSnapshot = authRepository.getUserSnapshot()
             val userIdentity = userSnapshot?.toUserIdentity()
             val accountType = userIdentity?.role ?: userSnapshot?.accountType
-            val warehouseId = userIdentity?.organizationId
             _uiState.value = _uiState.value.copy(accountType = accountType)
 
-            if (accountType == AccountType.WAREHOUSE && warehouseId.isNullOrBlank()) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    requests = emptyList(),
-                    errorMessage = context.getString(R.string.error_permission),
-                )
-                return@launch
-            }
-
-            // Select appropriate data flow based on account type
-            val requestsFlow = if (accountType == AccountType.WAREHOUSE && !warehouseId.isNullOrBlank()) {
-                pharmaRepository.observeIncomingRequestsForWarehouse(warehouseId)
-            } else {
-                pharmaRepository.observeRequests()
-            }
+            // Select appropriate data flow based on account type.
+            // observeRequests() is role-aware and handles filtering internally.
+            val requestsFlow = pharmaRepository.observeRequests()
 
             requestsFlow
                 .catch { error ->
@@ -105,13 +92,16 @@ class RequestListViewModel @Inject constructor(
     }
     
     private fun mapErrorToUserMessage(error: Throwable): String {
+        val message = error.message ?: ""
         return when {
-            error.message?.contains("network", ignoreCase = true) == true ||
-            error.message?.contains("connection", ignoreCase = true) == true ->
+            message.contains("network", ignoreCase = true) ||
+            message.contains("connection", ignoreCase = true) ->
                 context.getString(R.string.error_network)
-            error.message?.contains("permission", ignoreCase = true) == true ||
-            error.message?.contains("unauthorized", ignoreCase = true) == true ->
+            message.contains("permission", ignoreCase = true) ||
+            message.contains("unauthorized", ignoreCase = true) ->
                 context.getString(R.string.error_permission)
+            message.contains("missing organizationId", ignoreCase = true) ->
+                "حسابك غير مرتبط بصيدلية أو مستودع حالياً. يرجى مراجعة الإدارة لإتمام الربط."
             else -> context.getString(R.string.request_error_loading_failed)
         }
     }

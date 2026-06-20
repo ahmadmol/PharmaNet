@@ -25,7 +25,15 @@ data class ProfileUiState(
     val warehouseLocationMessageIsError: Boolean = false,
     val warehouseLocationSettingsAction: WarehouseLocationSettingsAction? = null,
     val settingsOptions: List<SettingItem> = emptyList(),
+    // Warehouse specific stats (Phase 3)
+    val responseSpeedMinutes: Int = 15,
+    val completionRatePercent: Int = 98,
+    val activeProductsCount: Int = 120,
 ) {
+    val isWarehouse: Boolean get() = accountTypeEnum == AccountType.WAREHOUSE
+    val isPharmacy: Boolean get() = accountTypeEnum == AccountType.PHARMACY
+    val isPublicUser: Boolean get() = accountTypeEnum == AccountType.PUBLIC_USER
+
     companion object {
         fun fromSnapshot(snapshot: UserSnapshot?): ProfileUiState =
             ProfileUiState(

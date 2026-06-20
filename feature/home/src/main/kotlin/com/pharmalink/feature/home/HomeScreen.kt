@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pharmalink.designsystem.components.AppBanner
 import com.pharmalink.designsystem.stitch.StitchTheme
 import com.pharmalink.designsystem.stitch.components.StitchButton
 import com.pharmalink.designsystem.components.DashboardWelcomeCard
@@ -274,14 +275,29 @@ private fun HomeHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(96.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        // Profile Image (Placeholder for now)
+        // Leading side (Right in RTL): App Logo
+        androidx.compose.foundation.Image(
+            painter = painterResource(id = DsR.drawable.ic_app_logo),
+            contentDescription = "Logo",
+            modifier = Modifier.size(84.dp),
+        )
+
+        // Center: Brand Title
+        Text(
+            text = stringResource(id = DsR.string.app_name),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = PremiumPrimary,
+        )
+
+        // Trailing side (Left in RTL): Profile Icon
         Surface(
             modifier = Modifier
-                .size(40.dp)
+                .size(48.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple(),
@@ -289,30 +305,13 @@ private fun HomeHeader(
                 ),
             shape = CircleShape,
             color = PharmaNeutral100,
+            border = BorderStroke(1.dp, PharmaNeutral400.copy(alpha = 0.5f))
         ) {
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = "Profile",
-                modifier = Modifier.padding(8.dp),
+                modifier = Modifier.padding(10.dp),
                 tint = PharmaNeutral600
-            )
-        }
-
-        // Logo / Title
-        Text(
-            text = "PharmaNet",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = PremiumPrimary,
-        )
-
-        // Menu Icon
-        IconButton(onClick = { /* No-op per Rule 9 */ }) {
-            Icon(
-                painter = painterResource(id = DsR.drawable.ic_app_logo),
-                contentDescription = "Menu",
-                modifier = Modifier.size(d.iconM),
-                tint = Color.Unspecified
             )
         }
     }
@@ -514,7 +513,7 @@ private fun InfoBannerLikeCard(
             horizontalArrangement = Arrangement.spacedBy(d.spaceM)
         ) {
             Surface(
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(60.dp),
                 shape = RoundedCornerShape(d.radiusM),
                 color = Color.White
             ) {
@@ -522,7 +521,7 @@ private fun InfoBannerLikeCard(
                     painter = painterResource(id = DsR.drawable.ic_app_logo),
                     contentDescription = null,
                     tint = Color.Unspecified,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier.padding(4.dp)
                 )
             }
             Column(
@@ -921,7 +920,7 @@ private fun PublicPharmacyRow(
             }
             
             Surface(
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(52.dp),
                 shape = CircleShape,
                 color = PharmaBlue50,
                 border = BorderStroke(1.dp, PharmaBlue100)
@@ -930,7 +929,7 @@ private fun PublicPharmacyRow(
                     painter = painterResource(id = DsR.drawable.ic_app_logo),
                     contentDescription = null,
                     tint = Color.Unspecified,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier.padding(4.dp)
                 )
             }
         }

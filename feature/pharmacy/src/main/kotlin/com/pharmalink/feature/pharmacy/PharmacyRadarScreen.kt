@@ -68,7 +68,28 @@ import com.pharmalink.designsystem.theme.ClinicalCanvas
 import androidx.compose.material.icons.outlined.LocationOff
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.unit.LayoutDirection
+import com.pharmalink.designsystem.theme.PharmaBlue700
+import com.pharmalink.designsystem.theme.PharmaSuccess
+import com.pharmalink.designsystem.theme.PharmaNeutral400
+import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaBlue50
+import com.pharmalink.designsystem.theme.PharmaBlue100
+import com.pharmalink.designsystem.theme.PharmaBlue800
+import com.pharmalink.designsystem.theme.PremiumPrimary
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.designsystem.R as DsR
+import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaNeutral200
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun PharmacyRadarScreen(
@@ -120,48 +141,113 @@ fun PharmacyRadarScreen(
         }
     }
 
-    Scaffold(containerColor = ClinicalCanvas) { innerPadding ->
-        Box(
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Scaffold(
+            containerColor = ClinicalCanvas,
+            topBar = {
+                RadarTopBar(onProfileClick = {}, onMenuClick = {})
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            ) {
+                RadarContent(
+                    uiState = uiState,
+                    errorMessage = permissionMessage ?: uiState.errorMessage,
+                    isPermanentlyDenied = isPermanentlyDenied,
+                    onAllowLocationClick = {
+                        if (isPermanentlyDenied) {
+                            val intent = Intent(
+                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.fromParts("package", context.packageName, null),
+                            ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                            context.startActivity(intent)
+                        } else {
+                            hasRequestedPermission = true
+                            permissionLauncher.launch(locationPermissions)
+                        }
+                    },
+                    onOpenLocationSettingsClick = {
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
+                    },
+                    onRetryLocationClick = {
+                        permissionMessage = null
+                        isPermanentlyDenied = false
+                        hasLoadedNearbyOrders = true
+                        viewModel.refreshNearbyOrders()
+                    },
+                    onNavigateToOrderDetail = onNavigateToOrderDetail,
+                )
+
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RadarTopBar(
+    onProfileClick: () -> Unit,
+    onMenuClick: () -> Unit,
+) {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp),
+        color = PharmaBlue700,
+        contentColor = Color.White,
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(horizontal = d.spaceM),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            RadarContent(
-                uiState = uiState,
-                errorMessage = permissionMessage ?: uiState.errorMessage,
-                isPermanentlyDenied = isPermanentlyDenied,
-                onAllowLocationClick = {
-                    if (isPermanentlyDenied) {
-                        val intent = Intent(
-                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                            Uri.fromParts("package", context.packageName, null),
-                        ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
-                        context.startActivity(intent)
-                    } else {
-                        hasRequestedPermission = true
-                        permissionLauncher.launch(locationPermissions)
-                    }
-                },
-                onOpenLocationSettingsClick = {
-                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    context.startActivity(intent)
-                },
-                onRetryLocationClick = {
-                    permissionMessage = null
-                    isPermanentlyDenied = false
-                    hasLoadedNearbyOrders = true
-                    viewModel.refreshNearbyOrders()
-                },
-                onNavigateToOrderDetail = onNavigateToOrderDetail,
+            // Hamburger on the right in RTL (Start)
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = Color.White,
+                )
+            }
+
+            Text(
+                text = "PharmaNet",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
             )
 
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.primary,
-                )
+            // Profile on the left in RTL (End)
+            IconButton(onClick = onProfileClick) {
+                Surface(
+                    modifier = Modifier.size(32.dp),
+                    shape = CircleShape,
+                    color = Color.Transparent,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color.White,
+                        )
+                    }
+                }
             }
         }
     }
@@ -177,25 +263,46 @@ private fun RadarContent(
     onRetryLocationClick: () -> Unit,
     onNavigateToOrderDetail: (String) -> Unit,
 ) {
+    val d = MaterialTheme.dimens
     val closestDistance = uiState.nearbyOrders.minOfOrNull { it.distanceKm ?: Double.MAX_VALUE }
         ?.takeIf { it != Double.MAX_VALUE }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        verticalArrangement = Arrangement.spacedBy(d.spaceL),
     ) {
         item {
-            Text(
-                text = "طلبات قريبة",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                Text(
+                    text = "الرادار",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = PharmaBlue700,
+                )
+            }
         }
 
         item {
             RadarHero(closestDistance = closestDistance)
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "طلبات قريبة",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
 
         item {
@@ -331,58 +438,81 @@ private fun EmptyNearbyOrdersCard() {
 @Composable
 private fun RadarHero(closestDistance: Double?) {
     val d = MaterialTheme.dimens
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(340.dp),
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = Color.White,
+        shadowElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
     ) {
         Box(
-            modifier = Modifier
-                .size(320.dp)
-                .padding(top = 12.dp),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            RadarPulseEffect()
-            if (closestDistance != null) {
-                Surface(
-                    modifier = Modifier.offset(x = (-90).dp, y = (-90).dp),
-                    shape = RoundedCornerShape(d.radiusL),
-                    color = MaterialTheme.colorScheme.primary,
-                    shadowElevation = 4.dp
+            // Distance Badge Top-Left in RTL (End)
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(d.spaceL),
+                shape = RoundedCornerShape(d.radiusXL),
+                color = PharmaBlue50,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = d.spaceM, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = PharmaBlue700
+                    )
                     Text(
-                        text = stringResource(R.string.pharmacy_dashboard_badge_distance, closestDistance),
-                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = 6.dp),
-                        color = Color.White,
+                        text = stringResource(R.string.pharmacy_dashboard_badge_distance, closestDistance ?: 0.0),
+                        color = PharmaBlue700,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                     )
                 }
             }
-            Surface(
-                shape = RoundedCornerShape(d.radiusXXL),
-                modifier = Modifier.size(136.dp),
-                shadowElevation = 8.dp,
-                color = Color.White,
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(d.spaceL)
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.size(200.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center,
+                    RadarPulseEffect()
+                    
+                    Surface(
+                        shape = CircleShape,
+                        modifier = Modifier.size(72.dp),
+                        color = PremiumPrimary,
+                        shadowElevation = 4.dp,
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.LocalPharmacy,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(48.dp),
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = DsR.drawable.ic_sydaliti_mark),
+                                contentDescription = null,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(40.dp),
+                            )
+                        }
                     }
                 }
+                
+                Text(
+                    text = "جاري البحث عن صيدليات متوفرة...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PharmaNeutral600,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -391,44 +521,35 @@ private fun RadarHero(closestDistance: Double?) {
 @Composable
 private fun RadarPulseEffect() {
     val transition = rememberInfiniteTransition(label = "RadarPulse")
-    val pulse1 = transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 2.5f,
+    val pulseAlpha = transition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2500, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
+            animation = tween(durationMillis = 1500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "Pulse1",
-    )
-    val pulse2 = transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 2.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2500, delayMillis = 800, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "Pulse2",
-    )
-    val pulse3 = transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 2.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2500, delayMillis = 1600, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "Pulse3",
+        label = "PulseAlpha",
     )
 
-        listOf(pulse1, pulse2, pulse3).forEach { pulse ->
+    Box(contentAlignment = Alignment.Center) {
+        // Static circles
         Box(
             modifier = Modifier
-                .size(120.dp)
-                .graphicsLayer {
-                    scaleX = pulse.value
-                    scaleY = pulse.value
-                    alpha = 1f - (pulse.value - 1f) / 1.5f
-                }
-                .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f), CircleShape),
+                .size(140.dp)
+                .border(1.dp, PharmaNeutral200, CircleShape)
+        )
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .border(1.dp, PharmaNeutral100, CircleShape)
+        )
+        
+        // Animated Pulse
+        Box(
+            modifier = Modifier
+                .size(140.dp)
+                .graphicsLayer { alpha = pulseAlpha.value }
+                .border(2.dp, PremiumPrimary.copy(alpha = 0.4f), CircleShape),
         )
     }
 }
@@ -484,50 +605,57 @@ private fun RadarOrderItemContent(order: NearbyOrderDto) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(d.spaceM),
     ) {
+        // Icon on the right in RTL (Start)
         Surface(
-            modifier = Modifier.size(56.dp),
+            modifier = Modifier.size(52.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
+            color = PharmaBlue50,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = if (order.medicineName.orEmpty().contains("حقن") || order.medicineName.orEmpty().contains("إبرة")) {
                         Icons.Default.Vaccines
-                    } else {
+                    } else if (order.medicineName.orEmpty().contains("مكملات")) {
                         Icons.Default.Medication
+                    } else {
+                        Icons.Default.LocalPharmacy
                     },
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(28.dp),
+                    tint = PremiumPrimary,
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
 
-        Column(modifier = Modifier.weight(1f)) {
+        // Info in the middle
+        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Text(
                 text = order.medicineName ?: "طلب عام",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
             )
             Text(
                 text = order.userName.orEmpty(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                color = PharmaNeutral600,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
             )
         }
 
+        // Distance badge on the left in RTL (End)
         Surface(
             shape = RoundedCornerShape(d.radiusM),
-            color = MaterialTheme.colorScheme.primaryContainer,
+            color = PharmaNeutral100,
         ) {
             Text(
                 text = stringResource(R.string.pharmacy_dashboard_distance_badge, order.distanceKm ?: 0.0),
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = PharmaNeutral600,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
             )

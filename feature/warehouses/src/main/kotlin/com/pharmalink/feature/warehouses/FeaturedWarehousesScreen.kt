@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -692,5 +693,40 @@ private fun MetricTile(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FeaturedWarehousesPreview() {
+    com.pharmalink.designsystem.theme.PharmaTheme {
+        FeaturedWarehousesContent(
+            uiState = FeaturedWarehousesUiState(
+                warehouses = listOf(
+                    FeaturedWarehouseItem(
+                        id = "1",
+                        name = "مستودع الأمل للأدوية",
+                        location = "الرياض، حي السلي",
+                        deliveryLabel = "توصيل خلال ساعتين",
+                        deliveryType = FeaturedDeliveryType.FAST,
+                        inStockPercent = 95,
+                        priorityRes = R.string.featured_priority_premium,
+                        supportsColdChain = true
+                    ),
+                    FeaturedWarehouseItem(
+                        id = "2",
+                        name = "مستودع الشفاء المركزي",
+                        location = "جدة، المنطقة الصناعية",
+                        deliveryLabel = "توصيل نفس اليوم",
+                        deliveryType = FeaturedDeliveryType.STANDARD,
+                        inStockPercent = 82,
+                        priorityRes = R.string.featured_priority_reliable,
+                        supportsColdChain = false
+                    )
+                )
+            ),
+            onWarehouseClick = {},
+            onRetry = {}
+        )
     }
 }

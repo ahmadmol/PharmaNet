@@ -130,11 +130,6 @@ fun SignUpScreen(
                 }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = DsR.drawable.ic_app_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(60.dp),
-                    )
                     Text(
                         text = stringResource(R.string.auth_brand_title),
                         style = MaterialTheme.typography.titleMedium,

@@ -26,6 +26,8 @@ data class AuditLogItemModel(
     val actionTitle: String,
     val description: String,
     val relativeTime: String,
+    val adminName: String,
+    val ipAddress: String?,
     val statusChip: String,
     val exactTimestamp: String,
     val borderColor: AuditLogBorderColor,

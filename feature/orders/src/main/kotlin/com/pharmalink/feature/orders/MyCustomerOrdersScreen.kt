@@ -205,7 +205,7 @@ private fun OrdersHeader() {
         }
 
         Text(
-            text = "PharmaNet",
+            text = stringResource(id = DsR.string.app_name),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = PremiumPrimary,

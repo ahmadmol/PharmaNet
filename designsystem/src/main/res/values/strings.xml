@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">صيدليتي</string>
     <!-- Stitch Home Screen -->
     <string name="home_current_orders">الطلبات الحالية</string>
     <string name="home_stock_shortages">نقص المخزون</string>

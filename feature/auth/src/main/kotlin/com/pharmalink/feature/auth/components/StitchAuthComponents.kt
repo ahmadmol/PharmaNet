@@ -64,6 +64,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import com.pharmalink.feature.auth.R
+import com.pharmalink.designsystem.R as DsR
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AccountType
 
@@ -458,7 +459,8 @@ fun TermsAndConditionsRow(
             withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
                 append("شروط الاستخدام")
             }
-            append(" الخاصة بـ PharmaNet")
+            append(" الخاصة بـ ")
+            append(stringResource(id = DsR.string.app_name))
         }
         
         Text(

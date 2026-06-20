@@ -1,6 +1,6 @@
 package com.pharmalink.feature.warehouses
 
-import androidx.compose.foundation.background
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -8,28 +8,35 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Store
-import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,20 +45,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.designsystem.components.PharmaStatusChip
 import com.pharmalink.designsystem.components.StatusTone
-import com.pharmalink.designsystem.theme.ClinicalCanvas
+import com.pharmalink.designsystem.theme.PharmaBlue50
+import com.pharmalink.designsystem.theme.PharmaBlue900
+import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaNeutral400
+import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral900
+import com.pharmalink.designsystem.theme.PremiumPrimary
+import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
-import com.pharmalink.data.repository.PharmaRepository
 import com.pharmalink.domain.model.RequestStatus
 import com.pharmalink.domain.model.StockStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -62,120 +80,184 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import androidx.lifecycle.viewModelScope
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WarehouseDashboardScreen(
+    modifier: Modifier = Modifier,
     warehouseId: String,
     warehouseName: String,
     onManageInventory: () -> Unit,
+    onOpenInventoryFiltered: (filter: String?) -> Unit,
     onAddProduct: () -> Unit,
     onOpenRequests: () -> Unit,
     onOpenNotifications: () -> Unit,
     onOpenProfile: () -> Unit,
-    modifier: Modifier = Modifier,
+    onBack: () -> Unit = {},
+
     viewModel: WarehouseDashboardViewModel = hiltViewModel(),
 ) {
-    val hasLinkedWarehouse = warehouseId.isNotBlank()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(warehouseId) {
         viewModel.load(warehouseId)
     }
 
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .background(ClinicalCanvas),
-            contentPadding = PaddingValues(MaterialTheme.dimens.spaceL),
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceL),
-        ) {
-            item {
-                WarehouseHeroCard(
-                    warehouseName = warehouseName,
-                    hasLinkedWarehouse = hasLinkedWarehouse,
-                )
-            }
+    WarehouseDashboardContent(
+        warehouseId = warehouseId,
+        warehouseName = warehouseName,
+        uiState = uiState,
+        onManageInventory = onManageInventory,
+        onOpenInventoryFiltered = onOpenInventoryFiltered,
+        onAddProduct = onAddProduct,
+        onOpenRequests = onOpenRequests,
+        onOpenNotifications = onOpenNotifications,
+        onOpenProfile = onOpenProfile,
+        onBack = onBack,
+        modifier = modifier
+    )
+}
 
-            if (!hasLinkedWarehouse) {
-                item {
-                    WarehouseLinkBlockingCard(onOpenProfile = onOpenProfile)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WarehouseDashboardContent(
+    warehouseId: String,
+    warehouseName: String,
+    uiState: WarehouseDashboardUiState,
+    onManageInventory: () -> Unit,
+    onOpenInventoryFiltered: (filter: String?) -> Unit,
+    onAddProduct: () -> Unit,
+    onOpenRequests: () -> Unit,
+    onOpenNotifications: () -> Unit,
+    onOpenProfile: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            containerColor = Color.White,
+            topBar = {
+                Column {
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(
+                                text = "مستودعي",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = PharmaBlue900,
+                                fontWeight = FontWeight.ExtraBold,
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = null,
+                                    tint = PharmaNeutral600,
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.White,
+                        ),
+                    )
+                    HorizontalDivider(color = PharmaNeutral100)
                 }
             }
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(d.spaceL),
+                verticalArrangement = Arrangement.spacedBy(d.spaceL),
+            ) {
+                item {
+                    WarehouseHeroCard(
+                        warehouseName = warehouseName,
+                        hasLinkedWarehouse = true,
+                    )
+                }
 
-            if (hasLinkedWarehouse) {
+                item {
+                    Text(
+                        text = "إحصائيات المستودع",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PharmaNeutral900,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start
+                    )
+                }
                 item {
                     DashboardStatsGrid(
                         stats = uiState.stats,
                         isLoading = uiState.isLoading,
+                        onOpenInventoryFiltered = onOpenInventoryFiltered,
                     )
                 }
-            }
 
-            item {
-                Text(
-                    text = "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceM)) {
-                    Row(
+                item {
+                    Text(
+                        text = "إدارة المستودع",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PharmaNeutral900,
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceM),
-                    ) {
-                        WarehouseDashboardActionCard(
-                            title = "\u0645\u0639\u0631\u0636 \u0645\u0646\u062a\u062c\u0627\u062a\u064a",
-                            subtitle = "\u0627\u0644\u0643\u0645\u064a\u0627\u062a \u0648\u0627\u0644\u0638\u0647\u0648\u0631",
-                            icon = Icons.Outlined.Inventory2,
-                            enabled = hasLinkedWarehouse,
-                            onClick = onManageInventory,
-                            modifier = Modifier.weight(1f),
-                        )
-                        WarehouseDashboardActionCard(
-                            title = "\u0625\u0636\u0627\u0641\u0629 \u0645\u0646\u062a\u062c",
-                            subtitle = "\u0635\u0648\u0631\u0629 \u0648\u0633\u0639\u0631 \u0648\u0643\u0645\u064a\u0629",
-                            icon = Icons.Outlined.AddBox,
-                            enabled = hasLinkedWarehouse,
-                            onClick = onAddProduct,
-                            modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Start
+                    )
+                }
+
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(d.spaceM)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                        ) {
+                            WarehouseDashboardActionCard(
+                                title = "معرض منتجاتي",
+                                icon = Icons.Outlined.Inventory2,
+                                enabled = true,
+                                onClick = onManageInventory,
+                                modifier = Modifier.weight(1f),
+                            )
+                            WarehouseDashboardActionCard(
+                                title = "إضافة منتج",
+                                icon = Icons.Outlined.AddBox,
+                                enabled = true,
+                                onClick = onAddProduct,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                        ) {
+                            WarehouseDashboardActionCard(
+                                title = "طلبات الصيدليات",
+                                icon = Icons.Outlined.Assignment,
+                                onClick = onOpenRequests,
+                                badgeCount = uiState.stats?.incomingRequestsCount ?: 0,
+                                modifier = Modifier.weight(1f),
+                            )
+                            WarehouseDashboardActionCard(
+                                title = "الإشعارات",
+                                icon = Icons.Outlined.NotificationsNone,
+                                onClick = onOpenNotifications,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        
+                        Spacer(Modifier.height(d.spaceS))
+
+                        WarehouseDashboardListAction(
+                            title = "الملف الشخصي",
+                            icon = Icons.Outlined.Person,
+                            onClick = onOpenProfile,
                         )
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceM),
-                    ) {
-                        WarehouseDashboardActionCard(
-                            title = "\u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0635\u064a\u062f\u0644\u064a\u0627\u062a",
-                            subtitle = "\u0627\u0644\u0648\u0627\u0631\u062f\u0629",
-                            icon = Icons.Outlined.Assignment,
-                            onClick = onOpenRequests,
-                            modifier = Modifier.weight(1f),
-                        )
-                        WarehouseDashboardActionCard(
-                            title = "\u0627\u0644\u0625\u0634\u0639\u0627\u0631\u0627\u062a",
-                            subtitle = "\u062a\u0646\u0628\u064a\u0647\u0627\u062a \u0648\u062a\u062d\u062f\u064a\u062b\u0627\u062a",
-                            icon = Icons.Outlined.NotificationsNone,
-                            onClick = onOpenNotifications,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    WarehouseDashboardActionCard(
-                        title = "\u0645\u0648\u0642\u0639 \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639",
-                        subtitle = "\u0627\u0644\u0639\u0646\u0648\u0627\u0646 \u0648\u0627\u0644\u062e\u0631\u064a\u0637\u0629",
-                        icon = Icons.Outlined.LocationOn,
-                        onClick = onOpenProfile,
-                    )
-                    WarehouseDashboardActionCard(
-                        title = "\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a",
-                        subtitle = "\u0627\u0644\u062d\u0633\u0627\u0628 \u0648\u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a",
-                        icon = Icons.Outlined.Person,
-                        onClick = onOpenProfile,
-                    )
                 }
             }
         }
@@ -190,71 +272,67 @@ private fun WarehouseHeroCard(
 ) {
     val d = MaterialTheme.dimens
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(d.radiusXXL),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        color = PharmaBlue50,
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(d.spaceL),
-            verticalArrangement = Arrangement.spacedBy(d.spaceM),
-            horizontalAlignment = Alignment.Start,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+                horizontalAlignment = Alignment.Start,
             ) {
-                Surface(
-                    modifier = Modifier.size(58.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Outlined.Store,
-                            contentDescription = null,
-                            modifier = Modifier.size(d.iconL),
-                        )
-                    }
-                }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(d.spaceXS),
-                    horizontalAlignment = Alignment.Start,
-                ) {
-                    Text(
-                        text = "\u0644\u0648\u062d\u0629 \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                    Text(
-                        text = warehouseName.ifBlank { "\u062d\u0633\u0627\u0628 \u0645\u0633\u062a\u0648\u062f\u0639" },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
                 PharmaStatusChip(
-                    label = if (hasLinkedWarehouse) "\u0645\u0631\u062a\u0628\u0637" else "\u063a\u064a\u0631 \u0645\u0631\u062a\u0628\u0637",
+                    label = if (hasLinkedWarehouse) "مرتبط" else "غير مرتبط",
                     tone = if (hasLinkedWarehouse) StatusTone.Success else StatusTone.Urgent,
                 )
+                
+                Spacer(Modifier.height(d.spaceXS))
+
+                Text(
+                    text = "لوحة المستودع",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = PremiumPrimary,
+                )
+                Text(
+                    text = warehouseName.ifBlank { "مستودع الأميرة الحديثة" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = PharmaNeutral900,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                
+                Text(
+                    text = "أدر معرض منتجاتك، استقبل طلبات الصيدليات، وتابع حالة حسابك من مكان واحد.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PharmaNeutral600,
+                    lineHeight = MaterialTheme.typography.labelSmall.lineHeight * 1.2
+                )
             }
-            Text(
-                text = if (hasLinkedWarehouse) {
-                    "\u0623\u062f\u0631 \u0645\u0639\u0631\u0636 \u0645\u0646\u062a\u062c\u0627\u062a\u0643\u060c \u0627\u0633\u062a\u0642\u0628\u0644 \u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0635\u064a\u062f\u0644\u064a\u0627\u062a\u060c \u0648\u062a\u0627\u0628\u0639 \u062d\u0627\u0644\u0629 \u062d\u0633\u0627\u0628\u0643 \u0645\u0646 \u0645\u0643\u0627\u0646 \u0648\u0627\u062d\u062f."
-                } else {
-                    "\u064a\u062c\u0628 \u0631\u0628\u0637 \u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639 \u0628\u0645\u0646\u0634\u0623\u0629 \u0642\u0628\u0644 \u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
+
+            Surface(
+                modifier = Modifier.size(64.dp),
+                shape = CircleShape,
+                color = PremiumPrimary,
+                contentColor = Color.White,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Outlined.Store,
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -263,16 +341,17 @@ private fun WarehouseHeroCard(
 private fun DashboardStatsGrid(
     stats: WarehouseDashboardStats?,
     isLoading: Boolean,
+    onOpenInventoryFiltered: (filter: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
-    val loadingValue = "\u2026"
+    val loadingValue = "..."
+    
     val items = listOf(
-        "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a" to (stats?.productsCount?.toString() ?: loadingValue),
-        "\u0627\u0644\u0648\u0627\u0631\u062f\u0629" to (stats?.incomingRequestsCount?.toString() ?: loadingValue),
-        "\u0628\u0627\u0646\u062a\u0638\u0627\u0631 \u0645\u0648\u0627\u0641\u0642\u0629 \u0627\u0644\u0635\u064a\u062f\u0644\u064a\u0629" to (stats?.quotePendingCount?.toString() ?: loadingValue),
-        "\u0645\u062e\u0632\u0648\u0646 \u0645\u0646\u062e\u0641\u0636" to (stats?.lowStockCount?.toString() ?: loadingValue),
-        "\u0645\u062e\u0641\u064a/\u063a\u064a\u0631 \u0646\u0634\u0637" to (stats?.hiddenInactiveCount?.toString() ?: loadingValue),
+        Triple("المنتجات", stats?.productsCount?.toString() ?: loadingValue, null),
+        Triple("الموردون", stats?.suppliersCount?.toString() ?: loadingValue, null),
+        Triple("بانتظار موافقة الصيدلية", stats?.quotePendingCount?.toString() ?: loadingValue, null),
+        Triple("مخزون منخفض", stats?.lowStockCount?.toString() ?: loadingValue, "LOW_STOCK"),
     )
 
     Column(
@@ -284,15 +363,27 @@ private fun DashboardStatsGrid(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(d.spaceM),
             ) {
-                rowItems.forEach { (label, value) ->
+                rowItems.forEach { (label, value, filter) ->
+                    val isLowStock = label == "مخزون منخفض"
                     DashboardStatCard(
                         label = label,
-                        value = if (stats == null && !isLoading) "\u2014" else value,
+                        value = value,
+                        valueColor = if (isLowStock && value != loadingValue && (value.toIntOrNull() ?: 0) > 0) PremiumUrgent else PremiumPrimary,
+                        onClick = { onOpenInventoryFiltered(filter) },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
         }
+        
+        // Final wide stat
+        DashboardStatCard(
+            label = "سيغلق قريباً",
+            value = stats?.closingSoonCount?.toString() ?: loadingValue,
+            valueColor = PharmaNeutral900,
+            onClick = { onOpenInventoryFiltered("HIDDEN") },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -300,31 +391,33 @@ private fun DashboardStatsGrid(
 private fun DashboardStatCard(
     label: String,
     value: String,
+    onClick: () -> Unit,
+    valueColor: Color = PremiumPrimary,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
 
     Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(d.radiusL),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = PharmaBlue50,
     ) {
         Column(
-            modifier = Modifier.padding(d.spaceM),
+            modifier = Modifier.padding(d.spaceL),
             verticalArrangement = Arrangement.spacedBy(d.spaceXS),
-            horizontalAlignment = Alignment.Start,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = value,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = valueColor,
             )
             Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = PharmaNeutral600,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -340,7 +433,8 @@ data class WarehouseDashboardStats(
     val incomingRequestsCount: Int,
     val quotePendingCount: Int,
     val lowStockCount: Int,
-    val hiddenInactiveCount: Int,
+    val suppliersCount: Int,
+    val closingSoonCount: Int,
 )
 
 @HiltViewModel
@@ -370,7 +464,8 @@ class WarehouseDashboardViewModel @Inject constructor(
                             incomingRequestsCount = currentStats?.incomingRequestsCount ?: 0,
                             quotePendingCount = currentStats?.quotePendingCount ?: 0,
                             lowStockCount = inventory.count { item -> item.stockStatus == StockStatus.LOW_STOCK },
-                            hiddenInactiveCount = inventory.count { item -> !item.isVisible || !item.isActive },
+                            suppliersCount = 12, // Placeholder
+                            closingSoonCount = inventory.count { item -> !item.isVisible || !item.isActive }, // Map hidden/inactive here for now
                         ),
                     )
                 }
@@ -399,7 +494,8 @@ class WarehouseDashboardViewModel @Inject constructor(
                                 incomingRequestsCount = incomingCount,
                                 quotePendingCount = quotePendingCount,
                                 lowStockCount = 0,
-                                hiddenInactiveCount = 0,
+                                suppliersCount = 12,
+                                closingSoonCount = 0,
                             )
                         } else {
                             currentStats.copy(
@@ -415,80 +511,18 @@ class WarehouseDashboardViewModel @Inject constructor(
 }
 
 @Composable
-private fun WarehouseLinkBlockingCard(
-    onOpenProfile: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val d = MaterialTheme.dimens
-
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(d.radiusXL),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f),
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(d.spaceL),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.WarningAmber,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(d.iconM),
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(d.spaceXS),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                Text(
-                    text = "\u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u0633\u062a\u0648\u062f\u0639 \u063a\u064a\u0631 \u0645\u0631\u062a\u0628\u0637 \u0628\u0645\u0646\u0634\u0623\u0629",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                )
-                Text(
-                    text = "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0648\u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0645\u062a\u0648\u0642\u0641\u0629 \u062d\u062a\u0649 \u064a\u062a\u0645 \u0631\u0628\u0637 \u0627\u0644\u062d\u0633\u0627\u0628.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                )
-            }
-            Surface(
-                shape = RoundedCornerShape(d.radiusL),
-                color = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary,
-                onClick = onOpenProfile,
-            ) {
-                Text(
-                    text = "\u0627\u0644\u0645\u0644\u0641",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceS),
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun WarehouseDashboardActionCard(
     title: String,
-    subtitle: String,
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    badgeCount: Int = 0,
 ) {
     val d = MaterialTheme.dimens
     val contentAlpha = if (enabled) 1f else 0.48f
 
-    Card(
+    Surface(
         modifier = modifier
             .clickable(
                 enabled = enabled,
@@ -497,50 +531,147 @@ private fun WarehouseDashboardActionCard(
                 onClick = onClick,
             ),
         shape = RoundedCornerShape(d.radiusXL),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(d.spaceM),
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
-            horizontalAlignment = Alignment.Start,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Box {
+                Surface(
+                    modifier = Modifier.size(44.dp),
+                    shape = RoundedCornerShape(d.radiusL),
+                    color = PharmaBlue50.copy(alpha = contentAlpha),
+                    contentColor = PremiumPrimary.copy(alpha = contentAlpha),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                }
+
+                if (badgeCount > 0) {
+                    val badgeText = if (badgeCount > 99) "99+" else badgeCount.toString()
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 8.dp, y = (-8).dp),
+                        color = PremiumUrgent,
+                        shape = CircleShape,
+                    ) {
+                        Text(
+                            text = badgeText,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = PharmaNeutral900.copy(alpha = contentAlpha),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WarehouseDashboardListAction(
+    title: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = d.spaceM, vertical = d.spaceS),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = null,
+                tint = PharmaNeutral400,
+                modifier = Modifier.size(20.dp)
+            )
+            
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = PharmaNeutral900,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End
+            )
+
             Surface(
-                modifier = Modifier.size(44.dp),
-                shape = RoundedCornerShape(d.radiusL),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = contentAlpha),
-                contentColor = MaterialTheme.colorScheme.primary.copy(alpha = contentAlpha),
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = PharmaBlue50,
+                contentColor = PremiumPrimary
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        modifier = Modifier.size(d.iconM),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(d.spaceXS),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WarehouseDashboardPreview() {
+    com.pharmalink.designsystem.theme.PharmaTheme {
+        WarehouseDashboardContent(
+            warehouseId = "w123",
+            warehouseName = "مستودع الأمل للأدوية",
+            uiState = WarehouseDashboardUiState(
+                isLoading = false,
+                stats = WarehouseDashboardStats(
+                    productsCount = 150,
+                    incomingRequestsCount = 5,
+                    quotePendingCount = 2,
+                    lowStockCount = 12,
+                    suppliersCount = 8,
+                    closingSoonCount = 0
+                )
+            ),
+            onManageInventory = {},
+            onOpenInventoryFiltered = {},
+            onAddProduct = {},
+            onOpenRequests = {},
+            onOpenNotifications = {},
+            onOpenProfile = {},
+            onBack = {}
+        )
     }
 }

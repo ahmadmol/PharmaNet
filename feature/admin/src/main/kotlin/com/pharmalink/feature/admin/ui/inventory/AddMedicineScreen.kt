@@ -1,5 +1,6 @@
 package com.pharmalink.feature.admin.ui.inventory
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -49,6 +50,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,7 +72,6 @@ fun AddMedicineScreen(
     viewModel: AddMedicineViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val d = MaterialTheme.dimens
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -84,6 +85,46 @@ fun AddMedicineScreen(
             onSuccess()
         }
     }
+
+    AddMedicineContent(
+        state = state,
+        onBackClick = onBackClick,
+        onImagePickerClick = { imagePickerLauncher.launch("image/*") },
+        onImageDeleteClick = { viewModel.onImageSelected(null) },
+        onNameChange = viewModel::onNameChange,
+        onBrandChange = viewModel::onBrandChange,
+        onStrengthChange = viewModel::onStrengthChange,
+        onDescriptionChange = viewModel::onDescriptionChange,
+        onSpecsChange = viewModel::onSpecsChange,
+        onPriceChange = viewModel::onPriceChange,
+        onStockQuantityChange = viewModel::onStockQuantityChange,
+        onVisibilityChange = viewModel::onVisibilityChange,
+        onSubmit = viewModel::submitMedicine,
+        profileImageUrl = profileImageUrl,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddMedicineContent(
+    state: AddMedicineUiState,
+    onBackClick: () -> Unit,
+    onImagePickerClick: () -> Unit,
+    onImageDeleteClick: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onBrandChange: (String) -> Unit,
+    onStrengthChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onSpecsChange: (String) -> Unit,
+    onPriceChange: (String) -> Unit,
+    onStockQuantityChange: (String) -> Unit,
+    onVisibilityChange: (Boolean) -> Unit,
+    onSubmit: () -> Unit,
+    profileImageUrl: String? = null,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Scaffold(
@@ -141,7 +182,7 @@ fun AddMedicineScreen(
                             color = MaterialTheme.colorScheme.outlineVariant,
                             shape = RoundedCornerShape(d.radiusL)
                         )
-                        .clickable { imagePickerLauncher.launch("image/*") },
+                        .clickable { onImagePickerClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     if (state.imageUri != null) {
@@ -152,7 +193,7 @@ fun AddMedicineScreen(
                             contentScale = ContentScale.Crop
                         )
                         IconButton(
-                            onClick = { viewModel.onImageSelected(null) },
+                            onClick = onImageDeleteClick,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(d.spaceS)
@@ -186,35 +227,35 @@ fun AddMedicineScreen(
 
                 PharmaTextField(
                     value = state.name,
-                    onValueChange = viewModel::onNameChange,
+                    onValueChange = onNameChange,
                     label = "اسم الدواء",
                     placeholder = "مثال: بانادول 500 مجم"
                 )
 
                 PharmaTextField(
                     value = state.brand,
-                    onValueChange = viewModel::onBrandChange,
+                    onValueChange = onBrandChange,
                     label = "الشركة المصنعة / العلامة التجارية",
                     placeholder = "مثال: GSK"
                 )
 
                 PharmaTextField(
                     value = state.strength,
-                    onValueChange = viewModel::onStrengthChange,
+                    onValueChange = onStrengthChange,
                     label = "العيار / القوة",
                     placeholder = "مثال: 500 ملغ"
                 )
 
                 PharmaTextField(
                     value = state.description,
-                    onValueChange = viewModel::onDescriptionChange,
+                    onValueChange = onDescriptionChange,
                     label = "التفاصيل / الوصف",
                     placeholder = "تفاصيل مختصرة عن المنتج",
                 )
 
                 PharmaTextField(
                     value = state.specs,
-                    onValueChange = viewModel::onSpecsChange,
+                    onValueChange = onSpecsChange,
                     label = "المواصفات",
                     placeholder = "مثال: 20 قرص، يحفظ بدرجة حرارة الغرفة",
                 )
@@ -225,7 +266,7 @@ fun AddMedicineScreen(
                 ) {
                     PharmaTextField(
                         value = state.price,
-                        onValueChange = viewModel::onPriceChange,
+                        onValueChange = onPriceChange,
                         label = "سعر البيع (اختياري)",
                         placeholder = "اتركه فارغاً",
                         modifier = Modifier.weight(1f),
@@ -234,7 +275,7 @@ fun AddMedicineScreen(
 
                     PharmaTextField(
                         value = state.stockQuantity,
-                        onValueChange = viewModel::onStockQuantityChange,
+                        onValueChange = onStockQuantityChange,
                         label = "الكمية المتوفرة",
                         placeholder = "0",
                         modifier = Modifier.weight(1f),
@@ -244,7 +285,7 @@ fun AddMedicineScreen(
 
                 ProductVisibilityCard(
                     isVisible = state.isVisible,
-                    onVisibilityChange = viewModel::onVisibilityChange,
+                    onVisibilityChange = onVisibilityChange,
                 )
 
                 if (state.errorMessage != null) {
@@ -260,7 +301,7 @@ fun AddMedicineScreen(
 
                 PharmaButton(
                     text = if (state.isUploading) "جاري الحفظ..." else "إضافة الدواء للمخزون",
-                    onClick = viewModel::submitMedicine,
+                    onClick = onSubmit,
                     enabled = !state.isUploading && state.name.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -321,5 +362,35 @@ private fun ProductVisibilityCard(
                 onCheckedChange = onVisibilityChange,
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AddMedicinePreview() {
+    com.pharmalink.designsystem.theme.PharmaTheme {
+        AddMedicineContent(
+            state = AddMedicineUiState(
+                name = "بانادول إكسترا",
+                brand = "GSK",
+                strength = "500 ملغ",
+                description = "مسكن للألم وخافض للحرارة",
+                specs = "20 قرص",
+                price = "15.5",
+                stockQuantity = "100"
+            ),
+            onBackClick = {},
+            onImagePickerClick = {},
+            onImageDeleteClick = {},
+            onNameChange = {},
+            onBrandChange = {},
+            onStrengthChange = {},
+            onDescriptionChange = {},
+            onSpecsChange = {},
+            onPriceChange = {},
+            onStockQuantityChange = {},
+            onVisibilityChange = {},
+            onSubmit = {}
+        )
     }
 }

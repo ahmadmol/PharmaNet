@@ -81,6 +81,7 @@ class EditMedicineViewModel @Inject constructor(
     fun onPriceChange(value: String) = _state.update { it.copy(price = value) }
     fun onStockQuantityChange(value: String) = _state.update { it.copy(stockQuantity = value) }
     fun onVisibilityChange(value: Boolean) = _state.update { it.copy(isVisible = value) }
+    fun onActiveChange(value: Boolean) = _state.update { it.copy(isActive = value) }
     fun onImageSelected(uri: android.net.Uri?) = _state.update { it.copy(imageUri = uri) }
 
     fun submitMedicine() {

@@ -24,13 +24,41 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pending
+import com.pharmalink.designsystem.theme.ClinicalCanvas
+import com.pharmalink.designsystem.stitch.components.StitchButton
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.LocalPharmacy
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material.icons.outlined.Warehouse
+import com.pharmalink.designsystem.theme.PharmaBlue50
+import com.pharmalink.designsystem.theme.PharmaBlue100
+import com.pharmalink.designsystem.theme.PharmaBlue500
+import com.pharmalink.designsystem.theme.PharmaBlue700
+import com.pharmalink.designsystem.theme.PharmaBlue900
+import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaNeutral400
+import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral900
+import com.pharmalink.designsystem.theme.PremiumPrimary
+import com.pharmalink.designsystem.theme.PremiumAccent
+import com.pharmalink.designsystem.theme.PharmaSuccess
+import com.pharmalink.designsystem.theme.PharmaError
+import com.pharmalink.designsystem.theme.PremiumUrgent
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import com.pharmalink.designsystem.theme.PharmaGradients
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -144,57 +172,51 @@ private fun AdminDashboardContent(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        containerColor = ClinicalCanvas,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             Column {
                 CenterAlignedTopAppBar(
                     title = {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(
-                                painter = painterResource(id = DsR.drawable.ic_sydaliti_mark),
-                                contentDescription = null,
-                                tint = Color.Unspecified,
-                                modifier = Modifier.size(20.dp),
-                            )
-                            Text(
-                                text = stringResource(R.string.admin_dashboard_title),
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
+                        Text(
+                            text = stringResource(DsR.string.app_name),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = PharmaBlue900,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
                     },
                     navigationIcon = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Spacer(Modifier.width(d.spaceM))
+                            AdminProfileAvatarButton(
+                                profileImageUrl = profileImageUrl,
+                                contentDescription = stringResource(R.string.admin_profile_cd),
+                                onClick = { onAction(AdminDashboardAction.OnProfileClicked) },
+                                size = 36.dp
+                            )
+                            IconButton(onClick = { onAction(AdminDashboardAction.OnNotificationsClicked) }) {
+                                Icon(
+                                    imageVector = Icons.Default.NotificationsNone,
+                                    contentDescription = stringResource(R.string.admin_notifications_cd),
+                                    tint = PharmaNeutral600,
+                                )
+                            }
+                        }
+                    },
+                    actions = {
                         IconButton(onClick = { onAction(AdminDashboardAction.OnMenuClicked) }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
                                 contentDescription = stringResource(R.string.admin_menu_cd),
-                                tint = MaterialTheme.colorScheme.onSurface,
+                                tint = PharmaNeutral600,
                             )
                         }
-                    },
-                    actions = {
-                        IconButton(onClick = { onAction(AdminDashboardAction.OnNotificationsClicked) }) {
-                            Icon(
-                                imageVector = Icons.Default.Notifications,
-                                contentDescription = stringResource(R.string.admin_notifications_cd),
-                                tint = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        
-                        AdminProfileAvatarButton(
-                            profileImageUrl = profileImageUrl,
-                            contentDescription = stringResource(R.string.admin_profile_cd),
-                            onClick = { onAction(AdminDashboardAction.OnProfileClicked) },
-                        )
-                        Spacer(Modifier.width(d.spaceM))
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = Color.White,
                     ),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
+                HorizontalDivider(color = PharmaNeutral100)
             }
         },
     ) { padding ->
@@ -265,14 +287,15 @@ private fun SuccessContent(
         contentPadding = PaddingValues(d.spaceL),
         verticalArrangement = Arrangement.spacedBy(d.spaceL),
     ) {
-        // Welcome Section
+        // Welcome Text
         item {
-            WelcomeSection(
-                adminName = state.adminName.ifEmpty { stringResource(R.string.admin_dashboard_default_admin_name) },
-                totalUsers = state.totalUsers,
-                totalOrders = state.totalOrders,
-                pendingRequests = state.pendingRequests.size,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(d.spaceXXS)) {
+                Text(
+                    text = "أهلاً بك د. ${state.adminName.substringBefore(" ").ifEmpty { "أحمد" }}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PharmaNeutral600,
+                )
+            }
         }
 
         // Primary Actions
@@ -280,7 +303,16 @@ private fun SuccessContent(
             PrimaryActionsRow(onAction = onAction)
         }
 
-        // Statistics Cards
+        // Banner Stats
+        item {
+            AdminStatsBanner(
+                totalUsers = state.totalUsers,
+                totalOrders = state.totalOrders,
+                totalFacilities = state.totalPharmacies + state.totalWarehouses
+            )
+        }
+
+        // Statistics Grid
         item {
             StatisticsGrid(
                 totalUsers = state.totalUsers,
@@ -304,6 +336,14 @@ private fun SuccessContent(
             )
         }
 
+        // System Health
+        item {
+            SystemHealthCard(
+                healthPercent = state.systemHealthPercent,
+                healthStatus = state.systemHealthStatus,
+            )
+        }
+
         // Pending Requests
         if (state.pendingRequests.isNotEmpty()) {
             item {
@@ -312,14 +352,6 @@ private fun SuccessContent(
                     onAction = onAction,
                 )
             }
-        }
-
-        // System Health
-        item {
-            SystemHealthCard(
-                healthPercent = state.systemHealthPercent,
-                healthStatus = state.systemHealthStatus,
-            )
         }
 
         // Recent Activities
@@ -335,41 +367,80 @@ private fun SuccessContent(
 }
 
 @Composable
-private fun WelcomeSection(
-    adminName: String,
+private fun AdminStatsBanner(
     totalUsers: Int,
     totalOrders: Int,
-    pendingRequests: Int,
-    modifier: Modifier = Modifier,
+    totalFacilities: Int
 ) {
     val d = MaterialTheme.dimens
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(d.spaceS),
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = PharmaBlue50,
     ) {
-        DashboardWelcomeCard(
-            title = "أهلاً بك في صيدليتي",
-            subtitle = "لوحة تحكم موحدة للمنشآت والطلبات",
-            stats = listOf(
-                "المستخدمون" to totalUsers.toString(),
-                "الطلبات" to totalOrders.toString(),
-                "المعلّقة" to pendingRequests.toString(),
-            ),
-        )
-        Text(
-            text = stringResource(R.string.admin_dashboard_welcome),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = adminName,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceL)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.Start) {
+                    Text(
+                        text = "أهلاً بك في صيدليتي",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = PremiumPrimary
+                    )
+                    Text(
+                        text = "لوحة تحكم موحدة للمنشآت والطلبات",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PharmaNeutral600
+                    )
+                }
+                Icon(
+                    painter = painterResource(id = DsR.drawable.ic_sydaliti_mark),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(64.dp)
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(d.spaceM)
+            ) {
+                BannerStatItem(label = "المستخدمون", value = formatNumber(totalUsers), modifier = Modifier.weight(1f))
+                BannerStatItem(label = "الطلبات", value = formatNumber(totalOrders), modifier = Modifier.weight(1f))
+                BannerStatItem(label = "المنشآت", value = formatNumber(totalFacilities), modifier = Modifier.weight(1f))
+            }
+        }
     }
 }
+
+@Composable
+private fun BannerStatItem(label: String, value: String, modifier: Modifier = Modifier) {
+    val d = MaterialTheme.dimens
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(d.spaceXXS, Alignment.Start)
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = PharmaNeutral600)
+        Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PremiumPrimary)
+    }
+}
+
+private fun formatNumber(number: Int): String {
+    return if (number >= 1000) {
+        "%,d".format(number)
+    } else {
+        number.toString()
+    }
+}
+
 @Composable
 private fun PrimaryActionsRow(
     onAction: (AdminDashboardAction) -> Unit,
@@ -381,11 +452,14 @@ private fun PrimaryActionsRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(d.spaceM),
     ) {
-        PharmaButton(
-            text = stringResource(R.string.admin_dashboard_add_facility),
+        StitchButton(
             onClick = { onAction(AdminDashboardAction.OnAddFacilityClicked) },
-            modifier = Modifier.weight(1f),
-        )
+            modifier = Modifier.weight(1.3f).height(48.dp),
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(d.spaceS))
+            Text(stringResource(R.string.admin_dashboard_add_facility), fontWeight = FontWeight.Bold)
+        }
         
         PharmaButton(
             text = "التقارير قريبًا",
@@ -417,15 +491,15 @@ private fun StatisticsGrid(
             horizontalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             StatCard(
-                title = stringResource(R.string.admin_dashboard_total_users),
-                value = totalUsers.toString(),
+                title = "إجمالي المستخدمين",
+                value = formatNumber(totalUsers),
                 modifier = Modifier.weight(1f),
                 onClick = { onAction(AdminDashboardAction.OnUsersCardClicked) },
             )
             
             StatCard(
-                title = stringResource(R.string.admin_dashboard_total_pharmacies),
-                value = totalPharmacies.toString(),
+                title = "إجمالي الصيدليات",
+                value = formatNumber(totalPharmacies),
                 modifier = Modifier.weight(1f),
                 onClick = { onAction(AdminDashboardAction.OnPharmaciesCardClicked) },
             )
@@ -436,17 +510,17 @@ private fun StatisticsGrid(
             horizontalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             StatCard(
-                title = stringResource(R.string.admin_dashboard_total_warehouses),
-                value = totalWarehouses.toString(),
+                title = "إجمالي الطلبات",
+                value = formatNumber(totalOrders),
                 modifier = Modifier.weight(1f),
-                onClick = { onAction(AdminDashboardAction.OnWarehousesCardClicked) },
+                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
             )
             
             StatCard(
-                title = stringResource(R.string.admin_dashboard_total_orders),
-                value = formatLargeNumber(totalOrders),
+                title = "إجمالي المستودعات",
+                value = formatNumber(totalWarehouses),
                 modifier = Modifier.weight(1f),
-                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
+                onClick = { onAction(AdminDashboardAction.OnWarehousesCardClicked) },
             )
         }
     }
@@ -460,42 +534,32 @@ private fun StatCard(
     onClick: () -> Unit = {},
 ) {
     val d = MaterialTheme.dimens
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val cardScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "admin_stat_card_press",
-    )
-
-    PharmaCard(
+    
+    Surface(
         modifier = modifier
-            .graphicsLayer {
-                scaleX = cardScale
-                scaleY = cardScale
-            }
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(),
-                onClick = onClick,
-            ),
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        elevationDp = 2f,
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = PharmaBlue50.copy(alpha = 0.5f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaBlue100)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(d.spaceS),
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                style = MaterialTheme.typography.labelSmall,
+                color = PharmaNeutral600,
+                textAlign = TextAlign.Start
             )
             
             Text(
                 text = value,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = PremiumPrimary,
+                textAlign = TextAlign.Start
             )
         }
     }
@@ -519,23 +583,22 @@ private fun PendingRequestsSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.admin_dashboard_pending_requests),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            
-            Text(
                 text = stringResource(R.string.admin_dashboard_view_all),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = PharmaBlue500,
                 modifier = Modifier.clickable {
                     onAction(AdminDashboardAction.OnViewAllRequestsClicked)
                 },
             )
+            Text(
+                text = stringResource(R.string.admin_dashboard_pending_requests),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = PharmaNeutral900,
+            )
         }
         
-        requests.forEach { request ->
+        requests.take(2).forEach { request ->
             PendingRequestCard(
                 request = request,
                 onClick = {
@@ -553,69 +616,79 @@ private fun PendingRequestCard(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
-    val isOrderRequest = request.type == RequestType.ORDER
-
-    Card(
-        modifier = if (isOrderRequest) {
-            modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(),
-                    onClick = onClick,
-                )
-        } else {
-            modifier.fillMaxWidth()
-        },
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(d.radiusXL),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(d.spaceL),
-            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                .padding(d.spaceM),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceM)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
+            Surface(
+                modifier = Modifier.size(44.dp),
+                shape = RoundedCornerShape(d.radiusL),
+                color = when (request.type) {
+                    RequestType.FACILITY -> PharmaBlue50
+                    RequestType.ORDER -> Color(0xFFE3F2FD)
+                    else -> PharmaNeutral100
+                }
             ) {
-                Icon(
-                    imageVector = Icons.Default.Pending,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp),
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = when (request.type) {
+                            RequestType.FACILITY -> if (request.title.contains("صيدلية")) 
+                                Icons.Outlined.LocalPharmacy else Icons.Outlined.Warehouse
+                            RequestType.ORDER -> Icons.Outlined.Inventory2
+                            RequestType.USER -> Icons.Outlined.Person
+                            else -> Icons.Default.Pending
+                        },
+                        contentDescription = null,
+                        tint = when (request.type) {
+                            RequestType.FACILITY -> PremiumPrimary
+                            RequestType.ORDER -> PharmaBlue500
+                            else -> PharmaNeutral600
+                        },
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
             
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
                     text = request.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = request.subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    color = PharmaNeutral900,
+                    textAlign = TextAlign.Start
                 )
                 Text(
-                    text = request.timestamp,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "${request.subtitle} • ${request.timestamp}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PharmaNeutral600,
+                    textAlign = TextAlign.Start,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = null,
+                tint = PharmaNeutral400,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -633,59 +706,56 @@ private fun SystemHealthCard(
         label = "admin_system_health_progress",
     )
 
-    PharmaCard(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.surface,
-        elevationDp = 2f,
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = Color.White,
+        shadowElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
     ) {
         Column(
+            modifier = Modifier.padding(d.spaceL),
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
-            Text(
-                text = stringResource(R.string.admin_dashboard_system_health),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Crossfade(
-                    targetState = healthPercent.coerceIn(0, 100),
-                    animationSpec = tween(durationMillis = 180),
-                    label = "admin_system_health_percent",
-                ) { percent ->
+                Surface(
+                    shape = RoundedCornerShape(d.radiusM),
+                    color = PharmaSuccess.copy(alpha = 0.12f),
+                    contentColor = PharmaSuccess
+                ) {
                     Text(
-                        text = "$percent%",
-                        style = MaterialTheme.typography.displayMedium,
+                        text = healthStatus,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceXXS)
                     )
                 }
-                
                 Text(
-                    text = healthStatus,
+                    text = stringResource(R.string.admin_dashboard_system_health),
                     style = MaterialTheme.typography.titleMedium,
-                    color = StatusActive,
+                    fontWeight = FontWeight.Bold,
+                    color = PharmaNeutral900,
                 )
             }
             
-            LinearProgressIndicator(
-                progress = { animatedProgress },
+            Text(
+                text = "$healthPercent%",
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = PremiumPrimary,
                 modifier = Modifier.fillMaxWidth(),
-                color = StatusActive,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                textAlign = TextAlign.Center
             )
             
-            // Note: Active connections telemetry is not available in current schema
-            // Showing "غير متاح" instead of fake 0 value
-            Text(
-                text = stringResource(R.string.admin_dashboard_active_connections_unavailable),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            LinearProgressIndicator(
+                progress = { animatedProgress },
+                modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                color = PremiumPrimary,
+                trackColor = PharmaNeutral100,
             )
         }
     }
@@ -708,32 +778,34 @@ private fun RecentActivitiesSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(R.string.admin_dashboard_recent_activities),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            
-            Text(
+             Text(
                 text = stringResource(R.string.admin_dashboard_view_all),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = PharmaBlue500,
                 modifier = Modifier.clickable {
                     onAction(AdminDashboardAction.OnViewAllActivitiesClicked)
                 },
             )
+            Text(
+                text = stringResource(R.string.admin_dashboard_recent_activities),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = PharmaNeutral900,
+            )
         }
         
-        PharmaCard(
-            containerColor = MaterialTheme.colorScheme.surface,
-            elevationDp = 2f,
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(d.radiusXXL),
+            color = Color.White,
+            shadowElevation = 2.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
         ) {
             Column {
-                activities.forEachIndexed { index, activity ->
+                activities.take(3).forEachIndexed { index, activity ->
                     ActivityRow(activity = activity)
-                    if (index < activities.lastIndex) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.16f))
+                    if (index < activities.take(3).lastIndex) {
+                        HorizontalDivider(color = PharmaNeutral100)
                     }
                 }
             }
@@ -755,42 +827,55 @@ private fun ActivityRow(
         horizontalArrangement = Arrangement.spacedBy(d.spaceM),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = when (activity.status) {
-                ActivityStatus.SUCCESS -> Icons.Default.CheckCircle
-                ActivityStatus.FAILED -> Icons.Default.Error
-                ActivityStatus.PENDING -> Icons.Default.Pending
-            },
-            contentDescription = null,
-            tint = when (activity.status) {
-                ActivityStatus.SUCCESS -> StatusActive
-                ActivityStatus.FAILED -> MaterialTheme.colorScheme.error
-                ActivityStatus.PENDING -> MaterialTheme.colorScheme.primary
-            },
-            modifier = Modifier.size(20.dp),
-        )
+        Surface(
+            modifier = Modifier.size(32.dp),
+            shape = CircleShape,
+            color = when (activity.status) {
+                ActivityStatus.SUCCESS -> PharmaSuccess.copy(alpha = 0.12f)
+                ActivityStatus.FAILED -> PharmaError.copy(alpha = 0.12f)
+                ActivityStatus.PENDING -> PharmaBlue100
+            }
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = when (activity.status) {
+                        ActivityStatus.SUCCESS -> Icons.Default.CheckCircle
+                        ActivityStatus.FAILED -> Icons.Default.Error
+                        ActivityStatus.PENDING -> Icons.Default.Pending
+                    },
+                    contentDescription = null,
+                    tint = when (activity.status) {
+                        ActivityStatus.SUCCESS -> StatusActive
+                        ActivityStatus.FAILED -> PharmaError
+                        ActivityStatus.PENDING -> PharmaBlue500
+                    },
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
         
         Column(
             modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(d.spaceXS),
         ) {
             Text(
                 text = activity.action,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = PharmaNeutral900,
             )
             Text(
                 text = activity.user,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+                color = PharmaNeutral600,
             )
         }
         
         Text(
             text = activity.timestamp,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall,
+            color = PharmaNeutral400,
         )
     }
 }
@@ -808,76 +893,67 @@ private fun OrdersBreakdownSection(
 ) {
     val d = MaterialTheme.dimens
 
-    Column(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(d.spaceM),
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = Color.White,
+        shadowElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
     ) {
-        Text(
-            text = stringResource(R.string.admin_dashboard_orders_breakdown_title),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        
-        // Order Types
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceL)
         ) {
-            StatCard(
-                title = stringResource(R.string.admin_dashboard_orders_b2c),
-                value = b2cOrders.toString(),
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
+            Text(
+                text = "تقسيم الطلبات",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = PharmaNeutral900,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start
             )
             
-            StatCard(
-                title = stringResource(R.string.admin_dashboard_orders_b2b),
-                value = b2bOrders.toString(),
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(d.spaceM)) {
+                OrderBreakdownRow(
+                    label1 = "B2C", value1 = formatNumber(b2cOrders),
+                    label2 = "B2B", value2 = formatNumber(b2bOrders)
+                )
+                HorizontalDivider(color = PharmaNeutral100)
+                OrderBreakdownRow(
+                    label1 = "مستعجل", value1 = formatNumber(urgentOrders),
+                    label2 = "معلّق", value2 = formatNumber(pendingOrders)
+                )
+                HorizontalDivider(color = PharmaNeutral100)
+                OrderBreakdownRow(
+                    label1 = "مؤكد", value1 = formatNumber(confirmedOrders),
+                    label2 = "مسلّم", value2 = formatNumber(deliveredOrders)
+                )
+            }
         }
-        
-        // Urgent Orders
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-        ) {
-            StatCard(
-                title = stringResource(R.string.admin_dashboard_orders_urgent),
-                value = urgentOrders.toString(),
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
-            )
-            
-            StatCard(
-                title = stringResource(R.string.admin_dashboard_orders_pending),
-                value = pendingOrders.toString(),
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
-            )
-        }
-        
-        // Order Status
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(d.spaceM),
-        ) {
-            StatCard(
-                title = stringResource(R.string.admin_dashboard_orders_confirmed),
-                value = confirmedOrders.toString(),
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
-            )
-            
-            StatCard(
-                title = stringResource(R.string.admin_dashboard_orders_delivered),
-                value = deliveredOrders.toString(),
-                modifier = Modifier.weight(1f),
-                onClick = { onAction(AdminDashboardAction.OnOrdersCardClicked) },
-            )
-        }
+    }
+}
+
+@Composable
+private fun OrderBreakdownRow(
+    label1: String, value1: String,
+    label2: String, value2: String
+) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        OrderBreakdownItem(label = label1, value = value1, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(1.dp).height(24.dp).background(PharmaNeutral100))
+        OrderBreakdownItem(label = label2, value = value2, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun OrderBreakdownItem(label: String, value: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PharmaNeutral900)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = PharmaNeutral600)
     }
 }
 

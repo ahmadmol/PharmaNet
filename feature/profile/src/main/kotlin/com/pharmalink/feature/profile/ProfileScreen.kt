@@ -16,16 +16,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.LocationOn
@@ -33,9 +36,13 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material.icons.outlined.Verified
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -56,22 +64,29 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.SubcomposeAsyncImage
+import com.pharmalink.designsystem.components.PharmaStatusChip
+import com.pharmalink.designsystem.components.StatusTone
 import com.pharmalink.designsystem.stitch.StitchTheme
 import com.pharmalink.designsystem.stitch.components.StitchButton
 import com.pharmalink.designsystem.theme.ClinicalCanvas
 import com.pharmalink.designsystem.theme.PharmaBlue50
 import com.pharmalink.designsystem.theme.PharmaBlue500
 import com.pharmalink.designsystem.theme.PharmaBlue700
+import com.pharmalink.designsystem.theme.PharmaBlue900
+import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaNeutral400
 import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral900
 import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.dimens
-import coil.compose.SubcomposeAsyncImage
 
 private data class SettingsGroup(
     val title: String,
@@ -103,6 +118,7 @@ fun ProfileScreen(
             onOpenContactUs = onOpenContactUs,
             onOpenLanguage = onOpenLanguage,
             onNotificationsToggle = viewModel::updateNotifications,
+            onUpdateWarehouseLocation = viewModel::updateWarehouseLocationFromCurrentGps,
         )
     }
 }
@@ -118,12 +134,12 @@ private fun ProfileContent(
     onOpenContactUs: () -> Unit,
     onOpenLanguage: () -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
+    onUpdateWarehouseLocation: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
-    val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
     val context = LocalContext.current
     val settingsGroups = uiState.settingsOptions
-        .filterNot { isPublicUser && it.isNotification(context) }
+        .filterNot { uiState.isPublicUser && it.isNotification(context) }
         .groupForProfile(uiState.accountTypeEnum, context)
     val languagePreview = stringResource(R.string.profile_language_arabic_only)
 
@@ -135,33 +151,59 @@ private fun ProfileContent(
         verticalArrangement = Arrangement.spacedBy(d.spaceL),
     ) {
         item { ProfileHeader() }
-        item {
-            ProfileHeroSection(
-                userName = uiState.userName,
-                accountType = uiState.accountType,
-                accountTypeEnum = uiState.accountTypeEnum,
-                pharmacyName = uiState.pharmacyName,
-                pharmacyAddress = uiState.pharmacyAddress,
-                profileImageUrl = uiState.profileImageUrl,
-                isPublicUser = isPublicUser,
-                onEditProfile = onEditProfile,
-                modifier = Modifier.padding(horizontal = d.spaceL),
-            )
-        }
-        item {
-            ProfileSummaryCard(
-                uiState = uiState,
-                modifier = Modifier.padding(horizontal = d.spaceL),
-            )
-        }
-        if (uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PHARMACY) {
+        
+        if (uiState.isWarehouse) {
             item {
-                LinkedPharmacyStatusCard(
+                WarehouseHeroSection(
+                    warehouseName = uiState.pharmacyName,
+                    profileImageUrl = uiState.profileImageUrl,
+                    onEditProfile = onEditProfile,
+                    modifier = Modifier.padding(horizontal = d.spaceL),
+                )
+            }
+            item {
+                WarehouseStatsRow(
                     uiState = uiState,
                     modifier = Modifier.padding(horizontal = d.spaceL),
                 )
             }
+            item {
+                LinkedWarehouseStatusCard(
+                    uiState = uiState,
+                    onUpdateLocation = onUpdateWarehouseLocation,
+                    modifier = Modifier.padding(horizontal = d.spaceL),
+                )
+            }
+        } else {
+            item {
+                ProfileHeroSection(
+                    userName = uiState.userName,
+                    accountType = uiState.accountType,
+                    accountTypeEnum = uiState.accountTypeEnum,
+                    pharmacyName = uiState.pharmacyName,
+                    pharmacyAddress = uiState.pharmacyAddress,
+                    profileImageUrl = uiState.profileImageUrl,
+                    isPublicUser = uiState.isPublicUser,
+                    onEditProfile = onEditProfile,
+                    modifier = Modifier.padding(horizontal = d.spaceL),
+                )
+            }
+            item {
+                ProfileSummaryCard(
+                    uiState = uiState,
+                    modifier = Modifier.padding(horizontal = d.spaceL),
+                )
+            }
+            if (uiState.isPharmacy) {
+                item {
+                    LinkedPharmacyStatusCard(
+                        uiState = uiState,
+                        modifier = Modifier.padding(horizontal = d.spaceL),
+                    )
+                }
+            }
         }
+
         items(settingsGroups) { group ->
             ProfileSettingsSection(
                 group = group,
@@ -222,6 +264,209 @@ private fun ProfileHeader() {
 }
 
 @Composable
+private fun WarehouseHeroSection(
+    warehouseName: String,
+    profileImageUrl: String?,
+    onEditProfile: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(d.spaceS),
+    ) {
+        Box(contentAlignment = Alignment.BottomEnd) {
+            Surface(
+                modifier = Modifier.size(112.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(2.dp, PharmaBlue500),
+                shadowElevation = 4.dp,
+            ) {
+                PersistedAvatarImage(
+                    imageUrl = profileImageUrl,
+                    contentDescription = null,
+                    modifier = Modifier.size(112.dp),
+                )
+            }
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = CircleShape,
+                color = Color.White,
+                shadowElevation = 2.dp
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Outlined.QrCode2,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = PharmaBlue500
+                    )
+                }
+            }
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.spaceXS)
+        ) {
+            Text(
+                text = warehouseName.ifBlank { "مستودع الأدوية" },
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = PharmaBlue900
+            )
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = PharmaSuccess
+            )
+        }
+
+        PharmaStatusChip(
+            label = stringResource(R.string.warehouse_verified_badge),
+            tone = StatusTone.Success
+        )
+
+        Spacer(Modifier.height(d.spaceXS))
+
+        StitchButton(
+            onClick = onEditProfile,
+            modifier = Modifier.fillMaxWidth(0.6f),
+            contentPadding = PaddingValues(horizontal = d.spaceL, vertical = d.spaceS),
+        ) {
+            Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(d.spaceS))
+            Text(text = stringResource(R.string.edit_profile_button), fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun WarehouseStatsRow(
+    uiState: ProfileUiState,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(d.spaceM)
+    ) {
+        WarehouseStatItem(
+            label = stringResource(R.string.warehouse_stat_response_speed),
+            value = stringResource(R.string.warehouse_minutes_format, uiState.responseSpeedMinutes),
+            icon = Icons.Outlined.History,
+            modifier = Modifier.weight(1f)
+        )
+        WarehouseStatItem(
+            label = stringResource(R.string.warehouse_stat_completion_rate),
+            value = "${uiState.completionRatePercent}%",
+            icon = Icons.Outlined.Verified,
+            modifier = Modifier.weight(1f)
+        )
+        WarehouseStatItem(
+            label = stringResource(R.string.warehouse_stat_active_products),
+            value = uiState.activeProductsCount.toString(),
+            icon = Icons.Outlined.Store,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun WarehouseStatItem(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(d.radiusXL),
+        color = Color.White,
+        border = BorderStroke(1.dp, PharmaNeutral100)
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceM),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = PharmaBlue500)
+            Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PharmaBlue900)
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = PharmaNeutral600, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+@Composable
+private fun LinkedWarehouseStatusCard(
+    uiState: ProfileUiState,
+    onUpdateLocation: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    val locationSet = uiState.warehouseLatitude != null && uiState.warehouseLongitude != null
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = Color.White,
+        border = BorderStroke(1.dp, PharmaNeutral100)
+    ) {
+        Column(
+            modifier = Modifier.padding(d.spaceL),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.warehouse_location_status_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = PharmaBlue900
+                )
+                PharmaStatusChip(
+                    label = if (locationSet) stringResource(R.string.warehouse_location_set) else stringResource(R.string.warehouse_location_not_set),
+                    tone = if (locationSet) StatusTone.Success else StatusTone.Urgent
+                )
+            }
+
+            if (locationSet) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS)
+                ) {
+                    Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = PharmaNeutral400, modifier = Modifier.size(16.dp))
+                    Text(
+                        text = uiState.pharmacyAddress.ifBlank { "تم تحديد الموقع الجغرافي للمستودع" },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PharmaNeutral600
+                    )
+                }
+            }
+
+            StitchButton(
+                onClick = onUpdateLocation,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Outlined.Explore, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(d.spaceS))
+                Text(text = stringResource(R.string.warehouse_update_location_btn), fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
 private fun ProfileHeroSection(
     userName: String,
     accountType: String,
@@ -234,7 +479,6 @@ private fun ProfileHeroSection(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
-    val context = LocalContext.current
     val isWarehouse = accountTypeEnum == com.pharmalink.domain.model.AccountType.WAREHOUSE
     val organizationFallback = if (isWarehouse) {
         stringResource(R.string.edit_profile_role_warehouse)
@@ -330,7 +574,7 @@ private fun ProfileHeroSection(
 @Composable
 private fun PersistedAvatarImage(
     imageUrl: String?,
-    contentDescription: String,
+    contentDescription: String?,
     modifier: Modifier = Modifier,
 ) {
     val model = imageUrl?.takeIf { it.isNotBlank() }
@@ -368,15 +612,13 @@ private fun ProfileSummaryCard(
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
-    val isPublicUser = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PUBLIC_USER
-    val isWarehouse = uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.WAREHOUSE
     val organizationLabel = when {
-        isPublicUser -> stringResource(R.string.profile_org_label_user)
-        isWarehouse -> stringResource(R.string.profile_org_label_warehouse)
-        uiState.accountTypeEnum == com.pharmalink.domain.model.AccountType.PHARMACY -> stringResource(R.string.profile_org_label_pharmacy)
+        uiState.isPublicUser -> stringResource(R.string.profile_org_label_user)
+        uiState.isWarehouse -> stringResource(R.string.profile_org_label_warehouse)
+        uiState.isPharmacy -> stringResource(R.string.profile_org_label_pharmacy)
         else -> stringResource(R.string.profile_org_label_fallback)
     }
-    val accountTypeLabel = if (isWarehouse) {
+    val accountTypeLabel = if (uiState.isWarehouse) {
         stringResource(R.string.edit_profile_role_warehouse)
     } else {
         uiState.accountType
@@ -441,7 +683,7 @@ private fun ProfileSummaryCard(
                 ) {
                     SummaryInfo(
                         label = organizationLabel,
-                        value = if (isPublicUser) uiState.pharmacyAddress else uiState.pharmacyName,
+                        value = if (uiState.isPublicUser) uiState.pharmacyAddress else uiState.pharmacyName,
                         modifier = Modifier.weight(1f),
                     )
                     SummaryInfo(
@@ -919,6 +1161,7 @@ fun ProfileScreenPreview() {
             onOpenContactUs = {},
             onOpenLanguage = {},
             onNotificationsToggle = {},
+            onUpdateWarehouseLocation = {},
         )
     }
 }

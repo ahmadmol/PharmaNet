@@ -63,7 +63,7 @@ fun DashboardWelcomeCard(
                     painter = painterResource(id = R.drawable.ic_sydaliti_mark),
                     contentDescription = null,
                     tint = Color.Unspecified,
-                    modifier = Modifier.size(52.dp),
+                    modifier = Modifier.size(72.dp),
                 )
             }
             if (stats.isNotEmpty()) {

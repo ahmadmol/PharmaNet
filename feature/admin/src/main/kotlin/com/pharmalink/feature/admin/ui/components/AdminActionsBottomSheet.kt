@@ -12,14 +12,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
-import androidx.compose.material.icons.outlined.LocalPharmacy
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.ReceiptLong
-import androidx.compose.material.icons.outlined.Security
-import androidx.compose.material.icons.outlined.SupervisorAccount
-import androidx.compose.material.icons.outlined.Warehouse
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Close
+import com.pharmalink.designsystem.theme.PharmaBlue50
+import com.pharmalink.designsystem.theme.PharmaNeutral200
+import com.pharmalink.designsystem.theme.PharmaNeutral400
+import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral900
+import com.pharmalink.designsystem.theme.PremiumPrimary
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,95 +78,135 @@ fun AdminActionsBottomSheet(
         AdminActionItem(AdminActionDestination.USERS, R.string.admin_action_users, Icons.Outlined.SupervisorAccount),
         AdminActionItem(AdminActionDestination.PHARMACIES, R.string.admin_action_pharmacies, Icons.Outlined.LocalPharmacy),
         AdminActionItem(AdminActionDestination.WAREHOUSES, R.string.admin_action_warehouses, Icons.Outlined.Warehouse),
-        AdminActionItem(AdminActionDestination.ORDERS, R.string.admin_action_orders, Icons.Outlined.ReceiptLong),
-        AdminActionItem(AdminActionDestination.AUDIT_LOG, R.string.admin_action_audit_log, Icons.Outlined.Security),
-        AdminActionItem(AdminActionDestination.NOTIFICATIONS, R.string.admin_action_notifications, Icons.Outlined.Notifications),
+        AdminActionItem(AdminActionDestination.ORDERS, R.string.admin_action_orders, Icons.Outlined.ShoppingCart),
+        AdminActionItem(AdminActionDestination.AUDIT_LOG, R.string.admin_action_audit_log, Icons.Outlined.HistoryEdu),
+        AdminActionItem(AdminActionDestination.NOTIFICATIONS, R.string.admin_action_notifications, Icons.Outlined.NotificationsNone),
         AdminActionItem(AdminActionDestination.PROFILE, R.string.admin_action_profile, Icons.Outlined.Person),
     )
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         ModalBottomSheet(
             onDismissRequest = onDismiss,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = Color.White,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .width(40.dp)
+                        .height(4.dp)
+                        .background(PharmaNeutral200, RoundedCornerShape(2.dp))
+                )
+            }
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(bottom = 32.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.admin_actions_sheet_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 4.dp),
-                )
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = null,
+                            tint = PharmaNeutral600
+                        )
+                    }
 
-                items.forEach { item ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onActionClick(item.destination) },
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 11.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
-                                        shape = CircleShape,
-                                    ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                if (item.destination == AdminActionDestination.PROFILE) {
-                                    AdminProfileAvatarIcon(
-                                        profileImageUrl = profileImageUrl,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(36.dp),
-                                        fallbackTint = MaterialTheme.colorScheme.primary,
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = item.icon,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                }
-                            }
-
+                        Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = stringResource(item.titleRes),
+                                text = "د. أحمد",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.weight(1f),
+                                fontWeight = FontWeight.Bold,
+                                color = PharmaNeutral900
                             )
-
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
-                                modifier = Modifier.size(14.dp),
+                            Text(
+                                text = "لوحة التحكم",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = PharmaNeutral600
                             )
                         }
+                        AdminProfileAvatarIcon(
+                            profileImageUrl = profileImageUrl,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, PharmaBlue50, CircleShape),
+                            fallbackTint = PremiumPrimary
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.size(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items.forEach { item ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { 
+                                    onActionClick(item.destination)
+                                    onDismiss()
+                                },
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color.White
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    contentDescription = null,
+                                    tint = PharmaNeutral400,
+                                    modifier = Modifier.size(20.dp)
+                                )
+
+                                Text(
+                                    text = stringResource(item.titleRes),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PharmaNeutral900,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.Start
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(PharmaBlue50, RoundedCornerShape(10.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = null,
+                                        tint = PremiumPrimary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

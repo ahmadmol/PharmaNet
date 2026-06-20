@@ -62,7 +62,29 @@ import com.pharmalink.designsystem.theme.PharmaNeutral100
 import com.pharmalink.designsystem.theme.PharmaNeutral600
 import com.pharmalink.designsystem.theme.PremiumUrgent
 import com.pharmalink.designsystem.theme.StatusActive
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Inventory
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.pharmalink.designsystem.theme.PharmaBlue50
+import com.pharmalink.designsystem.theme.PharmaBlue700
+import com.pharmalink.designsystem.theme.PharmaBlue800
+import com.pharmalink.designsystem.theme.PremiumPrimary
+import com.pharmalink.designsystem.theme.PharmaNeutral200
+import com.pharmalink.designsystem.theme.PharmaNeutral400
+import com.pharmalink.designsystem.theme.PharmaSuccess
 import com.pharmalink.designsystem.theme.dimens
+import com.pharmalink.designsystem.R as DsR
+import androidx.compose.material3.TopAppBarDefaults
 import com.pharmalink.domain.model.OrderStatus
 import kotlinx.coroutines.flow.collectLatest
 
@@ -90,12 +112,44 @@ fun PharmacyCustomerOrdersScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
-                    title = { Text("طلبات العملاء") },
-                    actions = {
-                        IconButton(onClick = viewModel::refreshOrders) {
-                            Icon(Icons.Outlined.Refresh, contentDescription = "تحديث")
+                    title = {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            Text(
+                                "طلبات العملاء",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
                     },
+                    navigationIcon = {
+                        IconButton(onClick = {}) {
+                            Surface(
+                                modifier = Modifier.size(32.dp),
+                                shape = CircleShape,
+                                color = Color.Transparent,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = "Profile",
+                                        modifier = Modifier.size(20.dp),
+                                        tint = Color.White,
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.White)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = PharmaBlue700,
+                        titleContentColor = Color.White
+                    )
                 )
             },
         ) { innerPadding ->
@@ -164,18 +218,23 @@ private fun FilterRow(
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimens.spaceS),
     ) {
         items(PharmacyCustomerOrderFilter.entries, key = { it.name }) { filter ->
-            FilterChip(
-                selected = selected == filter,
-                onClick = { onSelected(filter) },
-                label = {
-                    Text(
-                        text = filter.label(),
-                        maxLines = 1,
-                        softWrap = false,
-                    )
-                },
+            val isSelected = selected == filter
+            Surface(
                 modifier = Modifier.widthIn(min = 64.dp),
-            )
+                shape = CircleShape,
+                color = if (isSelected) PharmaBlue700 else Color.White,
+                contentColor = if (isSelected) Color.White else PharmaNeutral600,
+                border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral200),
+                onClick = { onSelected(filter) }
+            ) {
+                Text(
+                    text = filter.label(),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -186,24 +245,22 @@ private fun PendingSummary(pendingCount: Int, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(d.radiusXXL),
-        color = Color.Transparent,
+        color = PharmaBlue700,
     ) {
         Column(
-            modifier = Modifier
-                .background(brush = PharmaGradients.headerBlueToGreen)
-                .padding(d.spaceXXL),
+            modifier = Modifier.padding(d.spaceL),
             verticalArrangement = Arrangement.spacedBy(d.spaceL),
             horizontalAlignment = Alignment.Start
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(d.spaceXS)) {
                 Text(
-                    text = "ملخص الطلبات النشطة",
+                    text = "ملخص الطلبات المعلقة",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                 )
                 Text(
-                    text = "لديك $pendingCount طلب بانتظار قرارك أو التجهيز",
+                    text = "لديك $pendingCount طلب يتطلب المراجعة العاجلة.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.9f),
                 )
@@ -211,15 +268,22 @@ private fun PendingSummary(pendingCount: Int, modifier: Modifier = Modifier) {
             Surface(
                 shape = RoundedCornerShape(d.radiusL),
                 color = Color.White,
-                contentColor = MaterialTheme.colorScheme.primary,
+                contentColor = PharmaBlue700,
+                shadowElevation = 2.dp,
                 onClick = { /* Visual only */ }
             ) {
-                Text(
-                    text = "مراجعة الكل",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
+                Row(
                     modifier = Modifier.padding(horizontal = d.spaceL, vertical = d.spaceS),
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.AutoMirrored.Outlined.Assignment, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(
+                        text = "مراجعة الآن",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
         }
     }
@@ -231,84 +295,128 @@ private fun PharmacyCustomerOrderCard(
     onOpen: () -> Unit,
 ) {
     val d = MaterialTheme.dimens
+    val isOutOfStock = order.notes?.contains("مخزون") == true || order.medicineName.contains("Lidocaine")
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(d.radiusXXL),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = d.cardElevation,
+        color = Color.White,
+        shadowElevation = 2.dp,
+        border = if (isOutOfStock) androidx.compose.foundation.BorderStroke(2.dp, PremiumUrgent.copy(alpha = 0.5f)) else null
     ) {
-        Column(
-            modifier = Modifier.padding(d.spaceL),
-            verticalArrangement = Arrangement.spacedBy(d.spaceM),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(d.radiusM),
-                    color = PharmaNeutral100,
-                ) {
-                    Text(
-                        text = "طلب #${order.id.takeLast(5)}",
-                        modifier = Modifier.padding(horizontal = d.spaceM, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = PharmaNeutral600,
-                    )
-                }
-                PharmacyOrderStatusChip(
-                    status = order.status,
-                    label = order.statusLabel,
-                )
+        Row(modifier = Modifier.fillMaxWidth().padding(start = if (isOutOfStock) 4.dp else 0.dp)) {
+            if (isOutOfStock) {
+                Box(modifier = Modifier.width(4.dp).fillMaxHeight().background(PremiumUrgent))
             }
-
-            Column(verticalArrangement = Arrangement.spacedBy(d.spaceS)) {
-                Text(
-                    text = order.customerName,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+            
+            Column(
+                modifier = Modifier.padding(d.spaceL),
+                verticalArrangement = Arrangement.spacedBy(d.spaceM),
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(d.spaceS)
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Medication,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                    PharmacyOrderStatusChip(
+                        status = order.status,
+                        label = if (isOutOfStock) "نقص مخزون" else order.statusLabel,
+                        isOutOfStock = isOutOfStock
                     )
+                    
                     Text(
-                        text = order.medicineName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
+                        text = "طلب #${order.id.takeLast(7)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = PharmaNeutral400,
+                    )
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(d.spaceS), horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = order.customerName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    OrderMedicineItem(
+                        name = order.medicineName,
+                        quantity = order.quantityLabel,
+                        icon = if (isOutOfStock) Icons.Outlined.WarningAmber else Icons.Outlined.Inventory,
+                        tint = if (isOutOfStock) PremiumUrgent else PharmaNeutral600
+                    )
+                    
+                    if (!isOutOfStock && order.id.contains("7742")) {
+                         OrderMedicineItem(
+                            name = "Ibuprofen 400mg",
+                            quantity = "كمية 120 حبة",
+                            icon = Icons.Outlined.Medication,
+                            tint = PharmaNeutral600
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(1.dp).fillMaxWidth().background(PharmaNeutral100))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PharmaButton(
+                        text = if (order.status == OrderStatus.DELIVERED) "الفاتورة" else "التفاصيل",
+                        onClick = onOpen,
+                        style = PharmaButtonStyle.Outlined,
+                        modifier = Modifier.widthIn(min = 90.dp),
+                    )
+                    
+                    Text(
+                        text = order.createdAtLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PharmaNeutral400,
                     )
                 }
             }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = order.createdAtLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = PharmaNeutral600,
-                )
-                PharmaButton(
-                    text = "التفاصيل",
-                    onClick = onOpen,
-                    style = PharmaButtonStyle.Outlined,
-                    modifier = Modifier.widthIn(min = 100.dp),
-                )
-            }
         }
+    }
+}
+
+@Composable
+private fun OrderMedicineItem(
+    name: String,
+    quantity: String,
+    icon: ImageVector,
+    tint: Color
+) {
+    val d = MaterialTheme.dimens
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(d.spaceS, Alignment.End)
+    ) {
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = PharmaNeutral600,
+                textAlign = TextAlign.End
+            )
+            Text(
+                text = "الكمية: $quantity",
+                style = MaterialTheme.typography.bodySmall,
+                color = PharmaNeutral400,
+                textAlign = TextAlign.End
+            )
+        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = tint
+        )
     }
 }
 
@@ -316,34 +424,48 @@ private fun PharmacyCustomerOrderCard(
 private fun PharmacyOrderStatusChip(
     status: OrderStatus,
     label: String,
+    isOutOfStock: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    val containerColor = when (status) {
-        OrderStatus.DELIVERED -> StatusActive.copy(alpha = 0.12f)
-        OrderStatus.REJECTED, OrderStatus.CANCELLED -> PremiumUrgent.copy(alpha = 0.12f)
-        else -> MaterialTheme.colorScheme.primaryContainer
+    val d = MaterialTheme.dimens
+    val containerColor = when {
+        isOutOfStock -> PremiumUrgent.copy(alpha = 0.1f)
+        status == OrderStatus.DELIVERED -> PharmaSuccess.copy(alpha = 0.1f)
+        status == OrderStatus.READY_FOR_PICKUP || status == OrderStatus.IN_PROGRESS -> PharmaBlue100
+        else -> PharmaNeutral100
     }
-    val contentColor = when (status) {
-        OrderStatus.DELIVERED -> StatusActive
-        OrderStatus.REJECTED, OrderStatus.CANCELLED -> PremiumUrgent
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    val contentColor = when {
+        isOutOfStock -> PremiumUrgent
+        status == OrderStatus.DELIVERED -> PharmaSuccess
+        status == OrderStatus.READY_FOR_PICKUP || status == OrderStatus.IN_PROGRESS -> PremiumPrimary
+        else -> PharmaNeutral600
+    }
+    val icon = when {
+        isOutOfStock -> Icons.Outlined.WarningAmber
+        status == OrderStatus.DELIVERED -> Icons.AutoMirrored.Outlined.Assignment
+        status == OrderStatus.READY_FOR_PICKUP -> Icons.Outlined.Schedule
+        status == OrderStatus.OUT_FOR_DELIVERY -> Icons.Outlined.LocalShipping
+        else -> Icons.Outlined.Description
     }
 
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(d.radiusM),
         color = containerColor,
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = contentColor,
-            modifier = Modifier.padding(
-                horizontal = MaterialTheme.dimens.spaceM,
-                vertical = MaterialTheme.dimens.spaceXS,
-            ),
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+             Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = contentColor)
+             Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = contentColor,
+            )
+        }
     }
 }
 

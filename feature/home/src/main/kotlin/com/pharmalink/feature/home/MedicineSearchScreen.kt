@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -104,37 +105,46 @@ private fun SearchHeader(onBackClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = d.spaceM),
+            .height(96.dp)
+            .padding(vertical = d.spaceS),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        // Profile Placeholder
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            color = PharmaNeutral100,
-        ) {
-            Icon(
-                imageVector = Icons.Default.Person,
+        // Leading: Back + Logo
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(d.spaceS)) {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = PremiumPrimary
+                )
+            }
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = DsR.drawable.ic_app_logo),
                 contentDescription = null,
-                modifier = Modifier.padding(8.dp),
-                tint = PharmaNeutral600
+                modifier = Modifier.size(80.dp)
             )
         }
 
         Text(
-            text = "PharmaNet",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
+            text = stringResource(id = DsR.string.app_name),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
             color = PremiumPrimary,
         )
 
-        IconButton(onClick = { /* No-op per Rule 9 */ }) {
+        // Trailing: Profile
+        Surface(
+            modifier = Modifier.size(48.dp),
+            shape = CircleShape,
+            color = PharmaNeutral100,
+            border = BorderStroke(1.dp, PharmaNeutral400.copy(alpha = 0.5f))
+        ) {
             Icon(
-                painter = painterResource(id = DsR.drawable.ic_app_logo),
+                imageVector = Icons.Default.Person,
                 contentDescription = null,
-                modifier = Modifier.size(d.iconM),
-                tint = Color.Unspecified
+                modifier = Modifier.padding(10.dp),
+                tint = PharmaNeutral600
             )
         }
     }

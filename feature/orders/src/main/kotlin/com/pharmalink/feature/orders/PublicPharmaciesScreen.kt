@@ -170,36 +170,37 @@ private fun PharmaciesHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = d.spaceM),
+            .height(72.dp)
+            .padding(vertical = d.spaceS),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
+        // Leading: App Logo (Proper Place)
+        androidx.compose.foundation.Image(
+            painter = painterResource(id = DsR.drawable.ic_app_logo),
+            contentDescription = null,
+            modifier = Modifier.size(64.dp)
+        )
+
+        Text(
+            text = stringResource(id = DsR.string.app_name),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = PremiumPrimary,
+        )
+
+        // Trailing: Profile (Proper Place)
         Surface(
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(48.dp),
             shape = CircleShape,
             color = PharmaNeutral100,
+            border = BorderStroke(1.dp, PharmaNeutral400.copy(alpha = 0.5f))
         ) {
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = null,
-                modifier = Modifier.padding(8.dp),
+                modifier = Modifier.padding(10.dp),
                 tint = PharmaNeutral600
-            )
-        }
-
-        Text(
-            text = "PharmaNet",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = PremiumPrimary,
-        )
-
-        IconButton(onClick = { /* No-op per Rule 9 */ }) {
-            Icon(
-                painter = painterResource(id = DsR.drawable.ic_app_logo),
-                contentDescription = null,
-                modifier = Modifier.size(d.iconM),
-                tint = Color.Unspecified
             )
         }
     }

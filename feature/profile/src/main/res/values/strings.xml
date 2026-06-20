@@ -95,4 +95,19 @@
     <string name="edit_profile_role_user">مستخدم</string>
     <string name="edit_profile_back">رجوع</string>
     <string name="edit_profile_account_type">نوع الحساب</string>
+
+    <!-- Warehouse Profile Extensions -->
+    <string name="warehouse_verified_badge">موثق</string>
+    <string name="warehouse_stat_response_speed">سرعة الاستجابة</string>
+    <string name="warehouse_stat_completion_rate">نسبة الإنجاز</string>
+    <string name="warehouse_stat_active_products">المنتجات النشطة</string>
+    <string name="warehouse_minutes_format">%d دقيقة</string>
+    <string name="warehouse_location_status_title">حالة الموقع الجغرافي</string>
+    <string name="warehouse_location_not_set">الموقع غير محدد</string>
+    <string name="warehouse_location_set">الموقع محدد (GPS)</string>
+    <string name="warehouse_update_location_btn">تحديث الموقع من GPS</string>
+    <string name="warehouse_management_section">إدارة المستودع</string>
+    <string name="warehouse_license_info">معلومات الترخيص</string>
+    <string name="warehouse_manage_delegates">إدارة المناديب</string>
+    <string name="warehouse_coverage_areas">مناطق التغطية</string>
 </resources>

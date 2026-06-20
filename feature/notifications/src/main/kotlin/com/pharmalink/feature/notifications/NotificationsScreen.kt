@@ -1,7 +1,10 @@
 package com.pharmalink.feature.notifications
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,52 +13,74 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.PriorityHigh
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.MarkEmailRead
-import androidx.compose.material.icons.outlined.PriorityHigh
 import androidx.compose.material.icons.outlined.Rule
 import androidx.compose.material.icons.outlined.SupportAgent
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pharmalink.core.common.ui.ScreenState
-import com.pharmalink.designsystem.components.PharmaOutlinedTile
-import com.pharmalink.designsystem.components.PharmaScreenScaffold
 import com.pharmalink.designsystem.components.PharmaScreenState
-import com.pharmalink.designsystem.components.PharmaSectionHeader
 import com.pharmalink.designsystem.components.PharmaStateSpec
 import com.pharmalink.designsystem.components.PharmaStateTone
-import com.pharmalink.designsystem.components.PharmaStatusChip
-import com.pharmalink.designsystem.components.StatusTone
+import com.pharmalink.designsystem.theme.PharmaBlue50
+import com.pharmalink.designsystem.theme.PharmaBlue900
+import com.pharmalink.designsystem.theme.PharmaNeutral100
+import com.pharmalink.designsystem.theme.PharmaNeutral400
+import com.pharmalink.designsystem.theme.PharmaNeutral600
+import com.pharmalink.designsystem.theme.PharmaNeutral900
+import com.pharmalink.designsystem.theme.PremiumPrimary
 import com.pharmalink.designsystem.theme.PremiumUrgent
+import com.pharmalink.designsystem.theme.StatusActive
+import com.pharmalink.designsystem.theme.StatusInfo
 import com.pharmalink.designsystem.theme.dimens
 import com.pharmalink.domain.model.AppNotification
 import com.pharmalink.domain.model.NotificationCategory
 import com.pharmalink.domain.model.NotificationDestination
 import com.pharmalink.domain.model.NotificationType
+import com.pharmalink.feature.notifications.R as NotifR
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit = {},
@@ -66,104 +91,137 @@ fun NotificationsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val d = MaterialTheme.dimens
 
-    PharmaScreenScaffold(
-        title = stringResource(R.string.notifications_title),
-        onBack = onBack,
-        navigationContentDescription = stringResource(R.string.notifications_back),
-        modifier = modifier,
-        actions = {
-            if (state.unreadCount > 0) {
-                TextButton(onClick = viewModel::markAllRead) {
-                    Text(stringResource(R.string.notifications_mark_all_read))
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            containerColor = Color.White,
+            topBar = {
+                Column {
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(
+                                text = "الإشعارات",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = PharmaBlue900,
+                                fontWeight = FontWeight.ExtraBold,
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = null,
+                                    tint = PharmaNeutral600,
+                                )
+                            }
+                        },
+                        actions = {
+                            Row {
+                                if (state.unreadCount > 0) {
+                                    TextButton(onClick = viewModel::markAllRead) {
+                                        Text(
+                                            text = "قراءة الكل",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = PharmaNeutral600
+                                        )
+                                    }
+                                }
+                                if (state.totalCount > 0) {
+                                    TextButton(onClick = viewModel::deleteAllNotifications) {
+                                        Text(
+                                            text = "حذف الكل",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = PharmaNeutral600
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.White,
+                        ),
+                    )
+                    HorizontalDivider(color = PharmaNeutral100)
                 }
             }
-            if (state.totalCount > 0) {
-                TextButton(onClick = viewModel::deleteAllNotifications) {
-                    Text(stringResource(R.string.notifications_delete_all))
-                }
-            }
-        },
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(d.spaceM),
-        ) {
-            FilterRow(
-                selected = state.selectedFilter,
-                counts = state.filterCounts,
-                onSelected = viewModel::selectFilter,
-                modifier = Modifier.padding(top = d.spaceS),
-            )
-
-            if (state.screenState != ScreenState.Loading) {
-                NotificationOverviewCard(
-                    state = state,
-                    modifier = Modifier.padding(horizontal = d.spaceL),
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                verticalArrangement = Arrangement.spacedBy(d.spaceM),
+            ) {
+                FilterRow(
+                    selected = state.selectedFilter,
+                    counts = state.filterCounts,
+                    onSelected = viewModel::selectFilter,
+                    modifier = Modifier.padding(top = d.spaceM),
                 )
-            }
 
-            PharmaScreenState(
-                screenState = state.screenState,
-                loading = PharmaStateSpec(
-                    title = stringResource(R.string.notifications_title),
-                    subtitle = stringResource(R.string.notifications_loading_subtitle),
-                    tone = PharmaStateTone.Loading,
-                ),
-                empty = PharmaStateSpec(
-                    title = stringResource(R.string.notifications_empty_title),
-                    subtitle = if (state.selectedFilter == NotificationFilter.All) {
-                        stringResource(R.string.notifications_empty_subtitle)
-                    } else {
-                        stringResource(R.string.notifications_empty_filtered_subtitle)
-                    },
-                    actionLabel = if (state.selectedFilter != NotificationFilter.All) {
-                        stringResource(R.string.notifications_show_all)
+                if (state.screenState != ScreenState.Loading) {
+                    NotificationOverviewCard(
+                        state = state,
+                        modifier = Modifier.padding(horizontal = d.spaceL),
+                    )
+                }
+
+                PharmaScreenState(
+                    screenState = state.screenState,
+                    loading = PharmaStateSpec(
+                        title = stringResource(NotifR.string.notifications_title),
+                        subtitle = stringResource(NotifR.string.notifications_loading_subtitle),
+                        tone = PharmaStateTone.Loading,
+                    ),
+                    empty = PharmaStateSpec(
+                        title = stringResource(NotifR.string.notifications_empty_title),
+                        subtitle = if (state.selectedFilter == NotificationFilter.All) {
+                            stringResource(NotifR.string.notifications_empty_subtitle)
+                        } else {
+                            stringResource(NotifR.string.notifications_empty_filtered_subtitle)
+                        },
+                        actionLabel = if (state.selectedFilter != NotificationFilter.All) {
+                            stringResource(NotifR.string.notifications_show_all)
+                        } else {
+                            null
+                        },
+                    ),
+                    error = PharmaStateSpec(
+                        title = stringResource(NotifR.string.notifications_title),
+                        subtitle = stringResource(NotifR.string.notifications_error_subtitle),
+                        tone = PharmaStateTone.Error,
+                    ),
+                    offline = PharmaStateSpec(
+                        title = stringResource(NotifR.string.notifications_title),
+                        subtitle = stringResource(NotifR.string.notifications_offline_subtitle),
+                        tone = PharmaStateTone.Offline,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = d.spaceL),
+                    onEmptyAction = if (state.selectedFilter != NotificationFilter.All) {
+                        { viewModel.selectFilter(NotificationFilter.All) }
                     } else {
                         null
                     },
-                ),
-                error = PharmaStateSpec(
-                    title = stringResource(R.string.notifications_title),
-                    subtitle = stringResource(R.string.notifications_error_subtitle),
-                    tone = PharmaStateTone.Error,
-                ),
-                offline = PharmaStateSpec(
-                    title = stringResource(R.string.notifications_title),
-                    subtitle = stringResource(R.string.notifications_offline_subtitle),
-                    tone = PharmaStateTone.Offline,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = d.spaceL),
-                onEmptyAction = if (state.selectedFilter != NotificationFilter.All) {
-                    { viewModel.selectFilter(NotificationFilter.All) }
-                } else {
-                    null
-                },
-            ) { sections ->
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = d.spaceL, vertical = d.spaceXS),
-                    verticalArrangement = Arrangement.spacedBy(d.spaceM),
-                ) {
-                    sections.forEach { section ->
-                        item(key = section.type.name) {
-                            PharmaSectionHeader(
-                                title = sectionLabel(section.type),
-                                subtitle = sectionSubtitle(section.type),
-                            )
-                        }
-                        items(section.items, key = { it.id }) { notification ->
-                            NotificationCard(
-                                notification = notification,
-                                onMarkRead = { viewModel.markRead(notification.id) },
-                                onDelete = { viewModel.deleteNotification(notification.id) },
-                                onOpen = {
-                                    if (!notification.read) {
-                                        viewModel.markRead(notification.id)
-                                    }
-                                    onNotificationOpen(notification)
-                                },
-                            )
+                ) { sections ->
+                    LazyColumn(
+                        contentPadding = PaddingValues(horizontal = d.spaceL, vertical = d.spaceXS),
+                        verticalArrangement = Arrangement.spacedBy(d.spaceM),
+                    ) {
+                        sections.forEach { section ->
+                            items(section.items, key = { it.id }) { notification ->
+                                NotificationCard(
+                                    notification = notification,
+                                    onMarkRead = { viewModel.markRead(notification.id) },
+                                    onDelete = { viewModel.deleteNotification(notification.id) },
+                                    onOpen = {
+                                        if (!notification.read) {
+                                            viewModel.markRead(notification.id)
+                                        }
+                                        onNotificationOpen(notification)
+                                    },
+                                )
+                            }
                         }
                     }
                 }
@@ -179,46 +237,84 @@ private fun NotificationOverviewCard(
 ) {
     val d = MaterialTheme.dimens
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
     ) {
         Column(
             modifier = Modifier.padding(d.spaceL),
             verticalArrangement = Arrangement.spacedBy(d.spaceM),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(R.string.notifications_summary_title),
+                text = "ملخص الإشعارات",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
+                color = PharmaNeutral900,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
-            Text(
-                text = overviewSubtitle(state),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(d.spaceM),
             ) {
-                PharmaOutlinedTile(
-                    title = stringResource(R.string.notifications_summary_total),
+                OverviewStatBox(
+                    label = "الكل",
                     value = state.totalCount.toString(),
+                    color = StatusInfo,
                     modifier = Modifier.weight(1f),
                 )
-                PharmaOutlinedTile(
-                    title = stringResource(R.string.notifications_summary_unread),
+                OverviewStatBox(
+                    label = "غير مقروءة",
                     value = state.unreadCount.toString(),
+                    color = PremiumPrimary,
                     modifier = Modifier.weight(1f),
                 )
-                PharmaOutlinedTile(
-                    title = stringResource(R.string.notifications_summary_attention),
+                OverviewStatBox(
+                    label = "تحتاج إجراء",
                     value = state.attentionCount.toString(),
+                    color = PremiumUrgent,
                     modifier = Modifier.weight(1f),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun OverviewStatBox(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(d.radiusL),
+        color = color.copy(alpha = 0.05f),
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = d.spaceM, horizontal = d.spaceS),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = PharmaNeutral600,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = color,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -239,11 +335,23 @@ private fun FilterRow(
         horizontalArrangement = Arrangement.spacedBy(d.spaceS),
     ) {
         items(filters, key = { it.name }) { filter ->
-            FilterChip(
-                selected = filter == selected,
-                onClick = { onSelected(filter) },
-                label = { Text(filter.label(counts[filter] ?: 0)) },
-            )
+            val isSelected = filter == selected
+            Surface(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(d.radiusXXL))
+                    .clickable { onSelected(filter) },
+                color = if (isSelected) PremiumPrimary else Color.White,
+                border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100),
+                shape = RoundedCornerShape(d.radiusXXL)
+            ) {
+                Text(
+                    text = filter.label(counts[filter] ?: 0),
+                    modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceS),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) Color.White else PharmaNeutral600
+                )
+            }
         }
     }
 }
@@ -257,97 +365,154 @@ private fun NotificationCard(
 ) {
     val d = MaterialTheme.dimens
     val actionable = notification.destination != null
+    val color = when {
+        notification.requiresAction -> PremiumUrgent
+        notification.type == NotificationType.ORDER_UPDATE -> StatusActive
+        else -> PremiumPrimary
+    }
 
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .semantics {
-                if (actionable) {
-                    role = Role.Button
-                }
-            }
-            .clickable(enabled = actionable, onClick = onOpen),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = if (notification.read) {
-                MaterialTheme.colorScheme.surface
-            } else {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.16f)
-            },
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (notification.read) 0.dp else 1.dp),
+            .clickable(onClick = onOpen),
+        shape = RoundedCornerShape(d.radiusXXL),
+        color = if (notification.read) Color.White else PharmaBlue50.copy(alpha = 0.3f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, PharmaNeutral100)
     ) {
         Column(
             modifier = Modifier.padding(d.spaceL),
-            verticalArrangement = Arrangement.spacedBy(d.spaceS),
+            verticalArrangement = Arrangement.spacedBy(d.spaceM),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(d.spaceM),
+                verticalAlignment = Alignment.Top
             ) {
-                Icon(
-                    imageVector = notification.icon(),
-                    contentDescription = null,
-                    tint = if (notification.requiresAction) PremiumUrgent else MaterialTheme.colorScheme.primary,
-                )
-                Column(Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(
                         text = notification.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PharmaNeutral900,
+                        textAlign = TextAlign.Start
                     )
-                    Spacer(Modifier.height(d.spaceXS))
                     Text(
                         text = notification.body,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = PharmaNeutral600,
+                        textAlign = TextAlign.Start,
+                        lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.2
                     )
                 }
-                PharmaStatusChip(
-                    label = notification.stateLabel(),
-                    tone = notification.stateTone(),
-                )
+
+                Surface(
+                    modifier = Modifier.size(44.dp),
+                    shape = CircleShape,
+                    color = color.copy(alpha = 0.1f),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = notification.icon(),
+                            contentDescription = null,
+                            tint = color,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        if (notification.requiresAction) {
+                            Surface(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp)
+                                    .size(8.dp),
+                                shape = CircleShape,
+                                color = PremiumUrgent,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White)
+                            ) {}
+                        }
+                    }
+                }
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(d.spaceS),
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                PharmaStatusChip(
-                    label = notification.categoryLabel(),
-                    tone = notification.categoryTone(),
-                )
-                Text(
-                    text = notification.createdAtLabel,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-
-            if (!notification.read || actionable) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(d.spaceS),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS)
                 ) {
-                    if (!notification.read) {
-                        TextButton(onClick = onMarkRead) {
-                            Icon(
-                                imageVector = Icons.Outlined.MarkEmailRead,
-                                contentDescription = null,
-                            )
-                            Spacer(Modifier.width(d.spaceXS))
-                            Text(stringResource(R.string.notifications_mark_read))
-                        }
-                    }
-                    TextButton(onClick = onDelete) {
-                        Text(stringResource(R.string.notifications_delete_one))
-                    }
                     if (actionable) {
-                        TextButton(onClick = onOpen) {
-                            Text(notification.actionLabel())
+                        Surface(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(d.radiusL))
+                                .clickable(onClick = onOpen),
+                            color = PremiumPrimary,
+                            shape = RoundedCornerShape(d.radiusL)
+                        ) {
+                            Text(
+                                text = notification.actionLabel(),
+                                modifier = Modifier.padding(horizontal = d.spaceM, vertical = d.spaceS),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
+                    }
+                    
+                    IconButton(onClick = onMarkRead) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = if (notification.read) StatusActive else PharmaNeutral400,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = null,
+                            tint = PharmaNeutral400,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(d.spaceS)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AccessTime,
+                            contentDescription = null,
+                            tint = PharmaNeutral400,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = notification.createdAtLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = PharmaNeutral600
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(d.radiusL),
+                        color = PharmaBlue50,
+                    ) {
+                        Text(
+                            text = notification.categoryLabel(),
+                            modifier = Modifier.padding(horizontal = d.spaceS, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = PremiumPrimary
+                        )
                     }
                 }
             }
@@ -358,83 +523,40 @@ private fun NotificationCard(
 @Composable
 private fun NotificationFilter.label(count: Int): String {
     val base = when (this) {
-        NotificationFilter.All -> stringResource(R.string.notifications_filter_all)
-        NotificationFilter.Attention -> stringResource(R.string.notifications_filter_attention)
-        NotificationFilter.Requests -> stringResource(R.string.notifications_filter_requests)
-        NotificationFilter.Orders -> stringResource(R.string.notifications_filter_orders)
-        NotificationFilter.Warehouses -> stringResource(R.string.notifications_filter_warehouses)
-        NotificationFilter.Compliance -> stringResource(R.string.notifications_filter_compliance)
-        NotificationFilter.Support -> stringResource(R.string.notifications_filter_support)
+        NotificationFilter.All -> "الكل"
+        NotificationFilter.Attention -> "تحتاج إجراء"
+        NotificationFilter.Requests -> "الطلبات"
+        NotificationFilter.Orders -> "أوامر الشراء"
+        NotificationFilter.Warehouses -> "المستودعات"
+        NotificationFilter.Compliance -> "الامتثال"
+        NotificationFilter.Support -> "الدعم"
     }
     return "$base ($count)"
 }
 
 @Composable
-private fun overviewSubtitle(state: NotificationsUiState): String = when {
-    state.totalCount == 0 -> stringResource(R.string.notifications_empty_subtitle)
-    state.selectedFilter == NotificationFilter.Attention -> stringResource(R.string.notifications_attention_subtitle)
-    state.unreadCount == 0 -> stringResource(R.string.notifications_all_caught_up)
-    else -> stringResource(R.string.notifications_summary_subtitle, state.unreadCount)
-}
-
-@Composable
-private fun sectionLabel(section: NotificationSectionType): String = when (section) {
-    NotificationSectionType.Attention -> stringResource(R.string.notifications_section_attention)
-    NotificationSectionType.Unread -> stringResource(R.string.notifications_section_unread)
-    NotificationSectionType.Archived -> stringResource(R.string.notifications_section_archived)
-}
-
-@Composable
-private fun sectionSubtitle(section: NotificationSectionType): String = when (section) {
-    NotificationSectionType.Attention -> stringResource(R.string.notifications_section_attention_subtitle)
-    NotificationSectionType.Unread -> stringResource(R.string.notifications_section_unread_subtitle)
-    NotificationSectionType.Archived -> stringResource(R.string.notifications_section_archived_subtitle)
-}
-
-@Composable
 private fun AppNotification.categoryLabel(): String = when (category) {
-    NotificationCategory.REQUESTS -> stringResource(R.string.notifications_filter_requests)
-    NotificationCategory.ORDERS -> stringResource(R.string.notifications_filter_orders)
-    NotificationCategory.WAREHOUSES -> stringResource(R.string.notifications_filter_warehouses)
-    NotificationCategory.COMPLIANCE -> stringResource(R.string.notifications_filter_compliance)
-    NotificationCategory.SUPPORT -> stringResource(R.string.notifications_filter_support)
+    NotificationCategory.REQUESTS -> "الطلبات"
+    NotificationCategory.ORDERS -> "أوامر الشراء"
+    NotificationCategory.WAREHOUSES -> "المستودعات"
+    NotificationCategory.COMPLIANCE -> "الامتثال"
+    NotificationCategory.SUPPORT -> "الدعم"
 }
 
 @Composable
 private fun AppNotification.actionLabel(): String = when (destination) {
-    NotificationDestination.ORDER -> stringResource(R.string.notifications_action_open_order)
-    NotificationDestination.PHARMACY_CUSTOMER_ORDER -> stringResource(R.string.notifications_action_open_order)
-    NotificationDestination.REQUEST -> stringResource(R.string.notifications_action_open_request)
-    NotificationDestination.WAREHOUSE -> stringResource(R.string.notifications_action_open_warehouse)
-    NotificationDestination.COMPLIANCE -> stringResource(R.string.notifications_action_open_compliance)
-    NotificationDestination.HELP -> stringResource(R.string.notifications_action_open_help)
-    null -> stringResource(R.string.notifications_open)
-}
-
-@Composable
-private fun AppNotification.stateLabel(): String = when {
-    requiresAction -> stringResource(R.string.notifications_status_action_needed)
-    read -> stringResource(R.string.notifications_status_read)
-    else -> stringResource(R.string.notifications_status_new)
-}
-
-private fun AppNotification.categoryTone(): StatusTone = when (category) {
-    NotificationCategory.REQUESTS -> if (requiresAction) StatusTone.Urgent else StatusTone.Warning
-    NotificationCategory.ORDERS -> StatusTone.Pending
-    NotificationCategory.WAREHOUSES -> StatusTone.Neutral
-    NotificationCategory.COMPLIANCE -> StatusTone.Warning
-    NotificationCategory.SUPPORT -> StatusTone.Success
-}
-
-private fun AppNotification.stateTone(): StatusTone = when {
-    requiresAction -> StatusTone.Urgent
-    read -> StatusTone.Neutral
-    else -> StatusTone.Pending
+    NotificationDestination.ORDER -> "فتح الطلب"
+    NotificationDestination.PHARMACY_CUSTOMER_ORDER -> "فتح الطلب"
+    NotificationDestination.REQUEST -> "فتح الطلب"
+    NotificationDestination.WAREHOUSE -> "عرض المستودع"
+    NotificationDestination.COMPLIANCE -> "فتح الامتثال"
+    NotificationDestination.HELP -> "فتح الدعم"
+    null -> "فتح"
 }
 
 private fun AppNotification.icon() = when (type) {
-    NotificationType.ALERT -> Icons.Outlined.PriorityHigh
-    NotificationType.ORDER_UPDATE -> Icons.Outlined.Assignment
+    NotificationType.ALERT -> Icons.Default.PriorityHigh
+    NotificationType.ORDER_UPDATE -> Icons.Default.LocalShipping
     NotificationType.COMPLIANCE -> Icons.Outlined.Rule
     NotificationType.SUPPORT -> Icons.Outlined.SupportAgent
     NotificationType.INFO -> Icons.Outlined.Inventory2
