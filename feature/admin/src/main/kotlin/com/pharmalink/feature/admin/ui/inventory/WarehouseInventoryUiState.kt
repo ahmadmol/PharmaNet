@@ -20,6 +20,7 @@ data class WarehouseInventoryUiState(
 @Immutable
 data class MedicineInventoryModel(
     val id: String = "",
+    val medicineId: String = "",
     val name: String = "",
     val description: String = "",
     val currentQuantity: Int = 0,
@@ -52,10 +53,12 @@ sealed interface WarehouseInventoryAction {
     data class OnSearchQueryChanged(val query: String) : WarehouseInventoryAction
     data class OnFilterSelected(val filter: InventoryProductFilter) : WarehouseInventoryAction
     data object OnAddMedicineClicked : WarehouseInventoryAction
+    data class OnMedicineClicked(val medicineId: String) : WarehouseInventoryAction
 }
 
 sealed interface WarehouseInventoryEffect {
     data class ShowMessage(val message: String) : WarehouseInventoryEffect
     data object NavigateBack : WarehouseInventoryEffect
     data object NavigateToAddMedicine : WarehouseInventoryEffect
+    data class NavigateToEditMedicine(val medicineId: String) : WarehouseInventoryEffect
 }

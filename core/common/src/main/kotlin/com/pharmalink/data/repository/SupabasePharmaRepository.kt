@@ -2052,6 +2052,84 @@ class SupabasePharmaRepository @Inject constructor(
         }
     }.map { Unit }
 
+    override suspend fun updateMedicine(
+        medicineId: String,
+        name: String,
+        brand: String?,
+        strength: String?,
+        description: String?,
+        priceAmount: Double?,
+        stockQuantity: Int,
+        imageUrl: String?,
+        isVisible: Boolean,
+        isActive: Boolean,
+    ): Result<Unit> = runCatching {
+        val identity = resolveAccessContext()
+        if (identity.role != AccountType.ADMIN && identity.role != AccountType.WAREHOUSE) {
+            throw UnauthorizedException("Only ADMIN or WAREHOUSE can update medicines")
+        }
+
+        if (identity.role == AccountType.WAREHOUSE) {
+            val realWarehouseId = resolveRealWarehouseIdForMedicineWrite(identity)
+            val rows = supabase.postgrest.from("medicines").select(Columns.raw("id")) {
+                filter {
+                    eq("id", medicineId)
+                    eq("warehouse_id", realWarehouseId)
+                }
+            }.decodeList<JsonElement>()
+            if (rows.isEmpty()) {
+                throw UnauthorizedException("Cannot update medicine you do not own")
+            }
+        }
+
+        val dto = MedicineUpdateDto(
+            name = name,
+            brand = brand,
+            strength = strength,
+            price = priceAmount,
+            description = description,
+            stockQuantity = stockQuantity,
+            imageUrl = imageUrl,
+            isVisible = isVisible,
+            isActive = isActive,
+        )
+
+        supabase.postgrest.from("medicines").update(dto) {
+            filter { eq("id", medicineId) }
+        }
+    }.onFailure { Log.e(TAG, "updateMedicine failed for medicineId=$medicineId", it) }.map { Unit }
+
+    override suspend fun deleteMedicine(medicineId: String): Result<Unit> = runCatching {
+        val identity = resolveAccessContext()
+        if (identity.role != AccountType.ADMIN && identity.role != AccountType.WAREHOUSE) {
+            throw UnauthorizedException("Only ADMIN or WAREHOUSE can delete medicines")
+        }
+
+        if (identity.role == AccountType.WAREHOUSE) {
+            val realWarehouseId = resolveRealWarehouseIdForMedicineWrite(identity)
+            val rows = supabase.postgrest.from("medicines").select(Columns.raw("id")) {
+                filter {
+                    eq("id", medicineId)
+                    eq("warehouse_id", realWarehouseId)
+                }
+            }.decodeList<JsonElement>()
+            if (rows.isEmpty()) {
+                throw UnauthorizedException("Cannot delete medicine you do not own")
+            }
+        }
+
+        supabase.postgrest.from("medicines").delete {
+            filter { eq("id", medicineId) }
+        }
+    }.onFailure { Log.e(TAG, "deleteMedicine failed for medicineId=$medicineId", it) }.map { Unit }
+
+    override suspend fun deleteMedicineImage(imageUrl: String): Result<Unit> = runCatching {
+        val identity = resolveAccessContext()
+        val path = extractOwnedMedicineImageStoragePath(imageUrl, identity)
+            ?: return@runCatching
+        supabase.storage.from("medicines").delete(path)
+    }
+
     private suspend fun resolveRealWarehouseIdForMedicineWrite(
         identity: UserIdentity,
         requestedWarehouseId: String? = null,
@@ -2951,6 +3029,19 @@ private data class MedicineInsertDto(
     @SerialName("is_visible") val isVisible: Boolean? = null,
     @SerialName("is_active") val isActive: Boolean? = null,
     val currency: String? = null,
+)
+
+@Serializable
+private data class MedicineUpdateDto(
+    val name: String,
+    val brand: String? = null,
+    val strength: String? = null,
+    val price: Double? = null,
+    val description: String? = null,
+    @SerialName("stock_quantity") val stockQuantity: Int? = null,
+    @SerialName("image_url") val imageUrl: String? = null,
+    @SerialName("is_visible") val isVisible: Boolean? = null,
+    @SerialName("is_active") val isActive: Boolean? = null,
 )
 
 @Serializable

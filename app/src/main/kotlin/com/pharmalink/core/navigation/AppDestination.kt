@@ -190,10 +190,21 @@ sealed class AppDestination(
     data object AdminDashboard : AppDestination("admin_dashboard")
 
     data object WarehouseInventory : AppDestination(
-        route = "warehouse_inventory/{warehouseId}",
-        arguments = listOf(navArgument(NavArgs.WAREHOUSE_ID) { type = NavType.StringType }),
+        route = "warehouse_inventory/{warehouseId}?filter={filter}",
+        arguments = listOf(
+            navArgument(NavArgs.WAREHOUSE_ID) { type = NavType.StringType },
+            navArgument("filter") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+        ),
     ) {
-        fun createRoute(warehouseId: String): String = "warehouse_inventory/$warehouseId"
+        fun createRoute(warehouseId: String, filter: String? = null): String = buildString {
+            append("warehouse_inventory/")
+            append(warehouseId)
+            if (!filter.isNullOrBlank()) append("?filter=$filter")
+        }
     }
 
     data object AddMedicine : AppDestination(
@@ -201,6 +212,17 @@ sealed class AppDestination(
         arguments = listOf(navArgument(NavArgs.WAREHOUSE_ID) { type = NavType.StringType }),
     ) {
         fun createRoute(warehouseId: String): String = "add_medicine/$warehouseId"
+    }
+
+    data object EditMedicine : AppDestination(
+        route = "edit_medicine/{warehouseId}/{medicineId}",
+        arguments = listOf(
+            navArgument(NavArgs.WAREHOUSE_ID) { type = NavType.StringType },
+            navArgument(NavArgs.MEDICINE_ID) { type = NavType.StringType },
+        ),
+    ) {
+        fun createRoute(warehouseId: String, medicineId: String): String =
+            "edit_medicine/$warehouseId/$medicineId"
     }
 
     data object WarehouseDetail : AppDestination(

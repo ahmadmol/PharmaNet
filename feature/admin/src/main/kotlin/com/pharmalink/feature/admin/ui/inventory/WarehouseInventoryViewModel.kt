@@ -29,7 +29,17 @@ class WarehouseInventoryViewModel @Inject constructor(
 
     private val warehouseId: String = savedStateHandle[NavArgs.WAREHOUSE_ID] ?: ""
 
-    private val _state = MutableStateFlow(WarehouseInventoryUiState(warehouseId = warehouseId))
+    private val initialFilter: InventoryProductFilter = run {
+        val raw: String? = savedStateHandle["filter"]
+        when (raw) {
+            "AVAILABLE" -> InventoryProductFilter.AVAILABLE
+            "LOW_STOCK" -> InventoryProductFilter.LOW_STOCK
+            "HIDDEN" -> InventoryProductFilter.HIDDEN
+            else -> InventoryProductFilter.ALL
+        }
+    }
+
+    private val _state = MutableStateFlow(WarehouseInventoryUiState(warehouseId = warehouseId, selectedFilter = initialFilter))
     val state: StateFlow<WarehouseInventoryUiState> = _state.asStateFlow()
 
     private val _effect = MutableSharedFlow<WarehouseInventoryEffect>(
@@ -61,6 +71,11 @@ class WarehouseInventoryViewModel @Inject constructor(
             WarehouseInventoryAction.OnAddMedicineClicked -> {
                 viewModelScope.launch {
                     _effect.emit(WarehouseInventoryEffect.NavigateToAddMedicine)
+                }
+            }
+            is WarehouseInventoryAction.OnMedicineClicked -> {
+                viewModelScope.launch {
+                    _effect.emit(WarehouseInventoryEffect.NavigateToEditMedicine(action.medicineId))
                 }
             }
         }
@@ -199,6 +214,7 @@ class WarehouseInventoryViewModel @Inject constructor(
     private fun InventoryItem.toUiModel(): MedicineInventoryModel {
         return MedicineInventoryModel(
             id = id,
+            medicineId = medicineId,
             name = medicineName,
             description = description.orEmpty(),
             currentQuantity = quantity,

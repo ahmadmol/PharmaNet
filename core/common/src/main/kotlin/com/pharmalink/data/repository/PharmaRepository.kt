@@ -84,6 +84,23 @@ interface PharmaRepository {
 
     suspend fun addMedicine(medicine: Medicine, warehouseId: String): Result<Unit>
 
+    suspend fun updateMedicine(
+        medicineId: String,
+        name: String,
+        brand: String?,
+        strength: String?,
+        description: String?,
+        priceAmount: Double?,
+        stockQuantity: Int,
+        imageUrl: String?,
+        isVisible: Boolean,
+        isActive: Boolean,
+    ): Result<Unit>
+
+    suspend fun deleteMedicine(medicineId: String): Result<Unit>
+
+    suspend fun deleteMedicineImage(imageUrl: String): Result<Unit>
+
     suspend fun getOrder(orderId: String): Result<Order?>
 
     suspend fun getRequest(requestId: String): Result<Request?>

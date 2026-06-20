@@ -64,6 +64,7 @@ import com.pharmalink.feature.admin.ui.components.AdminChromeViewModel
 import com.pharmalink.feature.admin.ui.audit.AuditLogDetailScreen
 import com.pharmalink.feature.admin.ui.dashboard.AdminDashboardScreen
 import com.pharmalink.feature.admin.ui.inventory.AddMedicineScreen
+import com.pharmalink.feature.admin.ui.inventory.EditMedicineScreen
 import com.pharmalink.feature.admin.ui.inventory.WarehouseInventoryScreen
 import com.pharmalink.feature.admin.ui.users.AdminUsersScreen
 import com.pharmalink.feature.admin.ui.warehouses.AdminWarehousesScreen
@@ -463,6 +464,13 @@ fun PharmaNavigator(
                             onManageInventory = {
                                 if (currentWarehouseId.isNotBlank()) {
                                     navController.navigate(AppDestination.WarehouseInventory.createRoute(currentWarehouseId))
+                                }
+                            },
+                            onOpenInventoryFiltered = { filter ->
+                                if (currentWarehouseId.isNotBlank()) {
+                                    navController.navigate(
+                                        AppDestination.WarehouseInventory.createRoute(currentWarehouseId, filter)
+                                    )
                                 }
                             },
                             onAddProduct = {
@@ -1172,6 +1180,9 @@ fun PharmaNavigator(
                             onAddMedicine = {
                                 navController.navigate(AppDestination.AddMedicine.createRoute(warehouseId))
                             },
+                            onEditMedicine = { medicineId ->
+                                navController.navigate(AppDestination.EditMedicine.createRoute(warehouseId, medicineId))
+                            },
                             profileImageUrl = adminProfileImageUrl,
                         )
                     } else {
@@ -1201,6 +1212,27 @@ fun PharmaNavigator(
                         LaunchedEffect(Unit) {
                             navController.popBackStack()
                         }
+                    }
+                }
+
+                composable(
+                    route = AppDestination.EditMedicine.route,
+                    arguments = AppDestination.EditMedicine.arguments,
+                ) { entry ->
+                    val warehouseId = entry.arguments?.getString(NavArgs.WAREHOUSE_ID) ?: ""
+                    val canEdit = when (accountType) {
+                        AccountType.ADMIN -> true
+                        AccountType.WAREHOUSE -> warehouseId.isNotBlank() && warehouseId == currentWarehouseId
+                        else -> false
+                    }
+                    if (canEdit) {
+                        EditMedicineScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onSuccess = { navController.popBackStack() },
+                            profileImageUrl = adminProfileImageUrl,
+                        )
+                    } else {
+                        LaunchedEffect(Unit) { navController.popBackStack() }
                     }
                 }
                 composable(AppDestination.Profile.route) {

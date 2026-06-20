@@ -109,6 +109,27 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             UnsupportedOperationException("addMedicine is not supported in InMemoryPharmaRepository.")
         )
 
+    override suspend fun updateMedicine(
+        medicineId: String,
+        name: String,
+        brand: String?,
+        strength: String?,
+        description: String?,
+        priceAmount: Double?,
+        stockQuantity: Int,
+        imageUrl: String?,
+        isVisible: Boolean,
+        isActive: Boolean,
+    ): Result<Unit> = Result.failure(
+        UnsupportedOperationException("updateMedicine is not supported in InMemoryPharmaRepository.")
+    )
+
+    override suspend fun deleteMedicine(medicineId: String): Result<Unit> = Result.failure(
+        UnsupportedOperationException("deleteMedicine is not supported in InMemoryPharmaRepository.")
+    )
+
+    override suspend fun deleteMedicineImage(imageUrl: String): Result<Unit> = Result.success(Unit)
+
     override suspend fun getPublicPharmacies(): Result<List<PublicPharmacyForMedicine>> =
         Result.failure(
             UnsupportedOperationException("getPublicPharmacies is not supported in InMemoryPharmaRepository. Use SupabasePharmaRepository for PUBLIC_USER discovery.")

@@ -1,6 +1,7 @@
 package com.pharmalink.feature.admin.ui.inventory
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,6 +76,7 @@ import coil.compose.AsyncImage
 fun WarehouseInventoryScreen(
     onBackClick: () -> Unit,
     onAddMedicine: () -> Unit,
+    onEditMedicine: (String) -> Unit,
     profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
     viewModel: WarehouseInventoryViewModel = hiltViewModel(),
@@ -89,6 +91,7 @@ fun WarehouseInventoryScreen(
             }
             WarehouseInventoryEffect.NavigateBack -> onBackClick()
             WarehouseInventoryEffect.NavigateToAddMedicine -> onAddMedicine()
+            is WarehouseInventoryEffect.NavigateToEditMedicine -> onEditMedicine(effect.medicineId)
         }
     }
 
@@ -297,6 +300,7 @@ private fun SuccessContent(
             ) { medicine ->
                 MedicineInventoryCard(
                     medicine = medicine,
+                    onClick = { onAction(WarehouseInventoryAction.OnMedicineClicked(medicine.medicineId)) }
                 )
             }
         }
@@ -465,13 +469,15 @@ private fun SearchField(
 @Composable
 private fun MedicineInventoryCard(
     medicine: MedicineInventoryModel,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val d = MaterialTheme.dimens
 
     Card(
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(d.radiusXL),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -697,6 +703,7 @@ private fun ProductImageThumb(
 }
 
 @Preview(showBackground = true, locale = "ar")
+@Preview(showBackground = true)
 @Composable
 private fun PreviewWarehouseInventoryScreen() {
     PharmaTheme {
