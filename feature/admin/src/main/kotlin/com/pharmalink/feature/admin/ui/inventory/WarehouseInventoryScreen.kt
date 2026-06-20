@@ -178,7 +178,10 @@ private fun WarehouseInventoryContent(
                 onRetry = { onAction(WarehouseInventoryAction.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
-            state.totalItems == 0 -> EmptyContent(modifier = Modifier.padding(padding))
+            state.totalItems == 0 -> EmptyContent(
+                onAddClick = { onAction(WarehouseInventoryAction.OnAddMedicineClicked) },
+                modifier = Modifier.padding(padding)
+            )
             else -> SuccessContent(
                 state = state,
                 onAction = onAction,
@@ -228,7 +231,10 @@ private fun ErrorContent(
 }
 
 @Composable
-private fun EmptyContent(modifier: Modifier = Modifier) {
+private fun EmptyContent(
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val d = MaterialTheme.dimens
     Column(
         modifier = modifier
@@ -239,6 +245,8 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
             title = stringResource(R.string.warehouse_inventory_empty),
             subtitle = stringResource(R.string.warehouse_inventory_empty_subtitle),
             tone = PharmaStateTone.Neutral,
+            actionLabel = "إضافة أول منتج",
+            onAction = onAddClick,
         )
     }
 }
