@@ -100,6 +100,7 @@ fun EditMedicineScreen(
         onPriceChange = viewModel::onPriceChange,
         onStockQuantityChange = viewModel::onStockQuantityChange,
         onVisibilityChange = viewModel::onVisibilityChange,
+        onActiveChange = viewModel::onActiveChange,
         onSubmit = viewModel::submitMedicine,
         profileImageUrl = profileImageUrl,
         modifier = modifier
@@ -122,6 +123,7 @@ private fun EditMedicineContent(
     onPriceChange: (String) -> Unit,
     onStockQuantityChange: (String) -> Unit,
     onVisibilityChange: (Boolean) -> Unit,
+    onActiveChange: (Boolean) -> Unit,
     onSubmit: () -> Unit,
     profileImageUrl: String? = null,
     modifier: Modifier = Modifier,
@@ -296,6 +298,11 @@ private fun EditMedicineContent(
                     onVisibilityChange = onVisibilityChange,
                 )
 
+                ProductActiveCard(
+                    isActive = state.isActive,
+                    onActiveChange = onActiveChange,
+                )
+
                 if (state.errorMessage != null) {
                     Text(
                         text = state.errorMessage!!,
@@ -368,6 +375,50 @@ private fun ProductVisibilityCard(
             Switch(
                 checked = isVisible,
                 onCheckedChange = onVisibilityChange,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductActiveCard(
+    isActive: Boolean,
+    onActiveChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val d = MaterialTheme.dimens
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(d.radiusL),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(d.spaceM),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(d.spaceXS),
+            ) {
+                Text(
+                    text = "المنتج نشط",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = if (isActive) "متاح للطلب من الصيدليات" else "موقوف مؤقتاً ولا يستقبل طلبات",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = isActive,
+                onCheckedChange = onActiveChange,
             )
         }
     }
