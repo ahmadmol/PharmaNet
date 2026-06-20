@@ -246,6 +246,7 @@ private fun WarehouseDashboardContent(
                                 title = "الإشعارات",
                                 icon = Icons.Outlined.NotificationsNone,
                                 onClick = onOpenNotifications,
+                                badgeCount = uiState.stats?.unreadNotificationsCount ?: 0,
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -435,6 +436,7 @@ data class WarehouseDashboardStats(
     val lowStockCount: Int,
     val suppliersCount: Int,
     val closingSoonCount: Int,
+    val unreadNotificationsCount: Int = 0,
 )
 
 @HiltViewModel
@@ -444,9 +446,11 @@ class WarehouseDashboardViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(WarehouseDashboardUiState())
     val uiState: StateFlow<WarehouseDashboardUiState> = _uiState.asStateFlow()
     private var requestJob: Job? = null
+    private var notificationsJob: Job? = null
 
     fun load(warehouseId: String) {
         requestJob?.cancel()
+        notificationsJob?.cancel()
         if (warehouseId.isBlank()) {
             _uiState.value = WarehouseDashboardUiState()
             return
@@ -466,6 +470,7 @@ class WarehouseDashboardViewModel @Inject constructor(
                             lowStockCount = inventory.count { item -> item.stockStatus == StockStatus.LOW_STOCK },
                             suppliersCount = 12, // Placeholder
                             closingSoonCount = inventory.count { item -> !item.isVisible || !item.isActive }, // Map hidden/inactive here for now
+                            unreadNotificationsCount = currentStats?.unreadNotificationsCount ?: 0,
                         ),
                     )
                 }
@@ -496,11 +501,38 @@ class WarehouseDashboardViewModel @Inject constructor(
                                 lowStockCount = 0,
                                 suppliersCount = 12,
                                 closingSoonCount = 0,
+                                unreadNotificationsCount = 0,
                             )
                         } else {
                             currentStats.copy(
                                 incomingRequestsCount = incomingCount,
                                 quotePendingCount = quotePendingCount,
+                            )
+                        },
+                    )
+                }
+            }
+        }
+
+        notificationsJob = viewModelScope.launch {
+            pharmaRepository.observeNotifications().collect { notifications ->
+                val unreadCount = notifications.count { !it.read }
+                _uiState.update { current ->
+                    val currentStats = current.stats
+                    current.copy(
+                        stats = if (currentStats == null) {
+                            WarehouseDashboardStats(
+                                productsCount = 0,
+                                incomingRequestsCount = 0,
+                                quotePendingCount = 0,
+                                lowStockCount = 0,
+                                suppliersCount = 12,
+                                closingSoonCount = 0,
+                                unreadNotificationsCount = unreadCount,
+                            )
+                        } else {
+                            currentStats.copy(
+                                unreadNotificationsCount = unreadCount,
                             )
                         },
                     )
