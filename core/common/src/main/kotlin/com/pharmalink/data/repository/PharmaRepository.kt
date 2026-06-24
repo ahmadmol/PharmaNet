@@ -300,4 +300,63 @@ interface PharmaRepository {
     ): Result<List<com.pharmalink.domain.model.AdminOrder>>
 
     suspend fun adminGetOrderDetail(orderId: String): Result<com.pharmalink.domain.model.AdminOrder?>
+
+    // ==================== Cross-Account Completeness (Phase 2-5) ====================
+
+    /**
+     * R12: Realtime stream of the authenticated PUBLIC_USER's own customer orders.
+     * Emits a fresh list whenever a row in public.orders that belongs to the user changes.
+     */
+    fun observeMyCustomerOrders(): kotlinx.coroutines.flow.Flow<List<Order>>
+
+    /**
+     * R4: ADMIN listing of B2B requests (basket layer), mirrors adminGetAllOrders.
+     */
+    suspend fun adminGetAllRequests(
+        status: String? = null,
+        pharmacyId: String? = null,
+        warehouseId: String? = null,
+        search: String? = null,
+        limit: Int = 100,
+        offset: Int = 0,
+    ): Result<List<com.pharmalink.domain.model.AdminRequest>>
+
+    /**
+     * R4: Full B2B request detail with items + linked order. Returned as raw JsonElement
+     * to avoid an extra dedicated model — admin UI can render fields directly.
+     */
+    suspend fun adminGetRequestDetail(
+        requestId: String,
+    ): Result<kotlinx.serialization.json.JsonElement>
+
+    /**
+     * R5: Force-cancel any non-terminal order. Audit + notifies all parties server-side.
+     */
+    suspend fun adminForceCancelOrder(orderId: String, reason: String): Result<Unit>
+
+    /**
+     * R5: Force-cancel a B2B request (cascades to its linked order if any).
+     */
+    suspend fun adminForceCancelRequest(requestId: String, reason: String): Result<Unit>
+
+    /**
+     * R9: Atomic provisioning — create pharmacy + link owner profile in one transaction.
+     */
+    suspend fun adminProvisionPharmacyWithOwner(
+        name: String,
+        location: String,
+        contactNumber: String,
+        licenseNumber: String,
+        ownerUserId: String,
+    ): Result<kotlinx.serialization.json.JsonElement>
+
+    /**
+     * R9: Atomic provisioning — create warehouse + link owner profile in one transaction.
+     */
+    suspend fun adminProvisionWarehouseWithOwner(
+        name: String,
+        location: String,
+        contactNumber: String,
+        ownerUserId: String,
+    ): Result<kotlinx.serialization.json.JsonElement>
 }

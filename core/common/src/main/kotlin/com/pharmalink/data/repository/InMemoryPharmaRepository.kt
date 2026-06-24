@@ -764,6 +764,48 @@ class InMemoryPharmaRepository @Inject constructor() : PharmaRepository {
             )
         ) // InMemory implementation returns default health
 
+    // ==================== Cross-Account Completeness (Phase 2-5) — stubs ====================
+
+    override fun observeMyCustomerOrders(): kotlinx.coroutines.flow.Flow<List<com.pharmalink.domain.model.Order>> =
+        kotlinx.coroutines.flow.flowOf(emptyList())
+
+    override suspend fun adminGetAllRequests(
+        status: String?,
+        pharmacyId: String?,
+        warehouseId: String?,
+        search: String?,
+        limit: Int,
+        offset: Int,
+    ): Result<List<com.pharmalink.domain.model.AdminRequest>> = Result.success(emptyList())
+
+    override suspend fun adminGetRequestDetail(
+        requestId: String,
+    ): Result<kotlinx.serialization.json.JsonElement> =
+        Result.failure(UnsupportedOperationException("adminGetRequestDetail is not supported in InMemoryPharmaRepository."))
+
+    override suspend fun adminForceCancelOrder(orderId: String, reason: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("adminForceCancelOrder is not supported in InMemoryPharmaRepository."))
+
+    override suspend fun adminForceCancelRequest(requestId: String, reason: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("adminForceCancelRequest is not supported in InMemoryPharmaRepository."))
+
+    override suspend fun adminProvisionPharmacyWithOwner(
+        name: String,
+        location: String,
+        contactNumber: String,
+        licenseNumber: String,
+        ownerUserId: String,
+    ): Result<kotlinx.serialization.json.JsonElement> =
+        Result.failure(UnsupportedOperationException("adminProvisionPharmacyWithOwner is not supported in InMemoryPharmaRepository."))
+
+    override suspend fun adminProvisionWarehouseWithOwner(
+        name: String,
+        location: String,
+        contactNumber: String,
+        ownerUserId: String,
+    ): Result<kotlinx.serialization.json.JsonElement> =
+        Result.failure(UnsupportedOperationException("adminProvisionWarehouseWithOwner is not supported in InMemoryPharmaRepository."))
+
     private fun updateCustomerOrder(
         orderId: String,
         transform: (Order) -> Order,

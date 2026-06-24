@@ -55,6 +55,14 @@ class BackendReadinessContractTest {
             "admin_get_pending_requests",
             "admin_get_recent_activities",
             "admin_get_system_health",
+            // Phase 2-5 cross-account additions
+            "admin_get_all_requests",
+            "admin_get_request_detail",
+            "admin_force_cancel_order",
+            "admin_force_cancel_request",
+            "admin_provision_pharmacy_with_owner",
+            "admin_provision_warehouse_with_owner",
+            "expire_stale_pending_customer_orders",
         )
 
         rpcNames.forEach { rpc ->
@@ -95,6 +103,13 @@ class BackendReadinessContractTest {
             "pharmacy_reject_b2b_quote" to listOf("p_request_id", "p_rejection_reason"),
             "get_public_pharmacies_for_medicine" to listOf("p_medicine_id"),
             "admin_get_audit_log_detail" to listOf("p_log_id"),
+            // Phase 2-5 cross-account additions
+            "admin_get_all_requests" to listOf("p_status", "p_pharmacy_id", "p_warehouse_id", "p_search", "p_limit", "p_offset"),
+            "admin_get_request_detail" to listOf("p_request_id"),
+            "admin_force_cancel_order" to listOf("p_order_id", "p_reason"),
+            "admin_force_cancel_request" to listOf("p_request_id", "p_reason"),
+            "admin_provision_pharmacy_with_owner" to listOf("p_name", "p_location", "p_contact_number", "p_license_number", "p_owner_user_id"),
+            "admin_provision_warehouse_with_owner" to listOf("p_name", "p_location", "p_contact_number", "p_owner_user_id"),
         )
 
         expectedParams.forEach { (rpc, params) ->
